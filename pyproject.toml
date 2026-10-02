@@ -59,7 +59,14 @@ select = [
     "B",    # flake8-bugbear (common bug patterns)
     "SIM",  # flake8-simplify (simpler equivalent code)
     "RUF",  # Ruff-specific rules
+    "D",    # pydocstyle (docstring conventions)
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D100", "D103"]  # test modules/functions don't need docstrings
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -73,4 +80,4 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["-ra", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
