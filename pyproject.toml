@@ -1,83 +1,72 @@
 [build-system]
 build-backend = "uv_build"
-requires = ["uv_build>=0.12.21,<0.13.0"]
+requires = [ "uv-build>=0.12.21,<0.13" ]
 
 [project]
 name = "puigame"
 version = "0.0.1"
 description = "UI widgets for pygame-ce"
 readme = "README.md"
-keywords = ["game-development", "gui", "pygame", "pygame-ce", "ui", "widgets"]
+keywords = [ "game-development", "gui", "pygame", "pygame-ce", "ui", "widgets" ]
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = [ "LICENSE" ]
 authors = [
-    { name = "neb01", email = "69682096+neb01@users.noreply.github.com" },
+  { name = "neb01", email = "69682096+neb01@users.noreply.github.com" },
 ]
 requires-python = ">=3.11"
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Games/Entertainment",
-    "Topic :: Software Development :: Libraries :: pygame",
-    "Topic :: Software Development :: User Interfaces",
-    "Typing :: Typed",
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Topic :: Games/Entertainment",
+  "Topic :: Software Development :: Libraries :: pygame",
+  "Topic :: Software Development :: User Interfaces",
+  "Typing :: Typed",
 ]
 dependencies = [
-    "pygame-ce>=2.5.8",
+  "pygame-ce>=2.5.8",
 ]
-
-[project.urls]
-Issues = "https://github.com/neb01/puigame/issues"
-Repository = "https://github.com/neb01/puigame"
+urls.Issues = "https://github.com/neb01/puigame/issues"
+urls.Repository = "https://github.com/neb01/puigame"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.6.2",
-    "pyright>=1.1.414",
-    "pytest>=9.1.1",
-    "ruff>=0.16.10",
+  "pyright>=1.1.414",
+  "pytest>=9.1.1",
+  "ruff>=0.16.10",
 ]
 
 [tool.ruff]
 line-length = 88
-src = ["src", "tests"]
-
-[tool.ruff.lint]
-select = [
-    "E",    # pycodestyle errors (style basics)
-    "W",    # pycodestyle warnings
-    "F",    # pyflakes (unused imports, undefined names)
-    "I",    # isort (import sorting)
-    "UP",   # pyupgrade (modern Python syntax)
-    "B",    # flake8-bugbear (common bug patterns)
-    "SIM",  # flake8-simplify (simpler equivalent code)
-    "RUF",  # Ruff-specific rules
-    "D",    # pydocstyle (docstring conventions)
+src = [ "src", "tests" ]
+format.docstring-code-format = true
+lint.select = [
+  "B",   # flake8-bugbear (common bug patterns)
+  "D",   # pydocstyle (docstring conventions)
+  "E",   # pycodestyle errors (style basics)
+  "F",   # pyflakes (unused imports, undefined names)
+  "I",   # isort (import sorting)
+  "RUF", # Ruff-specific rules
+  "SIM", # flake8-simplify (simpler equivalent code)
+  "UP",  # pyupgrade (modern Python syntax)
+  "W",   # pycodestyle warnings
 ]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["D100", "D103"]  # test modules/functions don't need docstrings
-
-[tool.ruff.format]
-docstring-code-format = true
+lint.per-file-ignores."tests/**/*.py" = [ "D100", "D103" ]  # test modules/functions don't need docstrings
+lint.pydocstyle.convention = "google"
 
 [tool.pyright]
-include = ["src", "tests"]
 pythonVersion = "3.11"
-typeCheckingMode = "standard"
-venvPath = "."
 venv = ".venv"
+venvPath = "."
+typeCheckingMode = "standard"
+include = [ "src", "tests" ]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+[tool.pytest]
+ini_options.testpaths = [ "tests" ]
+ini_options.addopts = [ "-ra", "--strict-markers", "--strict-config", "--import-mode=importlib" ]
