@@ -36,3 +36,11 @@ dependencies = [
 [project.urls]
 Issues = "https://github.com/neb01/puigame/issues"
 Repository = "https://github.com/neb01/puigame"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]
