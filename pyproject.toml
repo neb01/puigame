@@ -1,0 +1,38 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.12.21,<0.13.0"]
+
+[project]
+name = "puigame"
+version = "0.0.1"
+description = "UI widgets for pygame-ce"
+readme = "README.md"
+keywords = ["game-development", "gui", "pygame", "pygame-ce", "ui", "widgets"]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "neb01", email = "69682096+neb01@users.noreply.github.com" },
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries :: pygame",
+    "Topic :: Software Development :: User Interfaces",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pygame-ce>=2.5.8",
+]
+
+[project.urls]
+Issues = "https://github.com/neb01/puigame/issues"
+Repository = "https://github.com/neb01/puigame"
