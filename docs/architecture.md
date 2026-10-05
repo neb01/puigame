@@ -38,7 +38,7 @@ Out of scope: event buses, scene management, game key bindings, and game-specifi
 
 A game uses puigame through a `UI` object. Each `UI` combines two parts:
 
-- **`ui.root`**: a plain `Widget` sized to the UI's area (the whole screen by default). Every widget added to the UI becomes its child, directly or further down the tree.
+- **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It fills the UI's area (the whole screen by default) instead of anchoring to a parent, and can never be given a parent itself. Every widget added to the UI becomes its child, directly or further down the tree.
 - **`ui.manager`**: a `UIManager` that runs the UI: input routing, the highlight, press capture, and the cursor (see [Input](#input)).
 
 `UI` passes the common calls through, so a game rarely needs either part directly. `ui.add(widget)` is shorthand for `widget.set_parent(ui.root)`.
@@ -100,6 +100,7 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 
 ```
 Widget                  pygame Sprite: rect, anchor, children, flags, skin, state-surface cache
+├── UIRoot              top of a UI's tree: fills the UI's area, never has a parent
 ├── Container           invisible group of children (no skin)
 ├── Panel               Container behaviour with a skin, so it has a background
 ├── Label               + Text component, non-interactive
@@ -110,7 +111,7 @@ Widget                  pygame Sprite: rect, anchor, children, flags, skin, stat
 
 CheckboxGroup           helper: mutual exclusion between checkboxes (radio behaviour)
 WidgetGroup             LayeredUpdates subclass that draws the widget tree
-UI                      composes root (a plain Widget sized to its area) and manager; owns the theme and root group
+UI                      composes root (a UIRoot) and manager; owns the theme and root group
 UIManager               runs one UI: routes input, tracks the highlight and presses, manages the cursor
 ```
 
@@ -141,7 +142,7 @@ Every widget stores a reference to its `parent` (or `None`) and a list of refere
 
 Passing `None` detaches the widget from the tree.
 
-Before changing anything, `set_parent()` raises `ValueError` if `new_parent` is the widget itself or one of its descendants, since either would create a loop in the tree.
+`UIRoot` overrides `set_parent()` to raise an error if it is given a parent, since the root always sits at the top of its tree. For other widgets, before changing anything, `set_parent()` raises `ValueError` if `new_parent` is the widget itself or one of its descendants, since either would create a loop in the tree.
 
 ### Flags
 
@@ -406,34 +407,39 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 
 ```
 src/puigame/
-├── __init__.py                public API re-exports
-├── py.typed
 ├── assets/
 │   ├── fonts/
 │   └── images/
 ├── components/                objects widgets hold
+│   ├── __init__.py
 │   ├── skin.py                Skin, DrawnSkin, ImageSkin (nine-slice)
 │   └── text.py                Text and the font cache
 ├── core/
+│   ├── __init__.py
 │   ├── anchor.py              Anchor
-│   ├── state.py               State
-│   ├── widget.py              Widget, DEFAULT_DT
 │   ├── interactive_widget.py  InteractiveWidget
-│   ├── widget_group.py        WidgetGroup
+│   ├── state.py               State
 │   ├── ui_manager.py          UIManager
-│   └── ui.py                  UI
+│   ├── ui_root.py             UIRoot
+│   ├── ui.py                  UI
+│   ├── widget_group.py        WidgetGroup
+│   └── widget.py              Widget, DEFAULT_DT
 ├── themes/
+│   ├── __init__.py
 │   └── theme.py               Theme and the default theme
-└── widgets/
-    ├── container.py
-    ├── panel.py
-    ├── label.py
-    ├── button.py
-    ├── checkbox.py            Checkbox and CheckboxGroup
-    └── textbox.py
+├── widgets/
+│   ├── __init__.py
+│   ├── button.py
+│   ├── checkbox.py            Checkbox and CheckboxGroup
+│   ├── container.py
+│   ├── label.py
+│   ├── panel.py
+│   └── textbox.py
+├── __init__.py                public API re-exports
+└── py.typed
 ```
 
-Every subpackage has an `__init__.py`. Tests mirror this layout under `tests/`.
+The tree follows VS Code's default Explorer order: folders first, then files, alphabetically. Tests mirror this layout under `tests/`.
 
 ### Dependencies
 
@@ -443,16 +449,16 @@ Each layer imports only from the layers above it:
 2. `themes/theme`
 3. `components/skin`, `components/text`
 4. `core/widget`
-5. `core/interactive_widget`, `core/widget_group`
+5. `core/interactive_widget`, `core/ui_root`, `core/widget_group`
 6. `widgets/*`
 7. `core/ui_manager`
 8. `core/ui`
 
-`UIManager` and `UI` need only `Widget`, `InteractiveWidget`, and `WidgetGroup`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
+`UIManager` and `UI` need only `Widget`, `InteractiveWidget`, `UIRoot`, and `WidgetGroup`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
 
 ## v0.1 scope
 
-**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `WidgetGroup`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
+**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `WidgetGroup`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
 
 **Features:**
 
@@ -480,7 +486,7 @@ Each step is one branch and pull request, with tests:
 6. `feat/layout`: positioning from anchors, margin, and offset, plus `place_at_pos()`
 7. `feat/widget-group`: `WidgetGroup`
 8. `feat/container-panel-label`: `Container`, `Panel`, and `Label`
-9. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: the root widget, input routing, highlight, keyboard mode, and cursor management
+9. `feat/ui`: `InteractiveWidget`, `UIRoot`, `UIManager`, and `UI`: the root widget, input routing, highlight, keyboard mode, and cursor management
 10. `feat/button`: `Button`
 11. `feat/checkbox`: `Checkbox` and `CheckboxGroup`
 12. `feat/textbox`: `TextBox`
