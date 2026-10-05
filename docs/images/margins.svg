@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="440" viewBox="0 0 720 440" role="img" aria-label="How positive margins move widgets from each anchor">
+  <title>How positive margins move widgets from each anchor</title>
+  <style>
+    .card  { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+    .text  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; }
+    .label { font-size: 13px; font-weight: 600; }
+    .small { font-size: 12px; }
+    .muted { fill: #9da7b3; font-style: italic; }
+    .parent { fill: #7aa2e0; fill-opacity: 0.14; stroke: #7aa2e0; stroke-width: 2; }
+    .child  { fill: #f0b85a; fill-opacity: 0.20; stroke: #f0b85a; stroke-width: 1.5; }
+    .dot    { fill: #ff6b66; stroke: #161b22; stroke-width: 1.5; }
+    .margin { stroke: #4cc38a; stroke-width: 1.5; fill: none; }
+    .mtext  { fill: #4cc38a; font-size: 12px; font-weight: 600; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+  </style>
+  <rect class="card" x="0.5" y="0.5" width="719" height="439" rx="8"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4cc38a"/>
+    </marker>
+  </defs>
+  <rect class="parent" x="30" y="40" width="660" height="380" rx="4"/>
+  <text class="text small muted" x="30" y="28">same anchor on widget and parent · positive margin = (x, y) moves towards the widget's centre</text>
+  <rect class="child" x="80" y="90" width="132" height="46" rx="3"/>
+  <text class="text label" x="146" y="118" text-anchor="middle">TOP_LEFT</text>
+  <line class="margin" x1="30" y1="113" x2="80" y2="113" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="55" y="107" text-anchor="middle">x</text>
+  <line class="margin" x1="146" y1="40" x2="146" y2="90" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="154" y="69" text-anchor="start">y</text>
+  <rect class="child" x="294" y="90" width="132" height="46" rx="3"/>
+  <text class="text label" x="360" y="118" text-anchor="middle">MID_TOP</text>
+  <line class="margin" x1="360" y1="40" x2="360" y2="90" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="368" y="69" text-anchor="start">y</text>
+  <rect class="child" x="508" y="90" width="132" height="46" rx="3"/>
+  <text class="text label" x="574" y="118" text-anchor="middle">TOP_RIGHT</text>
+  <line class="margin" x1="640" y1="113" x2="690" y2="113" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="665" y="107" text-anchor="middle">x</text>
+  <line class="margin" x1="574" y1="40" x2="574" y2="90" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="582" y="69" text-anchor="start">y</text>
+  <rect class="child" x="80" y="207" width="132" height="46" rx="3"/>
+  <text class="text label" x="146" y="235" text-anchor="middle">MID_LEFT</text>
+  <line class="margin" x1="30" y1="230" x2="80" y2="230" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="55" y="224" text-anchor="middle">x</text>
+  <rect class="child" x="294" y="207" width="132" height="46" rx="3"/>
+  <text class="text label" x="360" y="235" text-anchor="middle">CENTRE</text>
+  <text class="text small muted" x="360" y="273" text-anchor="middle">margin ignored</text>
+  <rect class="child" x="508" y="207" width="132" height="46" rx="3"/>
+  <text class="text label" x="574" y="235" text-anchor="middle">MID_RIGHT</text>
+  <line class="margin" x1="640" y1="230" x2="690" y2="230" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="665" y="224" text-anchor="middle">x</text>
+  <rect class="child" x="80" y="324" width="132" height="46" rx="3"/>
+  <text class="text label" x="146" y="352" text-anchor="middle">BOTTOM_LEFT</text>
+  <line class="margin" x1="30" y1="347" x2="80" y2="347" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="55" y="341" text-anchor="middle">x</text>
+  <line class="margin" x1="146" y1="370" x2="146" y2="420" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="154" y="399" text-anchor="start">y</text>
+  <rect class="child" x="294" y="324" width="132" height="46" rx="3"/>
+  <text class="text label" x="360" y="352" text-anchor="middle">MID_BOTTOM</text>
+  <line class="margin" x1="360" y1="370" x2="360" y2="420" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="368" y="399" text-anchor="start">y</text>
+  <rect class="child" x="508" y="324" width="132" height="46" rx="3"/>
+  <text class="text label" x="574" y="352" text-anchor="middle">BOTTOM_RIGHT</text>
+  <line class="margin" x1="640" y1="347" x2="690" y2="347" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="665" y="341" text-anchor="middle">x</text>
+  <line class="margin" x1="574" y1="370" x2="574" y2="420" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="582" y="399" text-anchor="start">y</text>
+</svg>

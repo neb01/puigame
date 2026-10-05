@@ -11,7 +11,7 @@ UI widgets for [pygame-ce](https://pyga.me/).
 
 ## Development
 
-This project uses [uv](https://docs.astral.sh/uv/) to manage Python, dependencies and the virtual environment.
+This project uses [uv](https://docs.astral.sh/uv/) to manage Python, dependencies, and the virtual environment.
 
 ### Set up
 
@@ -26,7 +26,7 @@ Then, for each clone:
 ```powershell
 gh repo clone neb01/puigame
 cd puigame
-uv sync                      # creates .venv with puigame, pygame-ce and dev tools
+uv sync                      # creates .venv with puigame, pygame-ce, and dev tools
 pre-commit install           # run the checks automatically on every commit
 ```
 
@@ -43,6 +43,10 @@ pre-commit run --all-files   # everything pre-commit runs, on all files
 ### Commit messages
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/), e.g. `feat(button): add disabled state` or `fix: correct hover offset`.
+
+## Authorship
+
+All code in puigame is written by hand. Documentation, including this README, the `docs/` folder, and the docstrings in the code, is first drafted with AI assistance and then checked by hand.
 
 ## License
 
