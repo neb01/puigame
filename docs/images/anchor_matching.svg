@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="290" viewBox="0 0 720 290" role="img" aria-label="Placing a widget with the same or different anchors">
+  <title>Placing a widget with the same or different anchors</title>
+  <style>
+    .card  { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+    .text  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; }
+    .label { font-size: 13px; font-weight: 600; }
+    .small { font-size: 12px; }
+    .muted { fill: #9da7b3; font-style: italic; }
+    .parent { fill: #7aa2e0; fill-opacity: 0.14; stroke: #7aa2e0; stroke-width: 2; }
+    .child  { fill: #f0b85a; fill-opacity: 0.20; stroke: #f0b85a; stroke-width: 1.5; }
+    .dot    { fill: #ff6b66; stroke: #161b22; stroke-width: 1.5; }
+    .margin { stroke: #4cc38a; stroke-width: 1.5; fill: none; }
+    .mtext  { fill: #4cc38a; font-size: 12px; font-weight: 600; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+  </style>
+  <rect class="card" x="0.5" y="0.5" width="719" height="289" rx="8"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4cc38a"/>
+    </marker>
+  </defs>
+  <text class="text label" x="30" y="34">Same anchor (default)</text>
+  <rect class="parent" x="30" y="50" width="300" height="170" rx="4"/>
+  <text class="text small muted" x="40" y="70">parent</text>
+  <rect class="child" x="154" y="136" width="132" height="40" rx="3"/>
+  <text class="text label" x="220" y="161" text-anchor="middle">widget</text>
+  <line class="margin" x1="286" y1="156" x2="330" y2="156" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="308" y="150" text-anchor="middle">x</text>
+  <line class="margin" x1="220" y1="176" x2="220" y2="220" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="228" y="202" text-anchor="start">y</text>
+  <circle class="dot" cx="330" cy="220" r="5"/>
+  <text class="text small" x="30" y="246">anchor=BOTTOM_RIGHT</text>
+  <text class="text small" x="30" y="264">margin=(24, 24)</text>
+  <text class="text label" x="390" y="34">Different anchors</text>
+  <rect class="parent" x="430" y="70" width="220" height="56" rx="4"/>
+  <text class="text label" x="540" y="103" text-anchor="middle">parent (a button)</text>
+  <rect class="child" x="470" y="168" width="140" height="40" rx="3"/>
+  <text class="text label" x="540" y="193" text-anchor="middle">widget (tooltip)</text>
+  <line class="margin" x1="540" y1="130" x2="540" y2="164" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="mtext" x="548" y="151" text-anchor="start">y</text>
+  <circle class="dot" cx="540" cy="126" r="5"/>
+  <circle class="dot" cx="540" cy="168" r="5"/>
+  <text class="text small" x="390" y="228">anchor=MID_TOP (on the widget)</text>
+  <text class="text small" x="390" y="246">parent_anchor=MID_BOTTOM (on the parent)</text>
+  <text class="text small" x="390" y="264">margin=(0, 20)</text>
+</svg>
