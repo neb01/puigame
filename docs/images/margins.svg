@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="440" viewBox="0 0 720 440" role="img" aria-label="How margins offset widgets inwards from each anchor">
-  <title>How margins offset widgets inwards from each anchor</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="440" viewBox="0 0 720 440" role="img" aria-label="How positive margins move widgets from each anchor">
+  <title>How positive margins move widgets from each anchor</title>
   <style>
     .card  { fill: #161b22; stroke: #30363d; stroke-width: 1; }
     .text  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; }
@@ -19,7 +19,7 @@
     </marker>
   </defs>
   <rect class="parent" x="30" y="40" width="660" height="380" rx="4"/>
-  <text class="text small muted" x="30" y="28">parent rect · margin = (x, y), positive values push inwards</text>
+  <text class="text small muted" x="30" y="28">same anchor on widget and parent · positive margin = (x, y) moves towards the widget's centre</text>
   <rect class="child" x="80" y="90" width="132" height="46" rx="3"/>
   <text class="text label" x="146" y="118" text-anchor="middle">TOP_LEFT</text>
   <line class="margin" x1="30" y1="113" x2="80" y2="113" marker-start="url(#arrow)" marker-end="url(#arrow)"/>

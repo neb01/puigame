@@ -2,6 +2,30 @@
 
 This document records the design of puigame v0.1: what the library does, how it is structured, and the decisions behind it. Later pull requests implement it piece by piece; when a decision changes, this document is updated in the same pull request.
 
+All puigame code is written by hand. This document, like the rest of the documentation (including the docstrings in the code), was first drafted with AI assistance and then checked by hand.
+
+## Contents
+
+- [Goals and scope](#goals-and-scope)
+- [Integration](#integration)
+- [Class hierarchy](#class-hierarchy)
+- [Widget tree and flags](#widget-tree-and-flags)
+- [Components](#components)v
+- [Themes](#themes)
+- [Anchors](#anchors)
+- [State](#state)
+- [Rendering and caching](#rendering-and-caching)
+- [Drawing: WidgetGroup](#drawing-widgetgroup)
+- [Input](#input)
+- [Callbacks](#callbacks)
+- [Positions and types](#positions-and-types)
+- [Assets](#assets)
+- [Naming conventions](#naming-conventions)
+- [Package layout](#package-layout)
+- [v0.1 scope](#v01-scope)
+- [Build order](#build-order)
+- [Open questions](#open-questions)
+
 ## Goals and scope
 
 - **UI widgets for pygame-ce**: widgets, anchoring, skins, themes, event dispatch, and keyboard navigation.
@@ -12,10 +36,15 @@ Out of scope: event buses, scene management, game key bindings, and game-specifi
 
 ## Integration
 
-A game uses puigame through one object, the `UIManager`:
+A game uses puigame through a `UI` object. Each `UI` combines two parts:
+
+- **`ui.root`**: a plain `Widget` sized to the UI's area (the whole screen by default). Every widget added to the UI becomes its child, directly or further down the tree.
+- **`ui.manager`**: a `UIManager` that runs the UI: input routing, the highlight, press capture, and the cursor (see [Input](#input)).
+
+`UI` passes the common calls through, so a game rarely needs either part directly. `ui.add(widget)` is shorthand for `widget.set_parent(ui.root)`.
 
 ```python
-ui = puigame.UIManager()
+ui = puigame.UI()
 ui.add(puigame.Button(..., text="Back", on_click=go_back))
 
 while running:
@@ -29,7 +58,28 @@ while running:
     ui.draw(screen)  # UI drawn on top
 ```
 
-In an event-bus framework, a scene owns a `UIManager` like any other manager: the scene subscribes `ui.handle_event` to the bus, calls `ui.update` and `ui.draw` each frame, and passes callbacks that publish to the bus. puigame never imports the framework.
+In an event-bus framework, a scene owns a `UI` like any other manager: the scene subscribes `ui.handle_event` to the bus, calls `ui.update` and `ui.draw` each frame, and passes callbacks that publish to the bus. puigame never imports the framework.
+
+### Layering
+
+A screen that shows several UIs at once, such as a pause menu over a HUD, uses a separate `UI` for each. puigame does not coordinate them; the game decides the order:
+
+```python
+for event in pygame.event.get():
+    if pause_ui.handle_event(event):  # top layer first
+        continue
+    if not paused and hud.handle_event(event):
+        continue
+    ...  # the game handles the rest
+
+hud.draw(screen)
+pause_ui.draw(screen)  # drawn last, so on top
+```
+
+- **Input** goes to the top UI first and stops at the first one that consumes it. A modal menu is the game not passing events to the UIs below.
+- **Drawing** goes from the bottom UI to the top.
+- **Each UI has its own highlight and settings**: a HUD typically turns keyboard navigation off, while a pause menu keeps it on.
+- **Only one UI should manage the cursor** at a time, since the cursor belongs to the whole window. The others are created with `manage_cursor=False` (see [Cursor](#cursor)).
 
 ### Timing
 
@@ -49,19 +99,22 @@ The default is stated in the `update()` docstring, so it appears in editor toolt
 The hierarchy is shallow and describes **behaviour** only. Appearance (skins) and content (text) are added by composition.
 
 ```
-Widget            pygame Sprite: rect, anchor, children, flags, skin, state-surface cache
-├── Container     invisible group of children (no skin)
-├── Panel         Container behaviour with a skin, so it has a background
-├── Label         + Text component, non-interactive
-├── Button        + press and release, on_click; optional Text
-│   └── Checkbox  + checked, can_untoggle, optional CheckboxGroup
-└── TextBox       + editable Text, editing mode (a direct Widget subclass: no PRESSED state)
+Widget                  pygame Sprite: rect, anchor, children, flags, skin, state-surface cache
+├── Container           invisible group of children (no skin)
+├── Panel               Container behaviour with a skin, so it has a background
+├── Label               + Text component, non-interactive
+└── InteractiveWidget   + highlightable, plus the highlight and activation behaviour interactive widgets share
+    ├── Button          + press and release, on_click; optional Text
+    │   └── Checkbox    + checked, can_untoggle, optional CheckboxGroup
+    └── TextBox         + editable Text, editing mode (no PRESSED state)
 
-CheckboxGroup     helper: mutual exclusion between checkboxes (radio behaviour)
-WidgetGroup       LayeredUpdates subclass that draws the widget tree
-UIManager         owns the theme and the root group; routes input, tracks the highlight
+CheckboxGroup           helper: mutual exclusion between checkboxes (radio behaviour)
+WidgetGroup             LayeredUpdates subclass that draws the widget tree
+UI                      composes root (a plain Widget sized to its area) and manager; owns the theme and root group
+UIManager               runs one UI: routes input, tracks the highlight and presses, manages the cursor
 ```
 
+- **`InteractiveWidget` lives in `core`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing from `widgets`. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
@@ -75,7 +128,7 @@ Every widget is a `pygame.sprite.Sprite` with an `image` and a `rect`, so widget
 
 Every widget stores a reference to its `parent` (or `None`) and a list of references to its children.
 
-- A widget with no parent is **top-level**: the `UIManager` positions it against its own area, which defaults to the whole screen.
+- A widget added to a `UI` becomes a child of `ui.root`, which covers the UI's area (the whole screen by default). Every widget in a UI therefore has a parent, except the root itself. A widget not yet in any UI has no parent and stays at `(0, 0)`.
 - A parent, children, or both can be passed when a widget is created.
 - `set_parent()` is the single place where the link changes, so both sides always agree. Passing children on creation calls `set_parent()` on each child.
 
@@ -86,7 +139,9 @@ Every widget stores a reference to its `parent` (or `None`) and a list of refere
 3. Sets `new_parent` as this widget's parent.
 4. Adds this widget to `new_parent`'s children.
 
-Passing `None` detaches the widget and makes it top-level.
+Passing `None` detaches the widget from the tree.
+
+Before changing anything, `set_parent()` raises `ValueError` if `new_parent` is the widget itself or one of its descendants, since either would create a loop in the tree.
 
 ### Flags
 
@@ -96,10 +151,9 @@ Each widget has its **own** flags, which parents never overwrite, and a tree-awa
 |---|---|
 | `visible` | `visible_in_tree` |
 | `enabled` | `enabled_in_tree` |
-| `highlightable` | `highlightable_in_tree` |
 
 - The `_in_tree` values are **calculated on demand**, never stored: a widget is visible in the tree only if it and every widget above it are visible (the same for enabled).
-- `highlightable_in_tree` is true only if the widget's own `highlightable` is true **and** it is `visible_in_tree` and `enabled_in_tree`. `highlightable` defaults to `False` on `Widget` and `True` on `Button`, `Checkbox`, and `TextBox`.
+- `InteractiveWidget` adds a third pair: `highlightable` (default `True`) and `highlightable_in_tree`, which is true only if the widget's own `highlightable` is true **and** it is `visible_in_tree` and `enabled_in_tree`. Setting `highlightable=False` lets an interactive widget be skipped by highlighting, for example a button that should only respond to the mouse. See [Highlight](#highlight).
 - Hiding a parent changes only its own flag; its children's `_in_tree` values change automatically. A child hidden individually stays hidden when its parent is shown again.
 - Widgets that are not `visible_in_tree` are not drawn; widgets that are not `enabled_in_tree` ignore input.
 
@@ -109,8 +163,8 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 
 | Component | Held by | Job |
 |---|---|---|
-| **`Skin`** | Every `Widget` (optional; `None` means transparent) | Renders the widget's background surface for a given size and `State` |
-| **`Text`** | `Label`, `Button`, `TextBox` (one or more per widget) | Holds the string, font, and colour; is positioned within its owner by an anchor and margin; renders onto the owner's image; notifies the owner when it changes |
+| **`Skin`** | Every `Widget` (optional; `None` means transparent) | Renders the widget's background surface for a given size and `State` (see [Skins](#skins)) |
+| **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string, font, and colour; is positioned within its owner by an anchor and margin; renders onto the owner's image; notifies the owner when it changes |
 
 A `Text` component is **not** a child widget: it is not a Sprite, receives no input, and is drawn into its owner's image rather than on its own.
 
@@ -128,14 +182,15 @@ Scaling behaviour is a per-skin option, not a global setting.
 
 A `Theme` holds the shared rules skins and text read: colours, fonts, text sizes, corner radius, border widths, and per-state adjustments (for example disabled is dimmer, highlighted is lighter or has a halo).
 
-- The theme lives on the **`UIManager`**, so every widget it manages draws consistently.
+- The theme lives on the **`UI`**, so every widget in it draws consistently.
 - puigame ships a default theme that uses the bundled default art and fonts.
+- **Later:** the `UI` could assign individual widgets, or whole subtrees, a different theme from its default.
 
 ## Anchors
 
 Positions are set with a nine-point `Anchor` (`CENTRE`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `MID_LEFT`, `MID_RIGHT`, `MID_TOP`, `MID_BOTTOM`) plus a margin.
 
-- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. Top-level widgets are anchored to the `UIManager`'s area, which defaults to the whole screen.
+- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. Widgets added directly to a `UI` are anchored to `ui.root`, which covers the UI's area (the whole screen by default).
 - A `Text` component is anchored relative to its **owner widget's rect**.
 
 ### Anchor points
@@ -159,13 +214,17 @@ With the same anchor on both, the widget sits **inside** its parent (for example
 
 `margin` is either a single number or an `(x, y)` pair. A single number `m` is shorthand for `(m, m)`.
 
-The margin is measured **inwards from the widget's own anchor point**: positive values push the widget towards its own centre side of the anchor, negative values push it the other way.
+The margin's direction comes from the **widget's own anchor**: a positive margin moves the widget from its anchor point towards its own centre, and a negative margin moves it the other way. The parent's anchor plays no part in the direction.
 
-![How margins offset widgets inwards from each anchor](images/margins.svg)
+Margins therefore never use pygame's screen-coordinate signs (`+x` right, `+y` down). The same positive value means "towards the widget's centre" at every anchor, so changing anchors never requires flipping signs. [Offset](#offset) is the one value that does use screen coordinates.
+
+With the same anchor on the widget and its parent, a positive margin moves the widget inwards:
+
+![How positive margins move widgets from each anchor](images/margins.svg)
 
 | Anchor | Margin used |
 |---|---|
-| Corners (`TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`) | `x` horizontally and `y` vertically, both inwards |
+| Corners (`TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`) | `x` horizontally and `y` vertically, both towards the widget's centre |
 | `MID_LEFT`, `MID_RIGHT` | `x` only |
 | `MID_TOP`, `MID_BOTTOM` | `y` only |
 | `CENTRE` | Ignored |
@@ -175,9 +234,17 @@ Examples:
 - `anchor=BOTTOM_RIGHT, margin=10` places the widget 10 px left of and 10 px above its parent's bottom-right corner.
 - `anchor=TOP_LEFT, margin=(20, 8)` places it 20 px in from the left and 8 px down from the top.
 - `anchor=MID_TOP, parent_anchor=MID_BOTTOM, margin=(0, 4)` places it directly below its parent with a 4 px gap.
-- Negative margins push outwards, for example a badge overlapping the corner of a button.
+- `anchor=TOP_RIGHT, margin=-8` moves the widget 8 px up and 8 px right of its parent's top-right corner, so it overlaps the corner, like a notification badge.
+- `anchor=TOP_LEFT, parent_anchor=BOTTOM_RIGHT, margin=4` places the widget just outside its parent's bottom-right corner, with a 4 px gap. Here a positive margin moves the widget away from its parent, because the direction comes from the widget's own anchor.
+- With the same anchors, `margin=-8` moves the widget's top-left corner 8 px back inside its parent's corner, so it overlaps the corner from inside.
 
-In short: a positive margin always creates space between the matched points; a negative margin creates overlap. Changing anchors never requires flipping signs.
+![Positive and negative margins, with the same and different anchors](images/margin_signs.svg)
+
+In short: a positive margin always creates space between the matched points, and a negative margin moves them past each other. Whether that space is inside or outside the parent depends on the anchors, not on the sign.
+
+### Absolute placement
+
+`widget.place_at_pos((x, y))` places the widget's top-left corner at `(x, y)` relative to its parent's top-left corner (screen coordinates, for a widget added directly to a full-screen `UI`). It is shorthand that sets `anchor` and `parent_anchor` to `TOP_LEFT` and `margin` to `(x, y)`, not a separate positioning system: layout still runs as normal, and changing the parent's position moves the widget with it.
 
 ### Offset
 
@@ -192,7 +259,7 @@ Both are stored as `pygame.Vector2`, whatever form they are given in, so layout 
 
 ## State
 
-A widget's visual state is a `State`, an `enum.Flag`:
+A widget's state is a `State`, an `enum.Flag`. It is derived from the widget's flags and from interaction, so it describes behaviour as well as appearance, and it selects the widget's cached surface (see [Rendering and caching](#rendering-and-caching)):
 
 ```python
 class State(Flag):
@@ -204,6 +271,15 @@ class State(Flag):
     EDITING = auto()
 ```
 
+| Member | Meaning |
+|---|---|
+| `BASE` | No flags set: the widget's ordinary state |
+| `DISABLED` | The widget is not `enabled_in_tree`: it ignores input and draws its disabled look |
+| `HIGHLIGHTED` | The mouse is over the widget, or keyboard navigation has selected it (see [Highlight](#highlight)). Pressing adds `PRESSED` on top |
+| `PRESSED` | A press, by mouse button or by Enter or Space, is in progress on the widget |
+| `CHECKED` | A `Checkbox` is checked |
+| `EDITING` | A `TextBox` is receiving typed text |
+
 Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRESSED` is a single `State` value. Combinations are hashable and are used directly as cache keys. `BASE` has no bits set: it is the empty combination.
 
 ### Current state
@@ -211,9 +287,10 @@ Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRES
 `current_state` is a property built by composing flags with `|=`. Each class adds its own flags on top of its parent's:
 
 - `Widget` starts from `BASE` and adds `DISABLED` when not `enabled_in_tree`.
-- `Button` calls `super().current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED` and `PRESSED`.
+- `InteractiveWidget` calls `super().current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED`.
+- `Button` adds `PRESSED`, again only when not `DISABLED`.
 - `Checkbox` adds `CHECKED` when `checked` is true.
-- `TextBox` adds `HIGHLIGHTED` and `EDITING`.
+- `TextBox` adds `EDITING`.
 
 `DISABLED` suppresses `HIGHLIGHTED` and `PRESSED`: a disabled widget never looks interactive.
 
@@ -238,7 +315,7 @@ Each widget builds its image in layers:
 
 Caching rules:
 
-- **Per widget, per state**: one surface for every combination in the class's `possible_states`.
+- **Per widget, per state**: one surface for every combination in the class's [`possible_states`](#valid-states).
 - **Eager**: all states are rendered when the widget is created. Lazy rendering (on first use) is a later optimisation.
 - **State changes swap `image`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its surface, so `image` always matches the widget's flags and its parents' flags.
 - **Invalidation**: the cache is cleared and rebuilt whenever text, size, skin, or theme changes. These values are changed only through setters, which handle the rebuild.
@@ -252,12 +329,12 @@ Because rendering happens at creation, widgets must be created after `pygame.ini
 - **Layers follow the tree**: children draw above their parents. Layers are corrected when widgets are added, moved in the tree, or reordered, so layering can change while the game runs.
 - **Hidden widgets are skipped**: widgets that are not `visible_in_tree` are not drawn.
 
-The `UIManager` owns the root `WidgetGroup`. Games that keep their own sprite groups can still add widgets to them, since widgets are ordinary sprites.
+The `UI` owns the root `WidgetGroup`. Games that keep their own sprite groups can still add widgets to them, since widgets are ordinary sprites.
 
 ## Input
 
 ```
-pygame event → UIManager.handle_event
+pygame event → ui.handle_event → UIManager
    ├─ mouse    → hit-test topmost first → the first widget that handles it stops it
    ├─ keyboard → the editing TextBox, or highlight navigation and activation
    └─ unused   → returns False → the game handles it
@@ -269,11 +346,12 @@ Widgets are hit-tested against their `rect` by default. A widget can opt into a 
 
 ### Highlight
 
-Mouse hover and keyboard focus are **one concept**, the highlight, shown with `HIGHLIGHTED`. The `UIManager` tracks a single highlighted widget.
+Mouse hover and keyboard focus are **one concept**, the highlight, shown with `HIGHLIGHTED`. A widget is highlighted when the mouse is over it or keyboard navigation has selected it, before any press. The `UIManager` tracks a single highlighted widget.
 
 - **Mouse**: moving the mouse highlights the topmost `highlightable_in_tree` widget under the cursor. Moving onto empty space clears the highlight.
 - **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and hides the cursor.
 - **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, shows the cursor, and highlights whatever is under it.
+- **Turning keyboard navigation off**: a scene that uses the keyboard for something else (typically a game screen, as opposed to a menu or options screen) creates its `UI` with `keyboard_navigation=False`. Tab, the arrow keys, Enter, and Space then pass through to the game, and only the mouse highlights and activates widgets. A `TextBox` being edited still receives typing.
 
 ### Pressing
 
@@ -292,7 +370,7 @@ Mouse hover and keyboard focus are **one concept**, the highlight, shown with `H
 
 ### Cursor
 
-The `UIManager` hides and shows the mouse cursor as the input mode changes. A game that manages the cursor itself passes `manage_cursor=False`. Since `pygame.mouse.set_visible` affects the whole window, this is an option rather than something puigame always does.
+The `UIManager` hides and shows the mouse cursor as the input mode changes. A game that manages the cursor itself creates its `UI` with `manage_cursor=False`. When several UIs are shown at once (see [Layering](#layering)), only one should manage the cursor. Since `pygame.mouse.set_visible` affects the whole window, this is an option rather than something puigame always does.
 
 ## Callbacks
 
@@ -301,7 +379,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 ## Positions and types
 
 - **`pygame.Rect` internally**, for pixel-exact positioning.
-- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset), so a widget sits at `(0, 0)` until it has a parent or is added to the `UIManager`. Absolute placement is `anchor=TOP_LEFT, margin=(x, y)`.
+- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset), so a widget sits at `(0, 0)` until it has a parent, for example by being added to a `UI`. Absolute placement uses [`place_at_pos()`](#absolute-placement).
 - Smooth movement, if needed, keeps a precise `pygame.Vector2` and rounds it into the `Rect`.
 - pygame types use pygame-ce's `pygame.typing` aliases. puigame defines its own `Protocol` classes only for its own concepts.
 
@@ -320,36 +398,38 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 - **Permissions** start with `can_`: `can_untoggle`.
 - **Possession** starts with `has_`: `has_text`, `has_children`.
 - **Methods** are verbs: `show()`, `hide()`, `toggle()`, `set_text()`.
-- **Classes** use `CapWords` with capitalised acronyms (`UIManager`); public names avoid abbreviations; British spelling is used (`CENTRE`, `colour`).
-- **Docstrings and documentation** use British spelling and the Oxford comma in lists of three or more.
+- **Classes** use `CapWords` with capitalised acronyms (`UIManager`); public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos` and `mouse.get_pos()`); English spelling is used (`CENTRE`, `colour`).
+- **Docstrings and documentation** use English spelling and the Oxford comma in lists of three or more.
 - **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`, `WidgetGroup` in `widget_group.py`.
 
 ## Package layout
 
 ```
 src/puigame/
-├── __init__.py          public API re-exports
+├── __init__.py                public API re-exports
 ├── py.typed
 ├── assets/
 │   ├── fonts/
 │   └── images/
-├── components/          objects widgets hold
-│   ├── skin.py          Skin, DrawnSkin, ImageSkin (nine-slice)
-│   └── text.py          Text and the font cache
+├── components/                objects widgets hold
+│   ├── skin.py                Skin, DrawnSkin, ImageSkin (nine-slice)
+│   └── text.py                Text and the font cache
 ├── core/
-│   ├── anchor.py        Anchor
-│   ├── state.py         State
-│   ├── widget.py        Widget, DEFAULT_DT
-│   ├── widget_group.py  WidgetGroup
-│   └── ui_manager.py    UIManager
+│   ├── anchor.py              Anchor
+│   ├── state.py               State
+│   ├── widget.py              Widget, DEFAULT_DT
+│   ├── interactive_widget.py  InteractiveWidget
+│   ├── widget_group.py        WidgetGroup
+│   ├── ui_manager.py          UIManager
+│   └── ui.py                  UI
 ├── themes/
-│   └── theme.py         Theme and the default theme
+│   └── theme.py               Theme and the default theme
 └── widgets/
     ├── container.py
     ├── panel.py
     ├── label.py
     ├── button.py
-    ├── checkbox.py      Checkbox and CheckboxGroup
+    ├── checkbox.py            Checkbox and CheckboxGroup
     └── textbox.py
 ```
 
@@ -363,31 +443,44 @@ Each layer imports only from the layers above it:
 2. `themes/theme`
 3. `components/skin`, `components/text`
 4. `core/widget`
-5. `core/widget_group`
+5. `core/interactive_widget`, `core/widget_group`
 6. `widgets/*`
 7. `core/ui_manager`
+8. `core/ui`
 
-`UIManager` needs only `Widget` and `WidgetGroup`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
+`UIManager` and `UI` need only `Widget`, `InteractiveWidget`, and `WidgetGroup`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
 
 ## v0.1 scope
 
-**Included:** `Anchor`, `State`, `Widget`, `WidgetGroup`, `UIManager`, `Theme`, `Text`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
+**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `WidgetGroup`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
 
-**Later:** lazy caching, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, and a shared skin cache.
+**Features:**
+
+- The widget tree, with `set_parent()` and the `_in_tree` flags
+- Layout every frame from anchors, margin, and offset, plus `place_at_pos()`
+- Eager per-state surface caching
+- A single highlight shared by mouse and keyboard, with keyboard navigation that can be turned off
+- Press-and-release activation with mouse capture, and a mouse-button enable map
+- Text editing in `TextBox`
+- Cursor management, with an opt-out
+- Optional mask hit-testing
+- Bundled default art and fonts, loaded with `importlib.resources`
+
+**Later:** lazy caching, per-widget themes assigned through the `UI`, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, and a shared skin cache.
 
 ## Build order
 
 Each step is one branch and pull request, with tests:
 
 1. `docs/architecture`: this document
-2. `chore/package-structure`: subpackages, `__init__.py` files and module stubs
-3. `feat/anchor-state`: `Anchor` and `State`
-4. `feat/theme-drawn-skin`: `Theme`, `Skin`, and `DrawnSkin`
+2. `chore/package-structure`: subpackages, `__init__.py` files, and module stubs
+3. `feat/widget-base`: `Anchor`, `State`, a stub `Skin`, and a first pass at `Widget`, with the tree, flags, and state cache (replaces the `hello()` placeholder)
+4. `feat/theme-drawn-skin`: `Theme` and `DrawnSkin`
 5. `feat/text`: `Text` component and font cache
-6. `feat/widget-base`: `Widget`, with the tree, flags, positioning, and state cache (replaces the `hello()` placeholder)
+6. `feat/layout`: positioning from anchors, margin, and offset, plus `place_at_pos()`
 7. `feat/widget-group`: `WidgetGroup`
 8. `feat/container-panel-label`: `Container`, `Panel`, and `Label`
-9. `feat/ui-manager`: `UIManager` input routing, highlight, keyboard mode, and cursor management
+9. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: the root widget, input routing, highlight, keyboard mode, and cursor management
 10. `feat/button`: `Button`
 11. `feat/checkbox`: `Checkbox` and `CheckboxGroup`
 12. `feat/textbox`: `TextBox`

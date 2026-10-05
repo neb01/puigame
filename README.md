@@ -44,6 +44,10 @@ pre-commit run --all-files   # everything pre-commit runs, on all files
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/), e.g. `feat(button): add disabled state` or `fix: correct hover offset`.
 
+## Authorship
+
+All code in puigame is written by hand. Documentation, including this README, the `docs/` folder, and the docstrings in the code, is first drafted with AI assistance and then checked by hand.
+
 ## License
 
 [MIT](LICENSE)
