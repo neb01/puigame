@@ -10,7 +10,7 @@ All puigame code is written by hand. This document, like the rest of the documen
 - [Integration](#integration)
 - [Class hierarchy](#class-hierarchy)
 - [Widget tree and flags](#widget-tree-and-flags)
-- [Components](#components)v
+- [Components](#components)
 - [Themes](#themes)
 - [Anchors](#anchors)
 - [State](#state)
