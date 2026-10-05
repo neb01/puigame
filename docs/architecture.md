@@ -419,11 +419,11 @@ src/puigame/
 │   ├── anchor.py              Anchor
 │   ├── interactive_widget.py  InteractiveWidget
 │   ├── state.py               State
+│   ├── ui.py                  UI
 │   ├── ui_manager.py          UIManager
 │   ├── ui_root.py             UIRoot
-│   ├── ui.py                  UI
-│   ├── widget_group.py        WidgetGroup
-│   └── widget.py              Widget, DEFAULT_DT
+│   ├── widget.py              Widget, DEFAULT_DT
+│   └── widget_group.py        WidgetGroup
 ├── themes/
 │   ├── __init__.py
 │   └── theme.py               Theme and the default theme
@@ -439,7 +439,7 @@ src/puigame/
 └── py.typed
 ```
 
-The tree follows VS Code's default Explorer order: folders first, then files, alphabetically. Tests mirror this layout under `tests/`.
+The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicOptions` set to `unicode`: folders first, then files, sorted by character code (so `ui.py` comes before `ui_manager.py`). Tests mirror this layout under `tests/`.
 
 ### Dependencies
 
