@@ -56,7 +56,7 @@ class TransparentSkin(Skin):
         return pg.surface.Surface(size, pg.SRCALPHA)
 
 
-class DrawSkin(Skin):
+class DrawnSkin(Skin):
     """Skin that draws its surfaces in code from theme values."""
 
     pass

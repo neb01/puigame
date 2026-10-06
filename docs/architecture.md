@@ -127,7 +127,7 @@ Every widget is a `pygame.sprite.Sprite` with an `image` and a `rect`, so widget
 
 ### Parents and children
 
-Every widget stores a reference to its `parent` (or `None`) and a list of references to its children.
+Every widget stores a reference to its `parent` (or `None`) and an ordered list of its children. `children` is read-only: it returns a tuple, so it cannot be appended to or replaced, and `set_parent()` is the only way to change it.
 
 - A widget added to a `UI` becomes a child of `ui.root`, which covers the UI's area (the whole screen by default). Every widget in a UI therefore has a parent, except the root itself. A widget not yet in any UI has no parent and stays at `(0, 0)`.
 - A parent, children, or both can be passed when a widget is created.
@@ -173,9 +173,12 @@ A `Text` component is **not** a child widget: it is not a Sprite, receives no in
 
 A skin turns a size and a state into a surface, following the rules in the theme. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
 
+`Skin` is an abstract base class: it defines `render(size, state)` and cannot be created itself. Every skin's `render()` returns a **new** surface of **exactly** the requested size, so a widget can draw its content onto it without affecting other widgets, and its `image` always matches its `rect`.
+
+- **`TransparentSkin`**: a fully transparent surface, the same in every state. For widgets with no background.
 - **`DrawnSkin`**: built in code from theme values: per-state fill, border, and text colours, border width, corner radius, and padding. Works with no art at all and draws cleanly at any size.
 - **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
-- Custom skins can implement the same interface.
+- Custom skins subclass `Skin` and implement `render()`.
 
 Scaling behaviour is a per-skin option, not a global setting.
 
@@ -245,7 +248,7 @@ In short: a positive margin always creates space between the matched points, and
 
 ### Absolute placement
 
-`widget.place_at_pos((x, y))` places the widget's top-left corner at `(x, y)` relative to its parent's top-left corner (screen coordinates, for a widget added directly to a full-screen `UI`). It is shorthand that sets `anchor` and `parent_anchor` to `TOP_LEFT` and `margin` to `(x, y)`, not a separate positioning system: layout still runs as normal, and changing the parent's position moves the widget with it.
+`widget.place_at_pos((x, y))` places the widget's top-left corner at `(x, y)` relative to its parent's top-left corner (screen coordinates, for a widget added directly to a full-screen `UI`). It is shorthand that sets `anchor` and `parent_anchor` to `TOP_LEFT` and `margin` to `(x, y)`, not a separate positioning system: layout still runs as normal, and changing the parent's position moves the widget with it. A single number raises `TypeError`, since a position needs both coordinates; the check happens before anything changes, so a rejected call leaves the widget as it was.
 
 ### Offset
 
@@ -255,6 +258,8 @@ In short: a positive margin always creates space between the matched points, and
 - `anchor=MID_BOTTOM, margin=12, offset=(20, 0)` places it 12 px up from the bottom edge, then 20 px right of centre.
 
 The two parameters keep one meaning each: `margin` is space relative to the anchors, `offset` is a plain screen-space shift.
+
+`margin` accepts a single number as shorthand for both axes, but `offset` requires an `(x, y)` pair: a single number raises `TypeError`, since an equal shift on both axes is a diagonal move and rarely intended.
 
 Both are stored as `pygame.Vector2`, whatever form they are given in, so layout can use them in calculations directly. They are properties: assigning a new value converts it, while changing the stored vector in place (for example `widget.offset.y -= 2` to animate a slide) works as expected.
 
@@ -480,7 +485,7 @@ Each step is one branch and pull request, with tests:
 
 1. `docs/architecture`: this document
 2. `chore/package-structure`: subpackages, `__init__.py` files, and module stubs
-3. `feat/widget-base`: `Anchor`, `State`, a stub `Skin`, and a first pass at `Widget`, with the tree, flags, and state cache (replaces the `hello()` placeholder)
+3. `feat/widget-base`: `Anchor`, `State`, the abstract `Skin` with `TransparentSkin`, and a first pass at `Widget`, with the tree, flags, and state cache (replaces the `hello()` placeholder)
 4. `feat/theme-drawn-skin`: `Theme` and `DrawnSkin`
 5. `feat/text`: `Text` component and font cache
 6. `feat/layout`: positioning from anchors, margin, and offset, plus `place_at_pos()`

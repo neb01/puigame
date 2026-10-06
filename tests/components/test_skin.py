@@ -48,7 +48,7 @@ def test_surface_transparency():
         ((10, 20), (10, 20)),
         ([20, 30], (20, 30)),
         (pg.Vector2(4, 10), (4, 10)),
-        (pg.Vector2(5.2, 7.9), (5, 10)),
+        (pg.Vector2(5.2, 7.9), (5, 7)),
     ],
     ids=["tuple", "list", "pg.Vector2", "truncated_pg.Vector2_float"],
 )

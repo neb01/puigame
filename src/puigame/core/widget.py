@@ -37,7 +37,7 @@ class Widget(pg.sprite.Sprite):
         skin: Skin | None = None,
         parent: Widget | None = None,
         anchor: Anchor = Anchor.CENTRE,
-        parent_anchor: Anchor | None = None,
+        parent_anchor: Anchor | None = None,  # defaults to same as anchor
         margin: float | Point = 0,  # single number denotes same x and y margin
         offset: Point = (0, 0),  # screen space: +x is right >, +y is down v
         children: list[Widget] | None = None,
@@ -68,6 +68,13 @@ class Widget(pg.sprite.Sprite):
             enabled: Whether the widget responds to input.
             visible: Whether the widget is drawn.
         """
+        given_width, given_height = size
+        if given_width < 0 or given_height < 0:
+            raise ValueError(
+                "size cannot be negative. "
+                f"Given width = {given_width} and height = {given_height}"
+            )
+
         super().__init__()
 
         self.skin = skin
@@ -77,7 +84,7 @@ class Widget(pg.sprite.Sprite):
 
         self.parent: Widget | None = None
         self.set_parent(parent)
-        self.children: list[Widget] = []
+        self._children: list[Widget] = []
         for child in children or []:
             child.set_parent(self)
 
@@ -106,6 +113,11 @@ class Widget(pg.sprite.Sprite):
     @rect.setter
     def rect(self, value: pg.Rect | pg.FRect | None) -> None:
         raise AttributeError("Widget's rect is set by layout, not set directly.")
+
+    @property
+    def children(self) -> tuple[Widget, ...]:
+        """."""
+        return tuple(self._children)
 
     @property
     def margin(self) -> pg.Vector2:
@@ -215,21 +227,21 @@ class Widget(pg.sprite.Sprite):
 
         if new_parent is None:  # detach current widget
             if self.parent is not None:
-                self.parent.children.remove(self)
+                self.parent._children.remove(self)
 
             self.parent = None
 
-        else:  # move current widget to new parent
+        else:  # new parent exists: move current widget to new parent
             if new_parent.has_ancestor(self):
                 raise ValueError(
                     f"{self!r} attempted to set "
                     f"a descendant ({new_parent!r}) as its parent."
                 )
 
-            new_parent.children.append(self)
+            new_parent._children.append(self)
 
             if self.parent is not None:
-                self.parent.children.remove(self)
+                self.parent._children.remove(self)
 
             self.parent = new_parent
 
@@ -250,7 +262,17 @@ class Widget(pg.sprite.Sprite):
         Args:
             pos: ``(x, y)`` position of the widget's top-left corner, in pixels
                 from the parent's top-left corner.
+
+        Raises:
+            TypeError: If ``pos`` is a single number rather than an ``(x, y)``
+                pair. The widget is left unchanged.
         """
+        if isinstance(pos, (int, float)):
+            raise TypeError(
+                "A single value (int/float) was provided to place_at_pos()."
+                " place_at_pos() requires a Point."
+            )
+
         self.anchor = Anchor.TOP_LEFT
         self.parent_anchor = Anchor.TOP_LEFT
         self.margin = pos
