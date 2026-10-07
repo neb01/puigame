@@ -7,9 +7,18 @@ from puigame.core.state import State
 ANY_SIZE = (10, 10)
 
 
+# region --- Skin -------------------------------------------------------------
+
+
 def test_base_skin_instantiated_raises():
     with pytest.raises(TypeError):
         Skin()  # pyright: ignore[reportAbstractUsage]
+
+
+# endregion
+
+
+# region --- TransparentSkin --------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -56,3 +65,6 @@ def test_size_can_be_any_point_type(point, expected_size):
     surface = TransparentSkin().render(point, State.BASE)
 
     assert surface.get_size() == expected_size
+
+
+# endregion

@@ -8,7 +8,7 @@ from puigame.core.widget import Widget
 ANY_SIZE = (10, 10)  # arbitrary widget size for consistency
 
 
-# --- Fixtures ----------------------------------------------------------------
+# region --- Fixtures ---------------------------------------------------------
 
 
 @pytest.fixture
@@ -21,7 +21,10 @@ def family():
     return grandparent, parent, child
 
 
-# --- Construction ------------------------------------------------------------
+# endregion
+
+
+# region --- Construction -----------------------------------------------------
 
 
 def test_rect_has_given_size_at_origin():
@@ -93,7 +96,10 @@ def test_parent_anchor_defaults_to_anchor(anchor):
     assert widget.parent_anchor is anchor
 
 
-# --- rect --------------------------------------------------------------------
+# endregion
+
+
+# region --- rect -------------------------------------------------------------
 
 
 def test_assigning_to_rect_raises():
@@ -118,7 +124,10 @@ def test_rect_can_change_in_place():
     assert widget.rect.topleft == (2, 1)
 
 
-# --- Tree: normal use --------------------------------------------------------
+# endregion
+
+
+# region --- Tree: normal use -------------------------------------------------
 
 
 def test_assigning_parent_in_constructor_links_both_ways():
@@ -165,7 +174,10 @@ def test_set_parent_none_detaches():
     assert parent.children == (child_2,)
 
 
-# --- Tree: safeguards and edge cases -----------------------------------------
+# endregion
+
+
+# region --- Tree: safeguards and edge cases ----------------------------------
 
 
 def test_set_parent_same_parent_retains_order():
@@ -232,7 +244,10 @@ def test_moving_up_tree_does_not_raise(family):
     child.set_parent(grandparent)
 
 
-# --- has_ancestor ------------------------------------------------------------
+# endregion
+
+
+# region --- has_ancestor -----------------------------------------------------
 
 
 def test_has_ancestor_true_for_parent_and_grandparent(family):
@@ -258,7 +273,10 @@ def test_has_ancestor_false_for_descendant():
     assert not parent.has_ancestor(child)
 
 
-# --- enabled and enabled_in_tree propagation ---------------------------------
+# endregion
+
+
+# region --- enabled and enabled_in_tree propagation --------------------------
 
 
 def test_enabled_in_tree_true_by_default(family):
@@ -355,7 +373,10 @@ def test_reenabling_parent_does_not_override_disabled_grandparent(family):
     assert not child.enabled_in_tree
 
 
-# --- visible and visible_in_tree propagation ---------------------------------
+# endregion
+
+
+# region --- visible and visible_in_tree propagation --------------------------
 
 
 def test_visible_in_tree_true_by_default(family):
@@ -452,7 +473,10 @@ def test_showing_parent_does_not_override_hidden_grandparent(family):
     assert not child.visible_in_tree
 
 
-# --- current_state -----------------------------------------------------------
+# endregion
+
+
+# region --- current_state ----------------------------------------------------
 
 
 def test_base_state_is_default():
@@ -470,7 +494,10 @@ def test_disabled_state_when_ancestor_is_disabled():
     assert child.current_state is State.DISABLED
 
 
-# --- image cache -------------------------------------------------------------
+# endregion
+
+
+# region --- image cache ------------------------------------------------------
 
 
 def test_image_cache_has_one_surface_per_state():
@@ -488,7 +515,10 @@ def test_every_image_cache_surface_is_same_size_as_rect(state):
     assert widget._image_cache[state].get_size() == widget.rect.size
 
 
-# --- place_at_pos ------------------------------------------------------------
+# endregion
+
+
+# region --- place_at_pos -----------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -520,3 +550,6 @@ def test_place_at_pos_with_single_value_raises(pos):
     assert widget.anchor is Anchor.CENTRE
     assert widget.parent_anchor is Anchor.CENTRE
     assert widget.margin == (0, 0)
+
+
+# endregion
