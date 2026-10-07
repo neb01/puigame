@@ -176,7 +176,7 @@ A skin turns a size and a state into a surface, following the rules in the theme
 `Skin` is an abstract base class: it defines `render(size, state)` and cannot be created itself. Every skin's `render()` returns a **new** surface of **exactly** the requested size, so a widget can draw its content onto it without affecting other widgets, and its `image` always matches its `rect`.
 
 - **`TransparentSkin`**: a fully transparent surface, the same in every state. For widgets with no background.
-- **`DrawnSkin`**: built in code from theme values: per-state fill, border, and text colours, border width, corner radius, and padding. Works with no art at all and draws cleanly at any size.
+- **`DrawnSkin`**: built in code from the theme's style for each state: fill and border colours, border width, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size.
 - **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
 
@@ -184,10 +184,17 @@ Scaling behaviour is a per-skin option, not a global setting.
 
 ## Themes
 
-A `Theme` holds the shared rules skins and text read: colours, fonts, text sizes, corner radius, border widths, and per-state adjustments (for example disabled is dimmer, highlighted is lighter or has a halo).
+A `Theme` holds the shared rules skins and text read. It is made of two parts:
 
+- **`base_style`**: a `Style`, which holds every value needed to draw a widget: colours, border width, corner radius, halo, swell, and text settings.
+- **`style_overrides`**: a mapping from state flags to `StyleOverride`s. Each override sets only the fields that state changes and leaves the rest as `None`. Only fields that `StyleOverride` has can change between states; the others, such as the font, stay the same in every state.
+
+`theme.style_for(state)` returns a complete `Style` for any combination of flags. It starts from `base_style` and applies the override for each flag in the state, in the order the mapping holds them, so a later override wins when two set the same field. Skins and text use this one `Style` and do not need to know how the theme is organised.
+
+- Themes are **immutable**: `Theme`, `Style`, and `StyleOverride` are frozen dataclasses, and `style_overrides` is stored as a read-only copy. Cached images therefore never go out of date because a theme changed. A variation is made with `dataclasses.replace()`.
+- `State.BASE` cannot be a key in `style_overrides`, because it is part of every state and its override would always apply.
 - The theme lives on the **`UI`**, so every widget in it draws consistently.
-- puigame ships a default theme that uses the bundled default art and fonts.
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640×360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font until a bundled font is added.
 - **Later:** the `UI` could assign individual widgets, or whole subtrees, a different theme from its default.
 
 ## Anchors
