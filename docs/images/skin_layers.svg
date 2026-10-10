@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="620" viewBox="0 0 860 620" role="img" aria-label="DrawnSkin layers for each combination of border and swell">
+  <title>DrawnSkin layers for each combination of border and swell</title>
+  <style>
+    .card  { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+    .text  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; }
+    .title { font-size: 15px; font-weight: 700; }
+    .label { font-size: 13px; font-weight: 600; }
+    .small { font-size: 12px; }
+    .muted { fill: #9da7b3; font-style: italic; }
+    .parent { fill: #7aa2e0; fill-opacity: 0.14; stroke: #7aa2e0; stroke-width: 2; }
+    .child  { fill: #f0b85a; fill-opacity: 0.20; stroke: #f0b85a; stroke-width: 1.5; }
+    .ghost  { fill: none; stroke: #f0b85a; stroke-width: 1.2; stroke-dasharray: 4 3; opacity: 0.6; }
+    .dot    { fill: #ff6b66; stroke: #161b22; stroke-width: 1.5; }
+    .pdot   { fill: #c58af9; stroke: #161b22; stroke-width: 1.5; }
+    .margin { stroke: #4cc38a; stroke-width: 1.8; fill: none; }
+    .offset { stroke: #c58af9; stroke-width: 1.8; fill: none; }
+    .mtext  { fill: #4cc38a; font-size: 12px; font-weight: 600; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+    .otext  { fill: #c58af9; font-size: 12px; font-weight: 600; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+    .wtext  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; font-size: 11px; font-weight: 600; }
+    .halo     { fill: #f0b85a; fill-opacity: 0.22; }
+    .surface  { fill: none; stroke: #9da7b3; stroke-width: 1; stroke-dasharray: 2 3; }
+    .border   { fill: #7aa2e0; }
+    .body     { fill: #2b6e55; }
+    .wrect    { fill: none; stroke: #ff6b66; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .sep      { stroke: #30363d; stroke-width: 1; }
+  </style>
+  <defs>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4cc38a"/>
+    </marker>
+    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c58af9"/>
+    </marker>
+  </defs>
+  <rect class="card" x="0.5" y="0.5" width="859" height="619" rx="8"/>
+  <text class="text title" x="20" y="32" text-anchor="start">DrawnSkin layers: border and swell combinations</text>
+  <text class="text small muted" x="20" y="54" text-anchor="start">Widget size 104×60, halo 10, swell ±12, border 8 (all in pixels).</text>
+  <text class="text label" x="240" y="74" text-anchor="middle">Positive swell</text>
+  <text class="text label" x="480" y="74" text-anchor="middle">No swell</text>
+  <text class="text label" x="720" y="74" text-anchor="middle">Negative swell</text>
+  <line class="sep" x1="20" y1="80" x2="840" y2="80"/>
+  <text class="text label" x="20" y="181" text-anchor="start">With border</text>
+  <text class="text small muted" x="20" y="199" text-anchor="start">border 8</text>
+  <rect class="halo" x="166" y="123" width="148" height="104" rx="32"/>
+  <rect class="surface" x="166" y="123" width="148" height="104" rx="0"/>
+  <rect class="border" x="176" y="133" width="128" height="84" rx="22"/>
+  <rect class="body" x="184" y="141" width="112" height="68" rx="14"/>
+  <rect class="wrect" x="188" y="145" width="104" height="60" rx="0"/>
+  <text class="text small" x="240" y="262" text-anchor="middle">surface 148×104, border rect 128×84</text>
+  <text class="text small" x="240" y="278" text-anchor="middle">body rect 112×68, blit_offset 22</text>
+  <rect class="halo" x="418" y="135" width="124" height="80" rx="20"/>
+  <rect class="surface" x="418" y="135" width="124" height="80" rx="0"/>
+  <rect class="border" x="428" y="145" width="104" height="60" rx="10"/>
+  <rect class="body" x="436" y="153" width="88" height="44" rx="2"/>
+  <rect class="wrect" x="428" y="145" width="104" height="60" rx="0"/>
+  <text class="text small" x="480" y="262" text-anchor="middle">surface 124×80, border rect 104×60</text>
+  <text class="text small" x="480" y="278" text-anchor="middle">body rect 88×44, blit_offset 10</text>
+  <rect class="halo" x="670" y="147" width="100" height="56" rx="8"/>
+  <rect class="surface" x="670" y="147" width="100" height="56" rx="0"/>
+  <rect class="border" x="680" y="157" width="80" height="36" rx="0"/>
+  <rect class="body" x="688" y="165" width="64" height="20" rx="0"/>
+  <rect class="wrect" x="668" y="145" width="104" height="60" rx="0"/>
+  <text class="text small" x="720" y="262" text-anchor="middle">surface 100×56, border rect 80×36</text>
+  <text class="text small" x="720" y="278" text-anchor="middle">body rect 64×20, blit_offset -2</text>
+  <line class="sep" x1="20" y1="290" x2="840" y2="290"/>
+  <text class="text label" x="20" y="391" text-anchor="start">No border</text>
+  <text class="text small muted" x="20" y="409" text-anchor="start">border 0</text>
+  <rect class="halo" x="166" y="333" width="148" height="104" rx="32"/>
+  <rect class="surface" x="166" y="333" width="148" height="104" rx="0"/>
+  <rect class="border" x="176" y="343" width="128" height="84" rx="22"/>
+  <rect class="body" x="176" y="343" width="128" height="84" rx="22"/>
+  <rect class="wrect" x="188" y="355" width="104" height="60" rx="0"/>
+  <text class="text small" x="240" y="472" text-anchor="middle">surface 148×104, border rect 128×84</text>
+  <text class="text small" x="240" y="488" text-anchor="middle">body rect 128×84, blit_offset 22</text>
+  <rect class="halo" x="418" y="345" width="124" height="80" rx="20"/>
+  <rect class="surface" x="418" y="345" width="124" height="80" rx="0"/>
+  <rect class="border" x="428" y="355" width="104" height="60" rx="10"/>
+  <rect class="body" x="428" y="355" width="104" height="60" rx="10"/>
+  <rect class="wrect" x="428" y="355" width="104" height="60" rx="0"/>
+  <text class="text small" x="480" y="472" text-anchor="middle">surface 124×80, border rect 104×60</text>
+  <text class="text small" x="480" y="488" text-anchor="middle">body rect 104×60, blit_offset 10</text>
+  <rect class="halo" x="670" y="357" width="100" height="56" rx="8"/>
+  <rect class="surface" x="670" y="357" width="100" height="56" rx="0"/>
+  <rect class="border" x="680" y="367" width="80" height="36" rx="0"/>
+  <rect class="body" x="680" y="367" width="80" height="36" rx="0"/>
+  <rect class="wrect" x="668" y="355" width="104" height="60" rx="0"/>
+  <text class="text small" x="720" y="472" text-anchor="middle">surface 100×56, border rect 80×36</text>
+  <text class="text small" x="720" y="488" text-anchor="middle">body rect 80×36, blit_offset -2</text>
+  <line class="sep" x1="20" y1="500" x2="840" y2="500"/>
+  <rect class="halo" x="30" y="519" width="26" height="14" rx="2"/>
+  <text class="text small" x="64" y="530" text-anchor="start">halo</text>
+  <rect class="surface" x="280" y="519" width="26" height="14" rx="2"/>
+  <text class="text small" x="314" y="530" text-anchor="start">surface rect (whole surface)</text>
+  <rect class="border" x="530" y="519" width="26" height="14" rx="2"/>
+  <text class="text small" x="564" y="530" text-anchor="start">border rect (outer edge)</text>
+  <rect class="body" x="30" y="547" width="26" height="14" rx="2"/>
+  <text class="text small" x="64" y="558" text-anchor="start">body rect (fill inside the border)</text>
+  <rect class="wrect" x="280" y="547" width="26" height="14" rx="2"/>
+  <text class="text small" x="314" y="558" text-anchor="start">widget rect (requested size)</text>
+  <text class="text small muted" x="30" y="596" text-anchor="start">The surface is the border rect grown by the halo on every side. The border rect is the widget rect grown (or shrunk) by the swell.</text>
+</svg>

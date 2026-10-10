@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="330" viewBox="0 0 760 330" role="img" aria-label="Drawing a skin surface at rect.topleft minus blit_offset">
+  <title>Drawing a skin surface at rect.topleft minus blit_offset</title>
+  <style>
+    .card  { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+    .text  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; }
+    .title { font-size: 15px; font-weight: 700; }
+    .label { font-size: 13px; font-weight: 600; }
+    .small { font-size: 12px; }
+    .muted { fill: #9da7b3; font-style: italic; }
+    .parent { fill: #7aa2e0; fill-opacity: 0.14; stroke: #7aa2e0; stroke-width: 2; }
+    .child  { fill: #f0b85a; fill-opacity: 0.20; stroke: #f0b85a; stroke-width: 1.5; }
+    .ghost  { fill: none; stroke: #f0b85a; stroke-width: 1.2; stroke-dasharray: 4 3; opacity: 0.6; }
+    .dot    { fill: #ff6b66; stroke: #161b22; stroke-width: 1.5; }
+    .pdot   { fill: #c58af9; stroke: #161b22; stroke-width: 1.5; }
+    .margin { stroke: #4cc38a; stroke-width: 1.8; fill: none; }
+    .offset { stroke: #c58af9; stroke-width: 1.8; fill: none; }
+    .mtext  { fill: #4cc38a; font-size: 12px; font-weight: 600; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+    .otext  { fill: #c58af9; font-size: 12px; font-weight: 600; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+    .wtext  { font-family: "Segoe UI", Helvetica, Arial, sans-serif; fill: #e6edf3; font-size: 11px; font-weight: 600; }
+    .halo     { fill: #f0b85a; fill-opacity: 0.22; }
+    .surface  { fill: none; stroke: #9da7b3; stroke-width: 1; stroke-dasharray: 2 3; }
+    .border   { fill: #7aa2e0; }
+    .body     { fill: #2b6e55; }
+    .wrect    { fill: none; stroke: #ff6b66; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .sep      { stroke: #30363d; stroke-width: 1; }
+  </style>
+  <defs>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4cc38a"/>
+    </marker>
+    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c58af9"/>
+    </marker>
+  </defs>
+  <rect class="card" x="0.5" y="0.5" width="759" height="329" rx="8"/>
+  <text class="text title" x="20" y="32" text-anchor="start">Drawing a skin's surface at rect.topleft − blit_offset</text>
+  <text class="text label" x="30" y="66" text-anchor="start">Positive swell and halo</text>
+  <rect class="halo" x="120" y="110" width="160" height="104" rx="30"/>
+  <rect class="surface" x="120" y="110" width="160" height="104" rx="0"/>
+  <rect class="border" x="130" y="120" width="140" height="84" rx="20"/>
+  <rect class="body" x="136" y="126" width="128" height="72" rx="14"/>
+  <rect class="wrect" x="140" y="130" width="120" height="64" rx="0"/>
+  <circle class="dot" cx="140" cy="130" r="5"/>
+  <circle class="pdot" cx="120" cy="110" r="5"/>
+  <line class="offset" x1="140" y1="130" x2="120" y2="110" marker-end="url(#ap)"/>
+  <text class="text small" x="30" y="262" text-anchor="start">blit_offset = swell + halo = 20</text>
+  <text class="text small" x="30" y="280" text-anchor="start">red: widget rect.topleft</text>
+  <text class="text small" x="30" y="298" text-anchor="start">purple: where the surface is drawn</text>
+  <text class="text small muted" x="30" y="316" text-anchor="start">offset is positive, so the surface is drawn up and left</text>
+  <text class="text label" x="390" y="66" text-anchor="start">Negative swell, no halo</text>
+
+  <rect class="surface" x="512" y="142" width="96" height="40" rx="0"/>
+  <rect class="border" x="512" y="142" width="96" height="40" rx="0"/>
+  <rect class="body" x="518" y="148" width="84" height="28" rx="0"/>
+  <rect class="wrect" x="500" y="130" width="120" height="64" rx="0"/>
+  <circle class="dot" cx="500" cy="130" r="5"/>
+  <circle class="pdot" cx="512" cy="142" r="5"/>
+  <line class="offset" x1="500" y1="130" x2="512" y2="142" marker-end="url(#ap)"/>
+  <text class="text small" x="390" y="262" text-anchor="start">blit_offset = swell + halo = -12</text>
+  <text class="text small" x="390" y="280" text-anchor="start">red: widget rect.topleft</text>
+  <text class="text small" x="390" y="298" text-anchor="start">purple: where the surface is drawn</text>
+  <text class="text small muted" x="390" y="316" text-anchor="start">offset is negative, so the surface is drawn down and right</text>
+</svg>

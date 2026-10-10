@@ -20,7 +20,7 @@ All puigame code is written by hand. This document, like the rest of the documen
 - [Callbacks](#callbacks)
 - [Positions and types](#positions-and-types)
 - [Assets](#assets)
-- [Naming conventions](#naming-conventions)
+- [Naming and code conventions](#naming-and-code-conventions)
 - [Package layout](#package-layout)
 - [v0.1 scope](#v01-scope)
 - [Build order](#build-order)
@@ -173,21 +173,52 @@ A `Text` component is **not** a child widget: it is not a Sprite, receives no in
 
 A skin turns a size and a state into a surface, following the rules in the theme. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
 
-`Skin` is an abstract base class: it defines `render(size, state)` and cannot be created itself. Every skin's `render()` returns a **new** surface of **exactly** the requested size, so a widget can draw its content onto it without affecting other widgets, and its `image` always matches its `rect`.
+`Skin` is an abstract base class: it defines `render(size, state)` and cannot be created itself. Every skin's `render()` returns a `BlitOffsetImage`: a **new** surface, as `image`, so a widget can draw its content onto it without affecting other widgets, together with a **blit offset**, as `blit_offset`.
+
+- Without effects, the surface is exactly the requested size and the offset is `(0, 0)`.
+- A halo or a positive swell makes the surface **larger** than the widget, and a negative swell makes it smaller. The offset says how far up and to the left of `rect.topleft` to draw the surface, so the drawing stays centred on the widget's rect.
+- The widget's `rect` stays the size it was given, so effects are purely visual: hit-testing ignores the halo.
+
+![Drawing a skin surface at rect.topleft minus blit_offset](images/skin_offset.svg)
 
 - **`TransparentSkin`**: a fully transparent surface, the same in every state. For widgets with no background.
-- **`DrawnSkin`**: built in code from theme values: per-state fill, border, and text colours, border width, corner radius, and padding. Works with no art at all and draws cleanly at any size.
+- **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
 - **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
 
 Scaling behaviour is a per-skin option, not a global setting.
 
+#### DrawnSkin layers
+
+`DrawnSkin` works with four rects, all centred on the same point:
+
+- **Widget rect**: the widget's `rect`, at the size it was given. Layout and hit-testing use this one.
+- **Border rect**: the widget's outer edge. It is the widget rect grown by the swell on every side, or shrunk by a negative swell.
+- **Body rect**: the fill inside the border. It is the border rect shrunk by the border thickness on every side.
+- **Surface rect**: the whole rendered surface. It is the border rect grown by the halo thickness on every side.
+
+It draws three filled, rounded rectangles from largest to smallest: the halo (filling the surface rect), the border (filling the border rect), and the body (filling the body rect). Each layer covers the middle of the one before, so no gaps appear at rounded corners. The style's `corner_radius_px` is the radius of the border rect at the widget's normal size. The halo's radius is larger by the halo thickness and the body's smaller by the border thickness, and all three grow or shrink with the swell, so the layers stay concentric. Each layer's radius is kept between 0 and half that layer's shorter side, as in CSS: a radius that would be larger gives a pill shape, and one that would be negative, such as the body's inside a border thicker than the corner radius, gives square corners.
+
+![DrawnSkin layers for each combination of border and swell](images/skin_layers.svg)
+
+- A **fading halo** is drawn as one ring per pixel of thickness, from the outermost in. Each ring's alpha follows the style's `FadeProfile`: `SOLID`, `LINEAR`, or a soft or hard quadratic or cubic curve.
+- If the swell and border would give the body a **negative** size, `render()` raises `ValueError`, since the values contradict each other. A body of size 0 (a widget that is all border) is allowed.
+
 ## Themes
 
-A `Theme` holds the shared rules skins and text read: colours, fonts, text sizes, corner radius, border widths, and per-state adjustments (for example disabled is dimmer, highlighted is lighter or has a halo).
+A `Theme` holds the shared rules skins and text read. It is made of two parts:
 
+- **`base_style`**: a `Style`, which holds every value needed to draw a widget: body and border colours, border thickness, corner radius, halo colour, thickness, and fade profile, swell, and text settings.
+- **`style_overrides`**: a mapping from state flags to `StyleOverride`s. Each override sets only the fields that state changes and leaves the rest as `None`. Only fields that `StyleOverride` has can change between states; the others, such as the font, stay the same in every state.
+
+`theme.style_for(state)` returns a complete `Style` for any combination of flags. It starts from `base_style` and applies the override for each flag in the state, in the order the mapping holds them, so a later override wins when two set the same field. Skins and text use this one `Style` and do not need to know how the theme is organised.
+
+- Themes are **immutable**: `Theme`, `Style`, and `StyleOverride` are frozen dataclasses, and `style_overrides` is stored as a read-only copy. Cached images therefore never go out of date because a theme changed. A variation is made with `dataclasses.replace()`.
+- `State.BASE` cannot be a key in `style_overrides`, because it is part of every state and its override would always apply. Combined flags, such as `State.DISABLED | State.HIGHLIGHTED`, cannot be keys either: a combination of states is styled by applying each flag's override in turn. Both raise `ValueError` when the theme is created.
+- Overrides combine best when each state changes its own fields: for example, highlighting changes the border, checking changes the body, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the order of `style_overrides` decides which wins.
+- Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
 - The theme lives on the **`UI`**, so every widget in it draws consistently.
-- puigame ships a default theme that uses the bundled default art and fonts.
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640×360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font until a bundled font is added.
 - **Later:** the `UI` could assign individual widgets, or whole subtrees, a different theme from its default.
 
 ## Anchors
@@ -245,6 +276,18 @@ Examples:
 ![Positive and negative margins, with the same and different anchors](images/margin_signs.svg)
 
 In short: a positive margin always creates space between the matched points, and a negative margin moves them past each other. Whether that space is inside or outside the parent depends on the anchors, not on the sign.
+
+### Placement in three steps
+
+Every placement follows the same three steps:
+
+1. **Match the anchor points**: move the widget so its `anchor` point sits on its parent's `parent_anchor` point.
+2. **Apply the margin**: move the widget by the margin, in the direction from its own anchor point towards its own centre. The parent's anchor plays no part.
+3. **Apply the offset**: move the widget by the offset, in screen coordinates.
+
+For example, with `anchor=TOP_LEFT` and `parent_anchor=BOTTOM_LEFT`, step 1 hangs the widget below its parent's bottom-left corner. Its centre is to the right of and below its top-left corner, so a positive margin moves it right and down: further below the parent, but also inwards from the parent's left edge.
+
+![Placing a widget in three steps: anchors, margin, offset](images/anchor_steps.svg)
 
 ### Absolute placement
 
@@ -315,9 +358,9 @@ Not every combination can occur, so each class lists the combinations it can be 
 
 Each widget builds its image in layers:
 
-1. The skin renders the widget's rect for a state.
-2. Content (`Text` components, check marks, and so on) is drawn on top.
-3. The result is stored in the widget's cache, a `dict[State, Surface]`.
+1. The skin renders the widget's background for a state, returning the image and its blit offset as a `BlitOffsetImage`.
+2. Content (`Text` components, check marks, and so on) is drawn on top. Content is positioned relative to the widget's rect, so the blit offset is added to its position to land it on the body rather than in a halo margin.
+3. The result is stored in the widget's cache, a `dict[State, BlitOffsetImage]`. The image and its offset are kept together, since they are made together and drawing needs both.
 
 Caching rules:
 
@@ -397,7 +440,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 - Loading failures raise exceptions (for example `FileNotFoundError`) and never exit the program.
 - Game-side concerns stay in games: asset folder conventions, resource paths, and PyInstaller handling. Games bundled with PyInstaller need puigame's data files included in their build.
 
-## Naming conventions
+## Naming and code conventions
 
 - **State flags** are adjectives: `visible`, `enabled`, `highlightable`, `checked`; `State` members likewise (`HIGHLIGHTED`, `PRESSED`, `EDITING`).
 - **Tree-aware values** end in `_in_tree`: `visible_in_tree`, `enabled_in_tree`, `highlightable_in_tree`. They are calculated on demand, never stored.
@@ -407,6 +450,9 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 - **Classes** use `CapWords` with capitalised acronyms (`UIManager`); public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos` and `mouse.get_pos()`); English spelling is used (`CENTRE`, `colour`).
 - **Docstrings and documentation** use English spelling and the Oxford comma in lists of three or more.
 - **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`, `WidgetGroup` in `widget_group.py`.
+- **Error messages** start lowercase, name the exact parameter or field, and have no final full stop. Requirements use "must" and prohibitions use "cannot" (never "must not", which is easy to misread). The bad value follows ", got": `"border_thickness_px cannot be negative, got -2 px"`. Several values are written `name=value` with no spaces around `=`, units are separated by a space (`2 px`), and a second clause follows a semicolon. When a message is split across several string literals, each break comes after a space, so the space ends one line and the next line starts with a word.
+- **Exhaustive `match` statements** over an enum end with `case _: assert_never(value)`, so Pyright reports any member that is not handled.
+- **`None` checks** use `is None` and `is not None`, never truthiness (`x or default`), so valid falsy values such as `0` or `""` are never replaced by a default. Optional arguments default to `None`, never to a mutable object such as a list, and the real default is created inside the function.
 
 ## Package layout
 
@@ -477,7 +523,7 @@ Each layer imports only from the layers above it:
 - Optional mask hit-testing
 - Bundled default art and fonts, loaded with `importlib.resources`
 
-**Later:** lazy caching, per-widget themes assigned through the `UI`, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, and a shared skin cache.
+**Later:** lazy caching, per-widget themes assigned through the `UI`, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
 
 ## Build order
 
@@ -500,3 +546,8 @@ Each step is one branch and pull request, with tests:
 ## Open questions
 
 - **Callbacks**: names and signatures for each widget, whether programmatic changes (for example `checkbox.checked = True`) notify, and whether Escape on a `TextBox` has its own callback.
+- **Combining style overrides**: overrides are currently absolute, so when two active states set the same field the later one in `style_overrides` wins, and combined keys such as `State.DISABLED | State.HIGHLIGHTED` are rejected. Possible next steps, decided once a real widget needs them (most likely `Checkbox`):
+  - **Relative overrides**: colour fields that multiply the value underneath (a tint, or a lighten or darken factor) as well as replacing it, so effects such as hover and checked combine on the same field. Integer fields would add, and enum fields such as `halo_fade_profile` would still replace. `StyleOverride` would need a way to mark each value as absolute or relative.
+  - **Two passes**: apply absolute values first, so the most specific wins, then relative values on top. Multiplication gives the same result in any order, so relative values would no longer depend on dict order.
+  - **Combined keys**: allowed only if stacking and relative overrides cannot express a look. Overrides would apply in order of specificity (fewer flags first, then dict order), worked out once when the theme is created and stored privately, so `style_overrides` stays as given. A relative value in a combined key is an extra adjustment for the combination; an absolute value replaces whatever came before.
+  - **Where it lives**: change `Theme` itself if the new rules replace the old ones; use a subclass, or a strategy object the theme holds, only if both sets of rules are needed side by side.

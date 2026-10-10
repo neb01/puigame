@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pygame as pg
 from pygame.typing import Point
 
-from puigame.components.skin import Skin
+from puigame.components.skin import BlitOffsetImage, Skin, TransparentSkin
 
 from .anchor import Anchor
 from .state import State
@@ -48,8 +48,8 @@ class Widget(pg.sprite.Sprite):
 
         Args:
             size: Width and height in pixels.
-            skin: Skin that draws the widget's surfaces, or None for a
-                transparent widget.
+            skin: Skin that draws the widget's surfaces, or ``None`` for a
+                transparent widget, which uses a ``TransparentSkin``.
             parent: Widget to anchor against, or None for no parent yet.
                 Widgets added to a UI become children of its root widget.
             anchor: Point on this widget used for positioning.
@@ -70,31 +70,42 @@ class Widget(pg.sprite.Sprite):
         """
         given_width, given_height = size
         if given_width < 0 or given_height < 0:
-            raise ValueError(
-                "size cannot be negative. "
-                f"Given width = {given_width} and height = {given_height}"
-            )
+            raise ValueError(f"size cannot be negative, got size={size} px")
 
         super().__init__()
 
-        self.skin = skin
         self._rect = pg.Rect((0, 0), size)
-        self._image_cache: dict[State, pg.Surface] = {}
-        self.rebuild_image_cache()
+
+        if skin is None:
+            self.skin = TransparentSkin()
+        else:
+            self.skin = skin
 
         self.parent: Widget | None = None
         self.set_parent(parent)
+
         self._children: list[Widget] = []
-        for child in children or []:
-            child.set_parent(self)
+        if children is not None:
+            for child in children:
+                child.set_parent(self)
 
         self.anchor = anchor
-        self.parent_anchor = parent_anchor or self.anchor
+        if parent_anchor is None:
+            self.parent_anchor = self.anchor
+        else:
+            self.parent_anchor = parent_anchor
+
         self.margin = margin
         self.offset = offset
 
+        # set initial image_cache, image, blit_offset according to initial flags
         self.enabled = enabled
         self.visible = visible
+
+        self._image_cache: dict[State, BlitOffsetImage] = {}
+        self.image: pg.Surface
+        self.blit_offset: tuple[int, int]
+        self.rebuild_image_cache()  # build cache and set image, blit_offset
 
     def __repr__(self) -> str:
         """Return a representation for debugging."""
@@ -112,11 +123,19 @@ class Widget(pg.sprite.Sprite):
 
     @rect.setter
     def rect(self, value: pg.Rect | pg.FRect | None) -> None:
-        raise AttributeError("Widget's rect is set by layout, not set directly.")
+        raise AttributeError(
+            "widget's rect cannot be set directly; "
+            "position the widget via anchor, parent_anchor, margin, and offset"
+        )
 
     @property
     def children(self) -> tuple[Widget, ...]:
-        """."""
+        """The widget's children, in the order they were added.
+
+        Returned as a tuple, so it cannot be changed directly. Add or remove a
+        child with ``child.set_parent()``, which keeps both sides of the link
+        in step.
+        """
         return tuple(self._children)
 
     @property
@@ -147,8 +166,8 @@ class Widget(pg.sprite.Sprite):
     def offset(self, value: Point) -> None:
         if isinstance(value, (int, float)):
             raise TypeError(
-                "A single value (int/float) was provided to offset."
-                " Offset requires a Point."
+                f"offset cannot be a single value, got {value!r}; "
+                "offset must instead be a point"
             )
         self._offset = pg.Vector2(value)
 
@@ -204,6 +223,11 @@ class Widget(pg.sprite.Sprite):
 
         return self.parent.has_ancestor(potential_ancestor)
 
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        """Refresh ``image`` from the current state; called once per frame."""
+        super().update(*args, **kwargs)
+        self._refresh_current_image_blit_offset()
+
     def set_parent(self, new_parent: Widget | None) -> None:
         """Move this widget to a new parent, updating both sides of the link.
 
@@ -223,7 +247,7 @@ class Widget(pg.sprite.Sprite):
             return
 
         if new_parent is self:
-            raise ValueError(f"{self!r} attempted to set itself as its own parent.")
+            raise ValueError(f"cannot set {self!r} as its own parent")
 
         if new_parent is None:  # detach current widget
             if self.parent is not None:
@@ -234,8 +258,8 @@ class Widget(pg.sprite.Sprite):
         else:  # new parent exists: move current widget to new parent
             if new_parent.has_ancestor(self):
                 raise ValueError(
-                    f"{self!r} attempted to set "
-                    f"a descendant ({new_parent!r}) as its parent."
+                    "cannot set a descendant as its own parent, "
+                    f"got self {self!r} and new_parent {new_parent!r}"
                 )
 
             new_parent._children.append(self)
@@ -246,9 +270,15 @@ class Widget(pg.sprite.Sprite):
             self.parent = new_parent
 
     def rebuild_image_cache(self) -> None:
-        """Render every state in ``possible_states`` again and cache the results."""
+        """Render every state in ``possible_states`` again and cache the results.
+
+        Each state's surface is cached together with its blit offset, as a
+        ``BlitOffsetImage``.
+        """
         for state in self.possible_states:
             self._image_cache[state] = self._render_state_image(state)
+
+        self._refresh_current_image_blit_offset()
 
     def place_at_pos(self, pos: Point) -> None:
         """Place the widget's top-left corner at ``pos``.
@@ -269,22 +299,44 @@ class Widget(pg.sprite.Sprite):
         """
         if isinstance(pos, (int, float)):
             raise TypeError(
-                "A single value (int/float) was provided to place_at_pos()."
-                " place_at_pos() requires a Point."
+                "pos cannot be a single value, got {pos!r}; pos must instead be a point"
             )
 
         self.anchor = Anchor.TOP_LEFT
         self.parent_anchor = Anchor.TOP_LEFT
         self.margin = pos
 
-    def _render_state_image(self, state: State) -> pg.Surface:
-        """Return a new surface for ``state``.
+    def _render_state_image(self, state: State) -> BlitOffsetImage:
+        """Return a new surface and its blit offset for ``state``.
 
-        Uses the skin's rendering, or a transparent surface if there is no skin.
-        Subclasses extend this to draw their content on top.
+        Uses the skin's rendering. Subclasses extend this to draw their content
+        on top, adding the blit offset to any position so the content lands on
+        the widget's body rather than in a halo margin.
         """
-        if self.skin is None:
-            return pg.surface.Surface(self.rect.size, pg.SRCALPHA)
+        return self.skin.render(self.rect.size, state)
 
-        else:
-            return self.skin.render(self.rect.size, state)
+    def _refresh_current_image_blit_offset(self) -> None:
+        """Show the cached image and blit offset for the widget's current state.
+
+        Reads ``current_state`` once and looks up its ``BlitOffsetImage`` in the
+        image cache. Called whenever the cache is rebuilt, and each frame by
+        ``update()`` so the image follows changes to the widget's and its
+        ancestors' flags.
+
+        Raises:
+            RuntimeError: If ``current_state`` is not in ``possible_states``,
+                which means the class's ``possible_states`` is missing a
+                combination its flags can produce.
+        """
+        state = self.current_state  # cache property method result once
+
+        if state not in self.possible_states:
+            raise RuntimeError(
+                "current_state is not in possible_states; add it to "
+                f"{type(self).__name__}.possible_states, "
+                f"got state={state}, possible_states={self.possible_states}"
+            )
+
+        blit_offset_image = self._image_cache[state]  # cache lookup once
+        self.image = blit_offset_image.image
+        self.blit_offset = blit_offset_image.blit_offset
