@@ -217,8 +217,9 @@ A `Theme` holds the shared rules skins and text read. It is made of two parts:
 - `State.BASE` cannot be a key in `style_overrides`, because it is part of every state and its override would always apply. Combined flags, such as `State.DISABLED | State.HIGHLIGHTED`, cannot be keys either: a combination of states is styled by applying each flag's override in turn. Both raise `ValueError` when the theme is created.
 - Overrides combine best when each state changes its own fields: for example, highlighting changes the border, checking changes the body, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the order of `style_overrides` decides which wins.
 - Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
+- Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
 - The theme lives on the **`UI`**, so every widget in it draws consistently.
-- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640×360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font until a bundled font is added.
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640×360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font (`BundledTypeface.PYGAME_DEFAULT`) until a bundled font is added.
 - **Later:** the `UI` could assign individual widgets, or whole subtrees, a different theme from its default.
 
 ## Anchors
@@ -436,7 +437,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 
 - Bundled assets live in `assets/images/` (default skin art, nine-slice-ready) and `assets/fonts/`, all MIT-compatible.
 - They are loaded with `importlib.resources`, so they are found wherever the package is installed.
-- Fonts are cached, since rendering text is the most expensive step.
+- Loaded fonts are cached by typeface, size, and bold, italic, and underline settings, since loading a font file is slow. Every widget with the same settings shares one `pg.Font`, which is never changed after it is created.
 - Loading failures raise exceptions (for example `FileNotFoundError`) and never exit the program.
 - Game-side concerns stay in games: asset folder conventions, resource paths, and PyInstaller handling. Games bundled with PyInstaller need puigame's data files included in their build.
 

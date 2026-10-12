@@ -11,6 +11,7 @@ window with ``pg.SCALED``.
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, replace
 from enum import Enum, auto
+from pathlib import Path
 from types import MappingProxyType
 
 from puigame.core.anchor import Anchor
@@ -47,6 +48,21 @@ class FadeProfile(Enum):
     HARD_CUBIC = auto()
 
 
+class BundledTypeface(Enum):
+    """Typefaces bundled with puigame.
+
+    Each member's value is the file name of its font file in puigame's
+    ``assets/fonts`` folder, or ``None`` for pygame-ce's built-in font,
+    ``freesansbold.ttf``. Games use their own font files by passing a ``Path``
+    instead of a member.
+    """
+
+    _value_: str | None
+
+    PYGAME_DEFAULT = None
+    NEB0FONT = "neb0font.ttf"
+
+
 @dataclass(frozen=True)
 class Style:
     """Complete appearance of a widget: every value needed to draw it.
@@ -81,8 +97,8 @@ class Style:
         swell_px: How many pixels the widget grows by on each
             side. Negative values shrink it. 0 means no swell.
         text_colour: Text colour as RGBA.
-        text_font_name: Name or path of the font used for text, or ``None``
-            for pygame-ce's built-in font.
+        text_typeface: Typeface used for text: a ``BundledTypeface``, or the
+            path to a font file supplied by the game.
         text_font_size: Font size for text, in pixels.
         text_anchor: Point on the text that is aligned to the widget.
         text_parent_anchor: Point on the widget that the text is aligned to.
@@ -111,8 +127,8 @@ class Style:
     text_colour: RGBA
 
     # text options (state-agnostic)
-    # None gives pygame-ce's built-in font, freesansbold.ttf
-    text_font_name: str | None
+    # BundledTypeface.PYGAME_DEFAULT is pygame-ce's built-in font, freesansbold.ttf
+    text_typeface: BundledTypeface | Path
     text_font_size: int
     text_anchor: Anchor
     text_parent_anchor: Anchor
@@ -288,7 +304,7 @@ DEFAULT_THEME = Theme(
         halo_thickness_px=0,
         swell_px=0,
         text_colour=(255, 255, 255, 255),
-        text_font_name=None,
+        text_typeface=BundledTypeface.PYGAME_DEFAULT,
         text_font_size=12,
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,

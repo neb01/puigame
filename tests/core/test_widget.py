@@ -9,7 +9,7 @@ from puigame.components.skin import BlitOffsetImage, DrawnSkin, Skin, Transparen
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.widget import Widget
-from puigame.themes.theme import FadeProfile, Style, Theme
+from puigame.themes.theme import BundledTypeface, FadeProfile, Style, Theme
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
@@ -620,7 +620,7 @@ def test_changing_skin_changes_image_in_widget_upon_image_cache_rebuild():
         halo_thickness_px=0,
         swell_px=0,
         text_colour=BLACK,
-        text_font_name=None,
+        text_typeface=BundledTypeface.PYGAME_DEFAULT,
         text_font_size=12,
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,

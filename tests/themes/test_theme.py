@@ -6,6 +6,7 @@ from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.themes.theme import (
     DEFAULT_THEME,
+    BundledTypeface,
     FadeProfile,
     Style,
     StyleOverride,
@@ -30,7 +31,7 @@ BASE_STYLE = Style(
     halo_thickness_px=0,
     swell_px=0,
     text_colour=BLACK,
-    text_font_name=None,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
