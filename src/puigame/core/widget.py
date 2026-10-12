@@ -299,7 +299,8 @@ class Widget(pg.sprite.Sprite):
         """
         if isinstance(pos, (int, float)):
             raise TypeError(
-                "pos cannot be a single value, got {pos!r}; pos must instead be a point"
+                "pos cannot be a single value, "
+                f"got {pos!r}; pos must instead be a point"
             )
 
         self.anchor = Anchor.TOP_LEFT
