@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any, ClassVar
 
 import pygame as pg
 from pygame.typing import Point
 
 from puigame.components.skin import BlitOffsetImage, Skin, TransparentSkin
+from puigame.themes.theme import Theme
 
 from .anchor import Anchor
 from .state import State
@@ -20,7 +22,8 @@ class Widget(pg.sprite.Sprite):
 
     - a rect, sized on creation and positioned by its anchors
     - an optional parent to anchor against, and a list of children
-    - a skin that draws its surfaces
+    - a skin that draws its surfaces, and an optional theme of its own,
+      otherwise inherited from the nearest ancestor that has one
     - ``visible`` and ``enabled`` flags, with ``_in_tree`` versions that take
       its parents into account
     - its current State, and the States it can be in
@@ -34,7 +37,9 @@ class Widget(pg.sprite.Sprite):
     def __init__(
         self,
         size: Point,  # using Point not tuple[int, int] to follow Pygame convention
+        *,
         skin: Skin | None = None,
+        own_theme: Theme | None = None,  # None inherits from the nearest ancestor
         parent: Widget | None = None,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,  # defaults to same as anchor
@@ -50,6 +55,9 @@ class Widget(pg.sprite.Sprite):
             size: Width and height in pixels.
             skin: Skin that draws the widget's surfaces, or ``None`` for a
                 transparent widget, which uses a ``TransparentSkin``.
+            own_theme: Theme for this widget and the descendants that inherit
+                it, or ``None`` to inherit the nearest ancestor's theme.
+                Until a theme can be found, the widget's images are not built.
             parent: Widget to anchor against, or None for no parent yet.
                 Widgets added to a UI become children of its root widget.
             anchor: Point on this widget used for positioning.
@@ -81,13 +89,9 @@ class Widget(pg.sprite.Sprite):
         else:
             self.skin = skin
 
-        self.parent: Widget | None = None
-        self.set_parent(parent)
-
+        self._own_theme = own_theme
+        self._parent: Widget | None = None
         self._children: list[Widget] = []
-        if children is not None:
-            for child in children:
-                child.set_parent(self)
 
         self.anchor = anchor
         if parent_anchor is None:
@@ -106,6 +110,11 @@ class Widget(pg.sprite.Sprite):
         self.image: pg.Surface
         self.blit_offset: tuple[int, int]
         self.rebuild_image_cache()  # build cache and set image, blit_offset
+
+        self.set_parent(parent)
+        if children is not None:
+            for child in children:
+                child.set_parent(self)
 
     def __repr__(self) -> str:
         """Return a representation for debugging."""
@@ -126,6 +135,23 @@ class Widget(pg.sprite.Sprite):
         raise AttributeError(
             "widget's rect cannot be set directly; "
             "position the widget via anchor, parent_anchor, margin, and offset"
+        )
+
+    @property
+    def parent(self) -> Widget | None:
+        """The widget this one is anchored against, or ``None`` if detached.
+
+        The parent can be read, but replacing it directly raises an error.
+        Move the widget with ``set_parent()``, which keeps both sides of the
+        link in step.
+        """
+        return self._parent
+
+    @parent.setter
+    def parent(self, value: Widget | None) -> None:
+        raise AttributeError(
+            "widget's parent cannot be set directly; "
+            "set the parent via the set_parent() method."
         )
 
     @property
@@ -201,6 +227,66 @@ class Widget(pg.sprite.Sprite):
 
         return state
 
+    @property
+    def own_theme(self) -> Theme | None:
+        """The theme set on this widget itself, or ``None`` if it inherits one.
+
+        Setting it to a theme makes this widget, and the descendants that
+        inherit from it, draw with that theme. Setting it to ``None`` makes the
+        widget inherit the nearest ancestor's theme again. Either way, the
+        image caches of the widget and all its descendants are rebuilt, and
+        any widget that still has no theme is skipped.
+        """
+        return self._own_theme
+
+    @own_theme.setter
+    def own_theme(self, value: Theme | None) -> None:
+        self._own_theme = value
+
+        self.rebuild_image_cache()
+        for descendant in self.iter_descendants():
+            descendant.rebuild_image_cache()
+
+    @property
+    def theme(self) -> Theme:
+        """The theme the widget draws with.
+
+        This is ``own_theme`` if it is set, and otherwise the nearest
+        ancestor's ``own_theme``.
+
+        Raises:
+            RuntimeError: If neither the widget nor any of its ancestors has a
+                theme, for example while it is detached.
+        """
+        theme = self._find_theme()
+
+        if theme is None:
+            raise RuntimeError(
+                "Widget cannot be built without either its own theme "
+                "or an ancestor with a valid theme; "
+                f"{self} has no valid theme"
+            )
+
+        return theme
+
+    def _find_theme(self) -> Theme | None:
+        """Return the theme the widget draws with, or ``None`` if it has none.
+
+        Walks up the chain of parents, returning the first ``own_theme`` that
+        is set, starting with this widget's. Unlike ``theme``, does not raise.
+
+        Returns:
+            This widget's ``own_theme`` if set, otherwise the nearest
+            ancestor's, or ``None`` if no widget in the chain has one.
+        """
+        if self.own_theme is not None:
+            return self.own_theme
+
+        if self.parent is None:
+            return None
+
+        return self.parent._find_theme()
+
     def has_ancestor(self, potential_ancestor: Widget) -> bool:
         """Return whether ``potential_ancestor`` is above this widget in the tree.
 
@@ -226,14 +312,18 @@ class Widget(pg.sprite.Sprite):
     def update(self, *args: Any, **kwargs: Any) -> None:
         """Refresh ``image`` from the current state; called once per frame."""
         super().update(*args, **kwargs)
-        self._refresh_current_image_blit_offset()
+
+        if self._image_cache:  # don't refresh if image cache not yet built
+            self._refresh_current_image_blit_offset()
 
     def set_parent(self, new_parent: Widget | None) -> None:
         """Move this widget to a new parent, updating both sides of the link.
 
         Does nothing if ``new_parent`` is already the parent. Otherwise removes
         this widget from the old parent's children, sets ``new_parent`` as its
-        parent, and adds it to ``new_parent``'s children.
+        parent, and adds it to ``new_parent``'s children. Then rebuilds the
+        image caches of this widget and all its descendants, since the theme
+        they inherit may have changed.
 
         Args:
             new_parent: Widget to become the parent, or None to detach this
@@ -253,7 +343,7 @@ class Widget(pg.sprite.Sprite):
             if self.parent is not None:
                 self.parent._children.remove(self)
 
-            self.parent = None
+            self._parent = None
 
         else:  # new parent exists: move current widget to new parent
             if new_parent.has_ancestor(self):
@@ -267,18 +357,11 @@ class Widget(pg.sprite.Sprite):
             if self.parent is not None:
                 self.parent._children.remove(self)
 
-            self.parent = new_parent
+            self._parent = new_parent
 
-    def rebuild_image_cache(self) -> None:
-        """Render every state in ``possible_states`` again and cache the results.
-
-        Each state's surface is cached together with its blit offset, as a
-        ``BlitOffsetImage``.
-        """
-        for state in self.possible_states:
-            self._image_cache[state] = self._render_state_image(state)
-
-        self._refresh_current_image_blit_offset()
+        self.rebuild_image_cache()
+        for descendant in self.iter_descendants():
+            descendant.rebuild_image_cache()
 
     def place_at_pos(self, pos: Point) -> None:
         """Place the widget's top-left corner at ``pos``.
@@ -307,6 +390,35 @@ class Widget(pg.sprite.Sprite):
         self.parent_anchor = Anchor.TOP_LEFT
         self.margin = pos
 
+    def iter_descendants(self) -> Iterator[Widget]:
+        """Yield every widget below this one in the tree, parents first.
+
+        The order is depth-first pre-order: each child is followed by all of its
+        own descendants before the next child. The widget itself is not
+        included. The tree is read as it is walked, so take a ``list()`` first
+        if the walk will move widgets.
+
+        Yields:
+            Each descendant, in depth-first pre-order.
+        """
+        for child in self.children:
+            yield child
+            yield from child.iter_descendants()
+
+    def rebuild_image_cache(self) -> None:
+        """Render every state in ``possible_states`` again and cache the results.
+
+        Each state's surface is cached together with its blit offset, as a
+        ``BlitOffsetImage``. Does nothing if the widget has no theme, so a
+        detached widget is built once it gains one, either its own or an
+        ancestor's.
+        """
+        if self._find_theme() is not None:
+            for state in self.possible_states:
+                self._image_cache[state] = self._render_state_image(state)
+
+            self._refresh_current_image_blit_offset()
+
     def _render_state_image(self, state: State) -> BlitOffsetImage:
         """Return a new surface and its blit offset for ``state``.
 
@@ -314,7 +426,8 @@ class Widget(pg.sprite.Sprite):
         on top, adding the blit offset to any position so the content lands on
         the widget's body rather than in a halo margin.
         """
-        return self.skin.render(self.rect.size, state)
+        style = self.theme.style_for(state)
+        return self.skin.render(self.rect.size, style)
 
     def _refresh_current_image_blit_offset(self) -> None:
         """Show the cached image and blit offset for the widget's current state.

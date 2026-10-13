@@ -1,15 +1,16 @@
-"""Skins, which turn a size and a state into a widget surface.
+"""Skins, which turn a size and a style into a widget surface.
 
-A skin draws a widget's appearance for a given size and state. It can build
-surfaces of any size, so one skin can serve many widgets, each asking for its
-own size.
+A skin draws a widget's appearance for a given size and style. Skins hold no
+per-widget data and no theme: the widget looks up the style for each of its
+states and passes it in. One skin can therefore serve many widgets, each with
+its own size and theme.
 
 Effects such as a halo or a swell can make the surface larger or smaller than
 the widget. Each render therefore returns the surface together with an offset
 that keeps the drawing centred on the widget's rect.
 
 TransparentSkin draws nothing, for widgets with nothing to show.
-DrawnSkin draws surfaces in code from a theme's style for each state.
+DrawnSkin draws surfaces in code from the style it is given.
 ImageSkin loads an image file and scales it with nine-slice scaling.
 
 Widgets cache the surfaces their skin produces, one per state, and swap
@@ -23,8 +24,7 @@ from typing import assert_never
 import pygame as pg
 from pygame.typing import Point
 
-from puigame.core.state import State
-from puigame.themes.theme import FadeProfile, Theme
+from puigame.themes.theme import FadeProfile, Style
 
 
 @dataclass(frozen=True)
@@ -52,20 +52,22 @@ class BlitOffsetImage:
 class Skin(ABC):
     """Abstract base class for skins.
 
-    A skin turns a size and a state into a surface and an offset. Subclasses
-    implement ``render()``. ``Skin`` itself cannot be created.
+    A skin turns a size and a style into a surface and an offset. Subclasses
+    implement ``render()``, keeping its signature, so any skin can stand in for
+    any other. ``Skin`` itself cannot be created.
     """
 
     @abstractmethod
-    def render(self, size: Point, state: State) -> BlitOffsetImage:
-        """Render a surface for a widget of the given size in the given state.
+    def render(self, size: Point, style: Style) -> BlitOffsetImage:
+        """Render a surface for a widget of the given size in the given style.
 
         Every subclass implements this. Widgets call it once per state they can
-        be in, and cache the results.
+        be in, passing the theme's style for that state, and cache the results.
 
         Args:
             size: Width and height of the widget in pixels.
-            state: State to draw, for example ``State.HIGHLIGHTED``.
+            style: Complete style to draw with, as returned by
+                ``Theme.style_for()``.
 
         Returns:
             A new surface with its blit offset. Without effects, the surface
@@ -77,14 +79,22 @@ class TransparentSkin(Skin):
     """Skin that renders a fully transparent surface.
 
     Used for widgets with nothing to show, such as invisible containers. The
-    surface is the same in every state.
+    surface is the same whatever the style.
     """
 
-    def render(self, size: Point, state: State) -> BlitOffsetImage:
+    def render(self, size: Point, style: Style) -> BlitOffsetImage:
         """Return a fully transparent surface of the requested size.
 
-        The surface is the same in every state, so ``state`` is not used, and
-        the offset is always ``(0, 0)``.
+        Nothing is drawn, so ``style`` is not used, and the offset is always
+        ``(0, 0)``.
+
+        Args:
+            size: Width and height of the widget in pixels.
+            style: Not used; accepted so the signature matches ``Skin.render()``.
+
+        Returns:
+            A new transparent surface of exactly ``size``, with offset
+            ``(0, 0)``.
         """
         surface = pg.Surface(size, pg.SRCALPHA)
         return BlitOffsetImage(surface, (0, 0))
@@ -110,7 +120,7 @@ def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
 
 
 class DrawnSkin(Skin):
-    """Skin that draws its surfaces in code from a theme.
+    """Skin that draws its surfaces in code from a style.
 
     Each surface is drawn as three filled, rounded rectangles, from largest to
     smallest. Each layer covers the middle of the one before, so no gaps appear
@@ -129,21 +139,12 @@ class DrawnSkin(Skin):
     - **Body**: the fill inside the border, inset from the border's outer edge
       by the border thickness.
 
-    Attributes:
-        theme: The theme whose style for each state is drawn.
+    The skin holds no data of its own: everything it draws comes from the style
+    passed to ``render()``.
     """
 
-    def __init__(self, theme: Theme) -> None:
-        """Create a skin that draws from ``theme``.
-
-        Args:
-            theme: The theme to read styles from.
-        """
-        super().__init__()
-        self.theme = theme
-
-    def render(self, size: Point, state: State) -> BlitOffsetImage:
-        """Draw the widget's halo, border, and body for a size and state.
+    def render(self, size: Point, style: Style) -> BlitOffsetImage:
+        """Draw the widget's halo, border, and body for a size and style.
 
         The swell grows (or, if negative, shrinks) the border and body on every
         side. The halo surrounds the border, so the surface is larger than
@@ -153,7 +154,8 @@ class DrawnSkin(Skin):
 
         Args:
             size: Width and height of the widget in pixels.
-            state: State to draw, which can combine several flags.
+            style: Complete style to draw with, as returned by
+                ``Theme.style_for()``.
 
         Returns:
             The drawn surface with its blit offset, the swell plus the halo
@@ -166,7 +168,6 @@ class DrawnSkin(Skin):
         """
         given_size_x = int(size[0])
         given_size_y = int(size[1])
-        style = self.theme.style_for(state)
 
         # main inner body size and radius, and check for negative size
         body_size = (
@@ -182,7 +183,7 @@ class DrawnSkin(Skin):
         if min(body_size) < 0:
             raise ValueError(
                 f"body_size cannot be negative, got body_size={body_size} px, "
-                f"state={state}, size={size} px, "
+                f"style={style}, size={size} px, "
                 f"border_thickness_px={style.border_thickness_px} px, "
                 f"swell_px={style.swell_px} px"
             )
