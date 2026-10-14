@@ -1,4 +1,4 @@
-"""The Anchor enum: named points on a rect."""
+"""Anchor, the named points on a rect that widgets are positioned by."""
 
 from enum import Enum, auto
 

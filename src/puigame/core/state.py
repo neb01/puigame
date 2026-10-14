@@ -1,4 +1,4 @@
-"""Set of flags that widgets use to control State options."""
+"""State, the flags that describe what a widget is doing."""
 
 from enum import Flag, auto
 
