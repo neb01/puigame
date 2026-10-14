@@ -42,7 +42,7 @@ pre-commit run --all-files   # everything pre-commit runs, on all files
 
 ### Commit messages
 
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/), e.g. `feat(button): add disabled state` or `fix: correct hover offset`.
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/), for example `feat(button): add disabled state` or `fix: correct hover offset`.
 
 ## Authorship
 

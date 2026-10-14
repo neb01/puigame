@@ -1,1 +1,1 @@
-"""A widget for entering and editing text."""
+"""TextBox, a widget for entering and editing text."""

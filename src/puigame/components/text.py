@@ -1,1 +1,1 @@
-"""Component that provides a text display on the widget."""
+"""Text, the component that displays text on a widget."""

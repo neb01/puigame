@@ -3,13 +3,13 @@ from dataclasses import replace
 import pygame as pg
 import pytest
 
-from puigame.components.skin import DrawnSkin, Skin, TransparentSkin
-from puigame.core.state import State
-from puigame.themes.theme import DEFAULT_THEME, FadeProfile, StyleOverride, Theme
+from puigame.components.skin import DrawnSkin, NoSkin, Skin, TransparentSkin
+from puigame.themes.theme import DEFAULT_THEME, FadeProfile
 
 # region --- Constants --------------------------------------------------------
 
 ANY_SIZE = (10, 10)
+ANY_STYLE = DEFAULT_THEME.base_style
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
@@ -18,7 +18,8 @@ WHITE = (255, 255, 255, 255)
 
 # endregion
 
-# region --- Skin -------------------------------------------------------------
+
+# region --- Skin contract ----------------------------------------------------
 
 
 def test_base_skin_instantiated_raises():
@@ -26,7 +27,82 @@ def test_base_skin_instantiated_raises():
         Skin()  # pyright: ignore[reportAbstractUsage]
 
 
+@pytest.mark.parametrize("make_skin", [TransparentSkin, DrawnSkin, NoSkin])
+def test_rendered_surfaces_are_unique(make_skin):
+    skin = make_skin()
+    surface_1 = skin.render(ANY_SIZE, ANY_STYLE).image
+    surface_2 = skin.render(ANY_SIZE, ANY_STYLE).image
+
+    assert surface_1 is not surface_2
+
+
+# NoSkin is left out: it is the documented exception to the size contract
+@pytest.mark.parametrize("make_skin", [TransparentSkin, DrawnSkin])
+@pytest.mark.parametrize(
+    ("point", "expected_size"),
+    [
+        ((10, 20), (10, 20)),
+        ([20, 30], (20, 30)),
+        (pg.Vector2(4, 10), (4, 10)),
+        (pg.Vector2(5.2, 7.9), (5, 7)),
+    ],
+    ids=["tuple", "list", "pg.Vector2", "pg.Vector2 float"],
+)
+def test_render_truncates_any_point_type(make_skin, point, expected_size):
+    # no halo, swell, or border, so DrawnSkin's surface is exactly the given size
+    style = replace(
+        ANY_STYLE,
+        border_thickness_px=0,
+        halo_thickness_px=0,
+        swell_px=0,
+    )
+
+    surface = make_skin().render(point, style).image
+
+    assert surface.get_size() == expected_size
+
+
 # endregion
+
+
+# region --- NoSkin -----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "size",
+    [
+        (4, 4),
+        (4, 10),
+        (8, 4),
+        (0.4, 0.5),
+        pg.Vector2(2, 4),
+        pg.Vector2(2.2, 4.9),
+        [10, 4],
+    ],
+    ids=[
+        "same height and width",
+        "larger height",
+        "larger width",
+        "tuple of floats",
+        "vec2 of ints",
+        "vec2 of floats",
+        "list",
+    ],
+)
+def test_no_skin_always_returns_size_zero_surface(size):
+    surface = NoSkin().render(size, ANY_STYLE).image
+
+    assert surface.get_size() == (0, 0)
+
+
+def test_no_skin_always_returns_zero_blit_offset():
+    blit_offset = NoSkin().render(ANY_SIZE, ANY_STYLE).blit_offset
+
+    assert blit_offset == (0, 0)
+
+
+# endregion
+
 
 # region --- TransparentSkin --------------------------------------------------
 
@@ -36,62 +112,25 @@ def test_base_skin_instantiated_raises():
     [(0, 0), (1, 1), (100, 30), (30, 100), (1000, 1000)],
     ids=["empty", "tiny", "wide", "tall", "huge"],
 )
-@pytest.mark.parametrize("state", State.__members__.values())
-def test_render_returns_requested_size(size, state):
-    surface = TransparentSkin().render(size, state).image
+def test_transparent_skin_render_returns_requested_size(size):
+    surface = TransparentSkin().render(size, ANY_STYLE).image
 
     assert surface.get_size() == size
 
 
-def test_surfaces_are_unique():
-    skin = TransparentSkin()
-
-    surface_1 = skin.render(ANY_SIZE, State.BASE).image
-    surface_2 = skin.render(ANY_SIZE, State.BASE).image
-
-    assert surface_1 is not surface_2
-
-
-def test_surface_transparency():
-    # bounding box gives rect covering visible area
-    # if surface is fully transparent, then bounding box should be size 0.
-    surface = TransparentSkin().render(ANY_SIZE, State.BASE).image
+def test_transparent_skin_image_is_transparent():
+    # get_bounding_rect() covers every pixel that isn't fully transparent, so a
+    # fully transparent surface gives a 0x0 rect
+    surface = TransparentSkin().render(ANY_SIZE, ANY_STYLE).image
     bounding_box = surface.get_bounding_rect()
 
     assert bounding_box.size == (0, 0)
 
 
-@pytest.mark.parametrize(
-    "make_skin",
-    [
-        lambda: TransparentSkin(),
-        lambda: DrawnSkin(
-            Theme(
-                replace(DEFAULT_THEME.base_style, halo_thickness_px=0, swell_px=0), {}
-            )
-        ),
-    ],
-    ids=["TransparentSkin", "DrawnSkin"],
-)
-@pytest.mark.parametrize(
-    ("point", "expected_size"),
-    [
-        ((10, 20), (10, 20)),
-        ([20, 30], (20, 30)),
-        (pg.Vector2(4, 10), (4, 10)),
-        (pg.Vector2(5.2, 7.9), (5, 7)),
-    ],
-    ids=["tuple", "list", "pg.Vector2", "truncated_pg.Vector2_float"],
-)
-def test_render_truncates_any_point_type(make_skin, point, expected_size):
-    surface = make_skin().render(point, State.BASE).image
-
-    assert surface.get_size() == expected_size
-
-
 # endregion
 
-# region --- DrawnSkin ------------------------------------------------------
+
+# region --- DrawnSkin: size and offset ---------------------------------------
 
 
 @pytest.mark.parametrize("swell_px", [-2, 0, 2])
@@ -100,65 +139,34 @@ def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
     swell_px,
     halo_thickness_px,
 ):
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                swell_px=swell_px,
-                halo_thickness_px=halo_thickness_px,
-            ),
-            {},
-        )
+    style = replace(
+        ANY_STYLE,
+        swell_px=swell_px,
+        halo_thickness_px=halo_thickness_px,
     )
 
-    blit_offset_image = drawn_skin.render(ANY_SIZE, State.BASE)
+    blit_offset_image = DrawnSkin().render((10, 10), style)
     blit_offset = blit_offset_image.blit_offset
     surface_width, surface_height = blit_offset_image.image.get_size()
 
     assert blit_offset == (swell_px + halo_thickness_px, swell_px + halo_thickness_px)
-    assert surface_width == ANY_SIZE[0] + (swell_px + halo_thickness_px) * 2
-    assert surface_height == ANY_SIZE[1] + (swell_px + halo_thickness_px) * 2
+    assert surface_width == 10 + (swell_px + halo_thickness_px) * 2
+    assert surface_height == 10 + (swell_px + halo_thickness_px) * 2
 
 
-def test_drawn_skin_pixel_colours():
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                body_colour=WHITE,
-                border_colour=BLACK,
-                border_thickness_px=2,
-                corner_radius_px=3,
-                halo_colour=BLUE,
-                halo_fade_profile=FadeProfile.SOLID,
-                halo_thickness_px=2,
-                swell_px=1,
-            ),
-            {},
-        )
+@pytest.mark.parametrize(
+    "size",
+    [(4, 4), (4, 10), (8, 4)],
+    ids=["zero height and width", "zero width", "zero height"],
+)
+def test_drawn_skin_body_size_can_be_zero(size):
+    style = replace(
+        ANY_STYLE,
+        border_thickness_px=2,
+        swell_px=0,
     )
 
-    surface = drawn_skin.render((10, 10), State.BASE).image
-
-    assert surface.get_at((7, 7)) == WHITE  # centre
-    assert surface.get_at((7, 3)) == BLACK  # border
-    assert surface.get_at((7, 1)) == BLUE  # solid halo
-    assert surface.get_at((0, 0)) == (0, 0, 0, 0)  # transparent given corner radius
-
-
-def test_drawn_skin_body_size_can_be_zero():
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                border_thickness_px=2,
-                swell_px=0,
-            ),
-            {},
-        )
-    )
-
-    drawn_skin.render((4, 4), State.BASE)  # body is entirely subsumed by border
+    DrawnSkin().render(size, style)  # body is 0 px on at least one axis: all border
 
 
 @pytest.mark.parametrize(
@@ -174,7 +182,7 @@ def test_drawn_skin_body_size_can_be_zero():
         ((10, 2), 0, -3),
         ((10, 2), 1, -2),
     ],
-    ids=(
+    ids=[
         "thick border",
         "negative swell",
         "combined border swell",
@@ -184,27 +192,76 @@ def test_drawn_skin_body_size_can_be_zero():
         "thick border low height",
         "negative swell low height",
         "combined border swell low height",
-    ),
+    ],
 )
 def test_drawn_skin_negative_body_size_raises(size, border_thickness_px, swell_px):
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                border_thickness_px=border_thickness_px,
-                swell_px=swell_px,
-            ),
-            {},
-        )
+    style = replace(
+        ANY_STYLE,
+        border_thickness_px=border_thickness_px,
+        swell_px=swell_px,
     )
 
     with pytest.raises(ValueError):
-        drawn_skin.render(size, State.BASE)
+        DrawnSkin().render(size, style)
+
+
+# endregion
+
+
+# region --- DrawnSkin: layers ------------------------------------------------
+
+
+def test_drawn_skin_pixel_colours():
+    style = replace(
+        ANY_STYLE,
+        body_colour=WHITE,
+        border_colour=BLACK,
+        border_thickness_px=2,
+        corner_radius_px=3,
+        halo_colour=BLUE,
+        halo_fade_profile=FadeProfile.SOLID,
+        halo_thickness_px=2,
+        swell_px=1,
+    )
+
+    surface = DrawnSkin().render((10, 10), style).image
+
+    assert surface.get_at((7, 7)) == WHITE  # centre
+    assert surface.get_at((7, 3)) == BLACK  # border
+    assert surface.get_at((7, 1)) == BLUE  # solid halo
+    assert surface.get_at((0, 0)) == (0, 0, 0, 0)  # outside the rounded halo
+
+
+@pytest.mark.parametrize("halo_fade_profile", FadeProfile)
+@pytest.mark.parametrize("halo_thickness_px", [0, 1, 2, 5])
+def test_drawn_skin_halo_fade_does_not_overlap_border(
+    halo_fade_profile, halo_thickness_px
+):
+    style = replace(
+        ANY_STYLE,
+        border_colour=BLACK,
+        border_thickness_px=1,
+        corner_radius_px=0,
+        halo_colour=BLUE,
+        halo_fade_profile=halo_fade_profile,
+        halo_thickness_px=halo_thickness_px,
+        swell_px=0,
+    )
+
+    surface = DrawnSkin().render((10, 10), style).image
+
+    # the first row inside the halo is border, whatever the fade profile
+    assert surface.get_at((5, halo_thickness_px)) == BLACK
+
+
+# endregion
+
+
+# region --- DrawnSkin: halo fade ---------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "halo_colour",
-    [RED, BLUE, BLACK, WHITE],
+    "halo_colour", [RED, BLUE, BLACK, WHITE], ids=["red", "blue", "black", "white"]
 )
 @pytest.mark.parametrize(
     ("halo_fade_profile", "alpha_values"),
@@ -216,33 +273,37 @@ def test_drawn_skin_negative_body_size_raises(size, border_thickness_px, swell_p
         (FadeProfile.SOFT_CUBIC, (255, 76, 9)),
         (FadeProfile.HARD_CUBIC, (255, 246, 179)),
     ],
+    ids=[
+        "solid",
+        "linear",
+        "soft quadratic",
+        "hard quadratic",
+        "soft cubic",
+        "hard cubic",
+    ],
 )
-def test_halo_fade_profiles_give_correct_colour_and_transparency(
+def test_drawn_skin_halo_fade_profiles_give_correct_colour_and_transparency(
     halo_colour, halo_fade_profile, alpha_values
 ):
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                corner_radius_px=0,
-                halo_colour=halo_colour,
-                halo_fade_profile=halo_fade_profile,
-                halo_thickness_px=3,
-                swell_px=0,
-            ),
-            {},
-        )
+    style = replace(
+        ANY_STYLE,
+        corner_radius_px=0,
+        halo_colour=halo_colour,
+        halo_fade_profile=halo_fade_profile,
+        halo_thickness_px=3,
+        swell_px=0,
     )
 
-    surface = drawn_skin.render((10, 10), State.BASE).image
+    surface = DrawnSkin().render((10, 10), style).image
 
-    assert surface.get_at((5, 0))[:3] == halo_colour[:3]  # all rings still blue
+    # every ring keeps the halo colour's RGB; only the alpha fades
+    assert surface.get_at((5, 0))[:3] == halo_colour[:3]
     assert surface.get_at((5, 1))[:3] == halo_colour[:3]
     assert surface.get_at((5, 2))[:3] == halo_colour[:3]
 
     assert surface.get_at((5, 2))[3] == alpha_values[0]  # no fade
-    assert surface.get_at((5, 1))[3] == alpha_values[1]  # mid fade (apart from SOLID)
-    assert surface.get_at((5, 0))[3] == alpha_values[2]  # most faded (apart from SOLID)
+    assert surface.get_at((5, 1))[3] == alpha_values[1]  # middle fade (none for SOLID)
+    assert surface.get_at((5, 0))[3] == alpha_values[2]  # most faded (none for SOLID)
 
 
 @pytest.mark.parametrize(
@@ -255,90 +316,61 @@ def test_halo_fade_profiles_give_correct_colour_and_transparency(
         (FadeProfile.SOFT_CUBIC, (255, 76, 9)),
         (FadeProfile.HARD_CUBIC, (255, 246, 179)),
     ],
+    ids=[
+        "solid",
+        "linear",
+        "soft quadratic",
+        "hard quadratic",
+        "soft cubic",
+        "hard cubic",
+    ],
 )
 @pytest.mark.parametrize("swell_px", [-2, 0, 5])
-def test_halo_fade_profile_is_not_affected_by_swell_px(
+def test_drawn_skin_halo_fade_profile_is_not_affected_by_swell_px(
     halo_fade_profile,
     alpha_values,
     swell_px,
 ):
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                corner_radius_px=0,
-                halo_colour=BLUE,
-                halo_fade_profile=halo_fade_profile,
-                halo_thickness_px=3,
-                swell_px=swell_px,
-            ),
-            {},
-        )
+    style = replace(
+        ANY_STYLE,
+        corner_radius_px=0,
+        halo_colour=BLUE,
+        halo_fade_profile=halo_fade_profile,
+        halo_thickness_px=3,
+        swell_px=swell_px,
     )
 
-    surface = drawn_skin.render((10, 10), State.BASE).image
-    surface_center_x = surface.get_rect().centerx
+    surface = DrawnSkin().render((10, 10), style).image
+    surface_centre_x = surface.get_rect().centerx
 
-    assert surface.get_at((surface_center_x, 2))[3] == alpha_values[0]  # no fade
-    assert surface.get_at((surface_center_x, 1))[3] == alpha_values[1]  # middle fade
-    assert surface.get_at((surface_center_x, 0))[3] == alpha_values[2]  # most faded
+    assert surface.get_at((surface_centre_x, 2))[3] == alpha_values[0]  # no fade
+    assert surface.get_at((surface_centre_x, 1))[3] == alpha_values[1]  # middle fade
+    assert surface.get_at((surface_centre_x, 0))[3] == alpha_values[2]  # most faded
 
 
-@pytest.mark.parametrize("halo_fade_profile", list(FadeProfile))
-@pytest.mark.parametrize("halo_thickness_px", [0, 1, 2, 5])
-def test_halo_fade_does_not_overlap_border(halo_fade_profile, halo_thickness_px):
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                border_colour=BLACK,
-                border_thickness_px=1,
-                corner_radius_px=0,
-                halo_colour=BLUE,
-                halo_fade_profile=halo_fade_profile,
-                halo_thickness_px=halo_thickness_px,
-            ),
-            {},
-        )
+def test_drawn_skin_different_fade_profiles_give_same_shape():
+    style_1 = replace(
+        ANY_STYLE,
+        corner_radius_px=0,
+        swell_px=-2,
+        halo_colour=BLUE,
+        halo_fade_profile=FadeProfile.SOLID,
+        halo_thickness_px=3,
     )
 
-    surface = drawn_skin.render((10, 10), State.BASE).image
-
-    assert surface.get_at((5, halo_thickness_px)) == BLACK
-
-
-def test_different_fade_profiles_give_same_shape():
-    drawn_skin_1 = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                corner_radius_px=0,
-                swell_px=-2,
-                halo_colour=BLUE,
-                halo_fade_profile=FadeProfile.SOLID,
-                halo_thickness_px=3,
-            ),
-            {},
-        )
+    style_2 = replace(
+        ANY_STYLE,
+        corner_radius_px=0,
+        swell_px=-2,
+        halo_colour=BLUE,
+        halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
+        halo_thickness_px=3,
     )
 
-    drawn_skin_2 = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                corner_radius_px=0,
-                swell_px=-2,
-                halo_colour=BLUE,
-                halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
-                halo_thickness_px=3,
-            ),
-            {},
-        )
-    )
+    surface_1 = DrawnSkin().render((10, 10), style_1).image
+    surface_2 = DrawnSkin().render((10, 10), style_2).image
 
-    surface_1 = drawn_skin_1.render((10, 10), State.BASE).image
-    surface_2 = drawn_skin_2.render((10, 10), State.BASE).image
-
+    # the fade changes only alpha, so the non-transparent pixels match
     non_transparent_mask_1 = pg.mask.from_surface(surface_1, 0)
     non_transparent_mask_2 = pg.mask.from_surface(surface_2, 0)
 
@@ -347,72 +379,39 @@ def test_different_fade_profiles_give_same_shape():
     assert non_transparent_mask_2.count() == overlap_bits
 
 
-def test_render_state_change_returns_changed_surface():
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                body_colour=WHITE,
-                border_thickness_px=1,
-                corner_radius_px=1,
-                halo_thickness_px=0,
-            ),
-            {State.DISABLED: StyleOverride(body_colour=BLUE)},
-        )
+# endregion
+
+
+# region --- DrawnSkin: corner radius -----------------------------------------
+
+
+def test_drawn_skin_oversize_radius_returns_pill_shape():
+    style_1 = replace(
+        ANY_STYLE,
+        body_colour=WHITE,
+        border_thickness_px=0,
+        corner_radius_px=5,
+        swell_px=0,
+        halo_thickness_px=0,
+    )
+    style_2 = replace(
+        ANY_STYLE,
+        body_colour=WHITE,
+        border_thickness_px=0,
+        corner_radius_px=1000,
+        swell_px=0,
+        halo_thickness_px=0,
     )
 
-    base_state_surface = drawn_skin.render((10, 10), State.BASE).image
-    disabled_state_surface = drawn_skin.render((10, 10), State.DISABLED).image
+    surface_1 = DrawnSkin().render((20, 10), style_1).image
+    surface_2 = DrawnSkin().render((20, 10), style_2).image
 
-    assert base_state_surface.get_at((5, 5)) == WHITE
-    assert disabled_state_surface.get_at((5, 5)) == BLUE
-
-
-def test_render_instances_return_unique_surfaces():
-    drawn_skin = DrawnSkin(DEFAULT_THEME)
-
-    surface_1 = drawn_skin.render(ANY_SIZE, State.BASE).image
-    surface_2 = drawn_skin.render(ANY_SIZE, State.BASE).image
-
-    assert surface_1 is not surface_2
-
-
-def test_oversize_radius_returns_pill_shape():
-    drawn_skin_1 = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                body_colour=WHITE,
-                border_thickness_px=0,
-                corner_radius_px=5,
-                swell_px=0,
-                halo_thickness_px=0,
-            ),
-            {},
-        )
-    )
-
-    drawn_skin_2 = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                body_colour=WHITE,
-                border_thickness_px=0,
-                corner_radius_px=1000,
-                swell_px=0,
-                halo_thickness_px=0,
-            ),
-            {},
-        )
-    )
-
-    surface_1 = drawn_skin_1.render((20, 10), State.BASE).image
-    surface_2 = drawn_skin_2.render((20, 10), State.BASE).image
-
-    # check that image is a pill shape not a rectangle
+    # corners are transparent, so both shapes are rounded, not rectangles
     assert surface_1.get_at((0, 0))[3] == 0
     assert surface_2.get_at((0, 0))[3] == 0
 
+    # radius 1000 is clamped to 5, half the shorter side, so both give the
+    # same pill
     non_transparent_mask_1 = pg.mask.from_surface(surface_1, 0)
     non_transparent_mask_2 = pg.mask.from_surface(surface_2, 0)
 
@@ -421,23 +420,19 @@ def test_oversize_radius_returns_pill_shape():
     assert non_transparent_mask_2.count() == overlap_bits
 
 
-def test_negative_derived_corner_radius_gives_square_corner():
-    drawn_skin = DrawnSkin(
-        Theme(
-            replace(
-                DEFAULT_THEME.base_style,
-                body_colour=WHITE,
-                corner_radius_px=0,
-                border_thickness_px=0,
-                swell_px=-2,
-                halo_thickness_px=0,
-            ),
-            {},
-        )
+def test_drawn_skin_negative_derived_corner_radius_gives_square_corner():
+    style = replace(
+        ANY_STYLE,
+        body_colour=WHITE,
+        corner_radius_px=0,
+        border_thickness_px=0,
+        swell_px=-2,
+        halo_thickness_px=0,
     )
 
-    surface = drawn_skin.render((10, 10), State.BASE).image
+    surface = DrawnSkin().render((10, 10), style).image
 
+    # a swell of -2 makes the derived radius -2, which is clamped to 0
     assert surface.get_at((0, 0)) == WHITE
 
 
