@@ -1,1 +1,1 @@
-"""A Button that toggles a checked state."""
+"""Checkbox, a Button that toggles a checked state."""

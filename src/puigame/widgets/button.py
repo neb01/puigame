@@ -1,1 +1,1 @@
-"""An interactive widget that activates when pressed and released."""
+"""Button, an interactive widget that activates when pressed and released."""

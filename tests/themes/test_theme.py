@@ -15,7 +15,6 @@ from puigame.themes.theme import (
 
 # region --- Constants --------------------------------------------------------
 
-
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
@@ -130,14 +129,8 @@ def test_stored_style_overrides_copy_is_same_as_given():
     assert theme.style_overrides == ANY_STYLE_OVERRIDES
 
 
-def test_assigning_to_theme_style_overrides_raises():
-    theme = Theme(
-        BASE_STYLE,
-        {
-            State.DISABLED: StyleOverride(body_colour=RED),
-            State.HIGHLIGHTED: StyleOverride(body_colour=BLUE),
-        },
-    )
+def test_adding_key_to_style_overrides_raises():
+    theme = Theme(BASE_STYLE, ANY_STYLE_OVERRIDES)
 
     with pytest.raises(TypeError):
         theme.style_overrides[State.CHECKED] = StyleOverride(body_colour=RED)  # pyright: ignore[reportIndexIssue]
@@ -241,14 +234,13 @@ def test_later_override_wins_when_multiple_flags_change_same_field():
 
 
 def test_style_override_fields_are_subset_of_style():
-    style_field_names = []
-    for field in fields(Style):
-        style_field_names.append(field.name)
+    style_field_names = {field.name for field in fields(Style)}
+    style_override_field_names = {field.name for field in fields(StyleOverride)}
 
-    for field in fields(StyleOverride):
-        assert field.name in style_field_names
+    assert style_override_field_names - style_field_names == set()
 
 
+# iterating State itself skips BASE, which has no bits set
 @pytest.mark.parametrize("state", State.__members__.values())
 def test_default_theme_provides_style_for_every_state(state):
     assert isinstance(DEFAULT_THEME.style_for(state), Style)

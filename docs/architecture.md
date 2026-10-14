@@ -38,14 +38,14 @@ Out of scope: event buses, scene management, game key bindings, and game-specifi
 
 A game uses puigame through a `UI` object. Each `UI` combines two parts:
 
-- **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It fills the UI's area (the whole screen by default) instead of anchoring to a parent, and can never be given a parent itself. Every widget added to the UI becomes its child, directly or further down the tree.
+- **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It fills the UI's area (the whole screen by default) instead of anchoring to a parent, has no parent itself, and holds the UI's theme. Every widget in the UI is its child, directly or further down the tree.
 - **`ui.manager`**: a `UIManager` that runs the UI: input routing, the highlight, press capture, and the cursor (see [Input](#input)).
 
-`UI` passes the common calls through, so a game rarely needs either part directly. `ui.add(widget)` is shorthand for `widget.set_parent(ui.root)`.
+`UI` passes the common calls through, so a game rarely needs either part directly. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with `ui.root` as its parent.
 
 ```python
 ui = puigame.UI()
-ui.add(puigame.Button(..., text="Back", on_click=go_back))
+puigame.Button(ui.root, ..., text="Back", on_click=go_back)
 
 while running:
     for event in pygame.event.get():
@@ -99,9 +99,9 @@ The default is stated in the `update()` docstring, so it appears in editor toolt
 The hierarchy is shallow and describes **behaviour** only. Appearance (skins) and content (text) are added by composition.
 
 ```
-Widget                  pygame Sprite: rect, anchor, children, flags, skin, state-surface cache
-├── UIRoot              top of a UI's tree: fills the UI's area, never has a parent
-├── Container           invisible group of children (no skin)
+Widget                  pygame Sprite: rect, anchor, fixed parent, children, flags, skin, per-state image cache
+├── UIRoot              top of a UI's tree: fills the UI's area, holds the theme, has no parent
+├── Container           invisible group of children (NoSkin)
 ├── Panel               Container behaviour with a skin, so it has a background
 ├── Label               + Text component, non-interactive
 └── InteractiveWidget   + highlightable, plus the highlight and activation behaviour interactive widgets share
@@ -111,7 +111,7 @@ Widget                  pygame Sprite: rect, anchor, children, flags, skin, stat
 
 CheckboxGroup           helper: mutual exclusion between checkboxes (radio behaviour)
 WidgetGroup             LayeredUpdates subclass that draws the widget tree
-UI                      composes root (a UIRoot) and manager; owns the theme and root group
+UI                      composes root (a UIRoot, which holds the theme) and manager; owns the root group
 UIManager               runs one UI: routes input, tracks the highlight and presses, manages the cursor
 ```
 
@@ -127,31 +127,26 @@ Every widget is a `pygame.sprite.Sprite` with an `image` and a `rect`, so widget
 
 ### Parents and children
 
-Every widget stores a reference to its `parent` (or `None`) and an ordered list of its children. `children` is read-only: it returns a tuple, so it cannot be appended to or replaced, and `set_parent()` is the only way to change it.
+Every widget except a `UIRoot` is created with its `parent` as the first argument, and keeps that parent for its whole life: widgets cannot be moved to a new parent. This keeps the tree simple, and guarantees that every widget can reach its UI's theme from the moment it is created. Construction is therefore top-down: a parent exists before its children.
 
-- A widget added to a `UI` becomes a child of `ui.root`, which covers the UI's area (the whole screen by default). Every widget in a UI therefore has a parent, except the root itself. A widget not yet in any UI has no parent and stays at `(0, 0)`.
-- A parent, children, or both can be passed when a widget is created.
-- `set_parent()` is the single place where the link changes, so both sides always agree. Passing children on creation calls `set_parent()` on each child.
+- `parent` and `children` are read-only. `children` returns a tuple of the widget's children in the order they were created, so it cannot be appended to or replaced.
+- A new widget joins its parent's children only once the rest of its setup has succeeded, so a widget whose creation raised is never left in the tree.
+- A widget at the top level of a UI is created with `ui.root` as its parent. Every widget in a UI therefore has a parent, except the root itself.
+- Each widget keeps a reference to the `UIRoot` at the top of its tree, copied from its parent. Parents never change, so neither does the root, and the reference cannot go out of date.
+- To move a widget, kill it and create a new one under the new parent. Moving widgets directly is a later feature.
 
-`set_parent(new_parent)`:
+`kill()` removes a widget for good. It extends pygame's `Sprite.kill()`: the widget leaves its parent's children, each of its children is killed in turn, and every one of them leaves all its sprite groups. Like `Sprite.kill()`, it can safely be called more than once. A killed widget keeps its link to its old parent, but should not be used again. `UIRoot.kill()` raises `TypeError`: to remove a whole UI, the game drops every reference to it.
 
-1. Does nothing if `new_parent` is already the parent.
-2. Removes this widget from the old parent's children, if there was one.
-3. Sets `new_parent` as this widget's parent.
-4. Adds this widget to `new_parent`'s children.
-
-Passing `None` detaches the widget from the tree.
-
-`UIRoot` overrides `set_parent()` to raise an error if it is given a parent, since the root always sits at the top of its tree. For other widgets, before changing anything, `set_parent()` raises `ValueError` if `new_parent` is the widget itself or one of its descendants, since either would create a loop in the tree.
+`UIRoot` is created differently from other widgets, since it has no parent. It sets up its root reference and its theme itself, then runs the setup that every widget shares, without calling `Widget.__init__()`.
 
 ### Flags
 
 Each widget has its **own** flags, which parents never overwrite, and a tree-aware version of each:
 
-| Own flag | Taking parents into account |
+| Own flag | Taking ancestors into account |
 |---|---|
-| `visible` | `visible_in_tree` |
 | `enabled` | `enabled_in_tree` |
+| `visible` | `visible_in_tree` |
 
 - The `_in_tree` values are **calculated on demand**, never stored: a widget is visible in the tree only if it and every widget above it are visible (the same for enabled).
 - `InteractiveWidget` adds a third pair: `highlightable` (default `True`) and `highlightable_in_tree`, which is true only if the widget's own `highlightable` is true **and** it is `visible_in_tree` and `enabled_in_tree`. Setting `highlightable=False` lets an interactive widget be skipped by highlighting, for example a button that should only respond to the mouse. See [Highlight](#highlight).
@@ -164,16 +159,16 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 
 | Component | Held by | Job |
 |---|---|---|
-| **`Skin`** | Every `Widget` (optional; `None` means transparent) | Renders the widget's background surface for a given size and `State` (see [Skins](#skins)) |
+| **`Skin`** | Every `Widget` (required; `Container` and `UIRoot` use `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
 | **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string, font, and colour; is positioned within its owner by an anchor and margin; renders onto the owner's image; notifies the owner when it changes |
 
 A `Text` component is **not** a child widget: it is not a Sprite, receives no input, and is drawn into its owner's image rather than on its own.
 
 ### Skins
 
-A skin turns a size and a state into a surface, following the rules in the theme. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
+A skin turns a size and a style into a surface. Skins hold no per-widget data and no theme: the widget looks up the `Style` for each of its states in its theme and passes it in. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
 
-`Skin` is an abstract base class: it defines `render(size, state)` and cannot be created itself. Every skin's `render()` returns a `BlitOffsetImage`: a **new** surface, as `image`, so a widget can draw its content onto it without affecting other widgets, together with a **blit offset**, as `blit_offset`.
+`Skin` is an abstract base class: it defines `render(size, style)` and cannot be created itself. Every skin takes the same parameters, so any skin can stand in for any other; a skin that ignores the style, such as `TransparentSkin`, still accepts it. Every skin's `render()` returns a `BlitOffsetImage`: a **new** surface, as `image`, so a widget can draw its content onto it without affecting other widgets, together with a **blit offset**, as `blit_offset`.
 
 - Without effects, the surface is exactly the requested size and the offset is `(0, 0)`.
 - A halo or a positive swell makes the surface **larger** than the widget, and a negative swell makes it smaller. The offset says how far up and to the left of `rect.topleft` to draw the surface, so the drawing stays centred on the widget's rect.
@@ -181,7 +176,8 @@ A skin turns a size and a state into a surface, following the rules in the theme
 
 ![Drawing a skin surface at rect.topleft minus blit_offset](images/skin_offset.svg)
 
-- **`TransparentSkin`**: a fully transparent surface, the same in every state. For widgets with no background.
+- **`NoSkin`**: an empty (0x0) surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw. It is internal to puigame and not re-exported. An empty surface is the one exception to the size rules above.
+- **`TransparentSkin`**: a fully transparent surface of the widget's size, the same in every state. For widgets with content but no background, such as a bare label: the content is drawn onto it.
 - **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
 - **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
@@ -218,15 +214,15 @@ A `Theme` holds the shared rules skins and text read. It is made of two parts:
 - Overrides combine best when each state changes its own fields: for example, highlighting changes the border, checking changes the body, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the order of `style_overrides` decides which wins.
 - Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
 - Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
-- The theme lives on the **`UI`**, so every widget in it draws consistently.
-- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640×360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font (`BundledTypeface.PYGAME_DEFAULT`) until a bundled font is added.
-- **Later:** the `UI` could assign individual widgets, or whole subtrees, a different theme from its default.
+- The theme lives on the UI's **`UIRoot`**, and every widget reaches it through the root of its tree, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font (`BundledTypeface.PYGAME_DEFAULT`).
+- **Later:** individual widgets, or whole subtrees, could have a different theme from the UI's. An earlier attempt, with themes inherited down the tree, is kept at the tag `archive/per-widget-themes`.
 
 ## Anchors
 
 Positions are set with a nine-point `Anchor` (`CENTRE`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `MID_LEFT`, `MID_RIGHT`, `MID_TOP`, `MID_BOTTOM`) plus a margin.
 
-- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. Widgets added directly to a `UI` are anchored to `ui.root`, which covers the UI's area (the whole screen by default).
+- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A top-level widget is created with `ui.root` as its parent, so it is anchored to the UI's area (the whole screen by default).
 - A `Text` component is anchored relative to its **owner widget's rect**.
 
 ### Anchor points
@@ -292,7 +288,7 @@ For example, with `anchor=TOP_LEFT` and `parent_anchor=BOTTOM_LEFT`, step 1 hang
 
 ### Absolute placement
 
-`widget.place_at_pos((x, y))` places the widget's top-left corner at `(x, y)` relative to its parent's top-left corner (screen coordinates, for a widget added directly to a full-screen `UI`). It is shorthand that sets `anchor` and `parent_anchor` to `TOP_LEFT` and `margin` to `(x, y)`, not a separate positioning system: layout still runs as normal, and changing the parent's position moves the widget with it. A single number raises `TypeError`, since a position needs both coordinates; the check happens before anything changes, so a rejected call leaves the widget as it was.
+`widget.place_at_pos((x, y))` places the widget's top-left corner at `(x, y)` relative to its parent's top-left corner (screen coordinates, for a top-level widget in a full-screen `UI`). It is shorthand that sets `anchor` and `parent_anchor` to `TOP_LEFT` and `margin` to `(x, y)`, not a separate positioning system: layout still runs as normal, and changing the parent's position moves the widget with it. A single number raises `TypeError`, since a position needs both coordinates; the check happens before anything changes, so a rejected call leaves the widget as it was.
 
 ### Offset
 
@@ -309,7 +305,7 @@ Both are stored as `pygame.Vector2`, whatever form they are given in, so layout 
 
 ## State
 
-A widget's state is a `State`, an `enum.Flag`. It is derived from the widget's flags and from interaction, so it describes behaviour as well as appearance, and it selects the widget's cached surface (see [Rendering and caching](#rendering-and-caching)):
+A widget's state is a `State`, an `enum.Flag`. It is derived from the widget's flags and from interaction, so it describes behaviour as well as appearance, and it selects the widget's cached image (see [Rendering and caching](#rendering-and-caching)):
 
 ```python
 class State(Flag):
@@ -365,10 +361,10 @@ Each widget builds its image in layers:
 
 Caching rules:
 
-- **Per widget, per state**: one surface for every combination in the class's [`possible_states`](#valid-states).
+- **Per widget, per state**: one image for every combination in the class's [`possible_states`](#valid-states).
 - **Eager**: all states are rendered when the widget is created. Lazy rendering (on first use) is a later optimisation.
-- **State changes swap `image`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its surface, so `image` always matches the widget's flags and its parents' flags.
-- **Invalidation**: the cache is cleared and rebuilt whenever text, size, skin, or theme changes. These values are changed only through setters, which handle the rebuild.
+- **State changes swap `image`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its image, so `image` always matches the widget's flags and its ancestors' flags.
+- **Invalidation**: `rebuild_image_cache()` renders every state again. Setters for text and size, when added, will call it. Assigning a new `skin` does not, so `rebuild_image_cache()` is called afterwards. The theme is fixed for the life of the UI, so it never makes the cache out of date.
 
 Because rendering happens at creation, widgets must be created after `pygame.init()`. Converting surfaces for display (`convert_alpha()`) also requires a display window to exist.
 
@@ -376,7 +372,7 @@ Because rendering happens at creation, widgets must be created after `pygame.ini
 
 `WidgetGroup` subclasses pygame's `LayeredUpdates`:
 
-- **Layers follow the tree**: children draw above their parents. Layers are corrected when widgets are added, moved in the tree, or reordered, so layering can change while the game runs.
+- **Layers follow the tree**: children draw above their parents. Layers are corrected whenever the tree changes, so layering can change while the game runs.
 - **Hidden widgets are skipped**: widgets that are not `visible_in_tree` are not drawn.
 
 The `UI` owns the root `WidgetGroup`. Games that keep their own sprite groups can still add widgets to them, since widgets are ordinary sprites.
@@ -429,7 +425,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 ## Positions and types
 
 - **`pygame.Rect` internally**, for pixel-exact positioning.
-- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset), so a widget sits at `(0, 0)` until it has a parent, for example by being added to a `UI`. Absolute placement uses [`place_at_pos()`](#absolute-placement).
+- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset), so a widget's rect sits at `(0, 0)` until layout first runs. Absolute placement uses [`place_at_pos()`](#absolute-placement).
 - Smooth movement, if needed, keeps a precise `pygame.Vector2` and rounds it into the `Rect`.
 - pygame types use pygame-ce's `pygame.typing` aliases. puigame defines its own `Protocol` classes only for its own concepts.
 
@@ -443,8 +439,8 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 
 ## Naming and code conventions
 
-- **State flags** are adjectives: `visible`, `enabled`, `highlightable`, `checked`; `State` members likewise (`HIGHLIGHTED`, `PRESSED`, `EDITING`).
-- **Tree-aware values** end in `_in_tree`: `visible_in_tree`, `enabled_in_tree`, `highlightable_in_tree`. They are calculated on demand, never stored.
+- **State flags** are adjectives: `enabled`, `visible`, `highlightable`, `checked`; `State` members likewise (`HIGHLIGHTED`, `PRESSED`, `EDITING`).
+- **Tree-aware values** end in `_in_tree`: `enabled_in_tree`, `visible_in_tree`, `highlightable_in_tree`. They are calculated on demand, never stored.
 - **Permissions** start with `can_`: `can_untoggle`.
 - **Possession** starts with `has_`: `has_text`, `has_children`.
 - **Methods** are verbs: `show()`, `hide()`, `toggle()`, `set_text()`.
@@ -464,7 +460,7 @@ src/puigame/
 │   └── images/
 ├── components/                objects widgets hold
 │   ├── __init__.py
-│   ├── skin.py                Skin, DrawnSkin, ImageSkin (nine-slice)
+│   ├── skin.py                Skin, NoSkin, TransparentSkin, DrawnSkin, ImageSkin
 │   └── text.py                Text and the font cache
 ├── core/
 │   ├── __init__.py
@@ -514,9 +510,9 @@ Each layer imports only from the layers above it:
 
 **Features:**
 
-- The widget tree, with `set_parent()` and the `_in_tree` flags
+- The widget tree, with fixed parents, `kill()`, and the `_in_tree` flags
 - Layout every frame from anchors, margin, and offset, plus `place_at_pos()`
-- Eager per-state surface caching
+- Eager per-state image caching
 - A single highlight shared by mouse and keyboard, with keyboard navigation that can be turned off
 - Press-and-release activation with mouse capture, and a mouse-button enable map
 - Text editing in `TextBox`
@@ -524,7 +520,7 @@ Each layer imports only from the layers above it:
 - Optional mask hit-testing
 - Bundled default art and fonts, loaded with `importlib.resources`
 
-**Later:** lazy caching, per-widget themes assigned through the `UI`, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
+**Later:** lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
 
 ## Build order
 
@@ -534,15 +530,16 @@ Each step is one branch and pull request, with tests:
 2. `chore/package-structure`: subpackages, `__init__.py` files, and module stubs
 3. `feat/widget-base`: `Anchor`, `State`, the abstract `Skin` with `TransparentSkin`, and a first pass at `Widget`, with the tree, flags, and state cache (replaces the `hello()` placeholder)
 4. `feat/theme-drawn-skin`: `Theme` and `DrawnSkin`
-5. `feat/text`: `Text` component and font cache
-6. `feat/layout`: positioning from anchors, margin, and offset, plus `place_at_pos()`
-7. `feat/widget-group`: `WidgetGroup`
-8. `feat/container-panel-label`: `Container`, `Panel`, and `Label`
-9. `feat/ui`: `InteractiveWidget`, `UIRoot`, `UIManager`, and `UI`: the root widget, input routing, highlight, keyboard mode, and cursor management
-10. `feat/button`: `Button`
-11. `feat/checkbox`: `Checkbox` and `CheckboxGroup`
-12. `feat/textbox`: `TextBox`
-13. `feat/image-skin`: `ImageSkin`, nine-slice scaling, pixel-art option, and default art
+5. `feat/widget-tree`: fixed parents, `kill()`, `UIRoot`, `NoSkin`, and `Container`
+6. `feat/text`: `Text` component and font cache
+7. `feat/layout`: positioning from anchors, margin, and offset, plus `place_at_pos()`
+8. `feat/widget-group`: `WidgetGroup`
+9. `feat/panel-label`: `Panel` and `Label`
+10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: input routing, highlight, keyboard mode, and cursor management
+11. `feat/button`: `Button`
+12. `feat/checkbox`: `Checkbox` and `CheckboxGroup`
+13. `feat/textbox`: `TextBox`
+14. `feat/image-skin`: `ImageSkin`, nine-slice scaling, pixel-art option, and default art
 
 ## Open questions
 

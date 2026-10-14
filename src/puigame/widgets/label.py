@@ -1,1 +1,1 @@
-"""A non-interactive widget that displays text."""
+"""Label, a non-interactive widget that displays text."""

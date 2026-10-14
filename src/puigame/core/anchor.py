@@ -1,4 +1,4 @@
-"""The Anchor enum, and matching anchors to position one rect in another."""
+"""Anchor, the named points on a rect, and positioning one rect in another by them."""
 
 import math
 from enum import Enum, unique

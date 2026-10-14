@@ -1,1 +1,1 @@
-"""A container with a skin, giving its children a visible background."""
+"""Panel, a container with a skin, giving its children a visible background."""

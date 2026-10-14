@@ -1,4 +1,4 @@
-"""Sprite group that draws the widget tree.
+"""WidgetGroup, the sprite group that draws the widget tree.
 
 WidgetGroup extends pygame's LayeredUpdates (itself an extension of the
 standard Group). It keeps layers in line with the widget hierarchy, so

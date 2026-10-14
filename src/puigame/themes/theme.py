@@ -1,4 +1,4 @@
-"""Shared rules for drawing UI elements.
+"""Themes, which hold the shared rules for drawing widgets.
 
 A theme holds a base style and the changes each state makes to it. Skins and
 text ask the theme for the style of a widget's current state, so every widget
@@ -17,7 +17,7 @@ from types import MappingProxyType
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 
-# A colour as (red, green, blue, alpha), each from 0 to 255.
+# a colour as (red, green, blue, alpha), each from 0 to 255
 RGBA = tuple[int, int, int, int]
 
 
@@ -94,8 +94,8 @@ class Style:
             See ``FadeProfile``.
         halo_thickness_px: Halo thickness in pixels, drawn outside the
             widget's edge. 0 means no halo.
-        swell_px: How many pixels the widget grows by on each
-            side. Negative values shrink it. 0 means no swell.
+        swell_px: How many pixels the widget grows by on each side. Negative
+            values shrink it. 0 means no swell.
         text_colour: Text colour as RGBA.
         text_typeface: Typeface used for text: a ``BundledTypeface``, or the
             path to a font file supplied by the game.
@@ -189,15 +189,17 @@ class StyleOverride:
             ``None`` to keep it.
         halo_thickness_px: Halo thickness in pixels, or ``None`` to keep
             it. 0 turns the halo off.
-        swell_px: How many pixels the widget grows by on each
-            side, or ``None`` to keep it. Negative values shrink it, and 0
-            turns the swell off.
+        swell_px: How many pixels the widget grows by on each side, or
+            ``None`` to keep it. Negative values shrink it, and 0 turns the
+            swell off.
         text_colour: Text colour as RGBA, or ``None`` to keep it.
     """
 
     # general appearance options
     body_colour: RGBA | None = None  # alpha channel controls transparency
     border_colour: RGBA | None = None
+
+    # effect options
     halo_colour: RGBA | None = None
     halo_fade_profile: FadeProfile | None = None
     halo_thickness_px: int | None = None  # 0 for no halo
@@ -254,10 +256,10 @@ class Theme:
         if State.BASE in self.style_overrides:
             raise ValueError("style_overrides cannot use State.BASE as a key")
 
-        for state in self.style_overrides:
-            if len(state) > 1:
+        for flag in self.style_overrides:
+            if len(flag) > 1:
                 raise ValueError(
-                    f"style_overrides cannot use combined flags as a key, got {state}"
+                    f"style_overrides cannot use combined flags as a key, got {flag}"
                 )
 
         dict_copy = dict(self.style_overrides)
@@ -282,11 +284,11 @@ class Theme:
 
         for flag, style_override in self.style_overrides.items():
             if flag in state:
-                changed_fields: dict[str, object] = {}
-
-                for field, value in asdict(style_override).items():
-                    if value is not None:
-                        changed_fields[field] = value
+                changed_fields = {
+                    field: value
+                    for field, value in asdict(style_override).items()
+                    if value is not None
+                }
 
                 result = replace(result, **changed_fields)
 
