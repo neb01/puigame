@@ -243,7 +243,7 @@ With the same anchor on both, the widget sits **inside** its parent (for example
 
 ### Margins
 
-`margin` is either a single number or an `(x, y)` pair. A single number `m` is shorthand for `(m, m)`.
+`margin` is an `(x, y)` pair. A single number raises `TypeError` (see [Offset](#offset)).
 
 The margin's direction comes from the **widget's own anchor**: a positive margin moves the widget from its anchor point towards its own centre, and a negative margin moves it the other way. The parent's anchor plays no part in the direction.
 
@@ -262,12 +262,12 @@ With the same anchor on the widget and its parent, a positive margin moves the w
 
 Examples:
 
-- `anchor=BOTTOM_RIGHT, margin=10` places the widget 10 px left of and 10 px above its parent's bottom-right corner.
+- `anchor=BOTTOM_RIGHT, margin=(10, 10)` places the widget 10 px left of and 10 px above its parent's bottom-right corner.
 - `anchor=TOP_LEFT, margin=(20, 8)` places it 20 px in from the left and 8 px down from the top.
 - `anchor=MID_TOP, parent_anchor=MID_BOTTOM, margin=(0, 4)` places it directly below its parent with a 4 px gap.
-- `anchor=TOP_RIGHT, margin=-8` moves the widget 8 px up and 8 px right of its parent's top-right corner, so it overlaps the corner, like a notification badge.
-- `anchor=TOP_LEFT, parent_anchor=BOTTOM_RIGHT, margin=4` places the widget just outside its parent's bottom-right corner, with a 4 px gap. Here a positive margin moves the widget away from its parent, because the direction comes from the widget's own anchor.
-- With the same anchors, `margin=-8` moves the widget's top-left corner 8 px back inside its parent's corner, so it overlaps the corner from inside.
+- `anchor=TOP_RIGHT, margin=(-8, -8)` moves the widget 8 px up and 8 px right of its parent's top-right corner, so it overlaps the corner, like a notification badge.
+- `anchor=TOP_LEFT, parent_anchor=BOTTOM_RIGHT, margin=(4, 4)` places the widget just outside its parent's bottom-right corner, with a 4 px gap. Here a positive margin moves the widget away from its parent, because the direction comes from the widget's own anchor.
+- With the same anchors, `margin=(-8, -8)` moves the widget's top-left corner 8 px back inside its parent's corner, so it overlaps the corner from inside.
 
 ![Positive and negative margins, with the same and different anchors](images/margin_signs.svg)
 
@@ -294,11 +294,11 @@ For example, with `anchor=TOP_LEFT` and `parent_anchor=BOTTOM_LEFT`, step 1 hang
 `offset` is an optional `(x, y)` nudge in **screen coordinates** (pygame's convention: `+x` is right, `+y` is down), applied after the anchor and margin. It works on every anchor, including centred axes, where margins have no inward direction:
 
 - `anchor=CENTRE, offset=(0, -20)` places a widget 20 px above the centre of its parent.
-- `anchor=MID_BOTTOM, margin=12, offset=(20, 0)` places it 12 px up from the bottom edge, then 20 px right of centre.
+- `anchor=MID_BOTTOM, margin=(0, 12), offset=(20, 0)` places it 12 px up from the bottom edge, then 20 px right of centre.
 
 The two parameters keep one meaning each: `margin` is space relative to the anchors, `offset` is a plain screen-space shift.
 
-`margin` accepts a single number as shorthand for both axes, but `offset` requires an `(x, y)` pair: a single number raises `TypeError`, since an equal shift on both axes is a diagonal move and rarely intended.
+`margin` and `offset` both require an `(x, y)` pair, and a single number raises `TypeError`. This keeps every position-like value in one shape, matching pygame-ce, where positions and sizes are always pairs. For `offset` in particular, an equal shift on both axes is a diagonal move and rarely intended.
 
 Both are stored as `pygame.Vector2`, whatever form they are given in, so layout can use them in calculations directly. They are properties: assigning a new value converts it, while changing the stored vector in place (for example `widget.offset.y -= 2` to animate a slide) works as expected.
 

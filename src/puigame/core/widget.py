@@ -45,7 +45,7 @@ class Widget(pg.sprite.Sprite):
         *,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
-        margin: float | Point = 0,
+        margin: Point = (0, 0),
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
@@ -63,11 +63,10 @@ class Widget(pg.sprite.Sprite):
             anchor: Point on this widget used for positioning.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Defaults to the same point as ``anchor``.
-            margin: Space between the matched anchor points. Positive values
-                move the widget from its anchor point towards its own centre,
-                and negative values move it the other way. A single number
-                applies to both axes; an ``(x, y)`` pair sets each axis.
-                Ignored on centred axes.
+            margin: ``(x, y)`` space between the matched anchor points.
+                Positive values move the widget from its anchor point towards
+                its own centre, and negative values move it the other way.
+                Ignored on centred axes. Defaults to no margin.
             offset: Shift in screen coordinates (``+x`` right, ``+y`` down),
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the widget responds to input.
@@ -76,6 +75,8 @@ class Widget(pg.sprite.Sprite):
         Raises:
             ValueError: If either dimension of ``size`` is negative. The widget
                 is not added to ``parent``.
+            TypeError: If ``margin`` or ``offset`` is a single number rather
+                than an ``(x, y)`` pair. The widget is not added to ``parent``.
         """
         self._parent: Widget | None = parent
         # parents are fixed, so a widget's root never changes
@@ -103,7 +104,7 @@ class Widget(pg.sprite.Sprite):
         *,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
-        margin: float | Point = 0,
+        margin: Point = (0, 0),
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
@@ -118,6 +119,8 @@ class Widget(pg.sprite.Sprite):
 
         Raises:
             ValueError: If either dimension of ``size`` is negative.
+            TypeError: If ``margin`` or ``offset`` is a single number rather
+                than an ``(x, y)`` pair.
         """
         if min(size[0], size[1]) < 0:
             raise ValueError(f"size cannot be negative, got {size} px")
@@ -192,13 +195,20 @@ class Widget(pg.sprite.Sprite):
     def margin(self) -> pg.Vector2:
         """The margin as an ``(x, y)`` vector.
 
-        Assigning a single number sets both axes; assigning an ``(x, y)`` pair
-        sets each axis. Either is stored as a ``Vector2``.
+        Assigning any ``(x, y)`` pair, such as a tuple or another ``Vector2``,
+        stores a copy as a ``Vector2``, so it can be changed in place.
+        Assigning a single number raises ``TypeError``.
         """
         return self._margin
 
     @margin.setter
-    def margin(self, value: float | Point) -> None:
+    def margin(self, value: Point) -> None:
+        if isinstance(value, (int, float)):
+            raise TypeError(
+                f"margin cannot be a single value, got {value!r}; "
+                "margin must be an (x, y) pair"
+            )
+
         self._margin = pg.Vector2(value)
 
     @property

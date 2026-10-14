@@ -22,7 +22,7 @@ class Container(Widget):
         *,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
-        margin: float | Point = 0,
+        margin: Point = (0, 0),
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
@@ -36,9 +36,8 @@ class Container(Widget):
             anchor: Point on this container used for positioning.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Defaults to the same point as ``anchor``.
-            margin: Space between the matched anchor points, as for
-                ``Widget``. A single number applies to both axes; an ``(x, y)``
-                pair sets each axis.
+            margin: ``(x, y)`` space between the matched anchor points, as
+                for ``Widget``. Defaults to no margin.
             offset: Shift in screen coordinates (``+x`` right, ``+y`` down),
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the container and its children respond to input.
@@ -47,6 +46,9 @@ class Container(Widget):
         Raises:
             ValueError: If either dimension of ``size`` is negative. The
                 container is not added to ``parent``.
+            TypeError: If ``margin`` or ``offset`` is a single number rather
+                than an ``(x, y)`` pair. The container is not added to
+                ``parent``.
         """
         super().__init__(
             parent,
