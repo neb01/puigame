@@ -33,7 +33,7 @@
   <circle class="dot" cx="210" cy="110" r="5"/>
   <circle class="dot" cx="170" cy="150" r="5"/>
   <text class="text small" x="30" y="250">anchor=TOP_RIGHT</text>
-  <text class="text small" x="30" y="268">margin=40</text>
+  <text class="text small" x="30" y="268">margin=(40, 40)</text>
   <text class="text small" x="30" y="286">moves inwards</text>
   <text class="text label" x="390" y="34">Same anchor, negative margin</text>
   <rect class="parent" x="400" y="110" width="170" height="100" rx="4"/>
@@ -51,7 +51,7 @@
   <circle class="dot" cx="570" cy="110" r="5"/>
   <circle class="dot" cx="610" cy="70" r="5"/>
   <text class="text small" x="390" y="250">anchor=TOP_RIGHT</text>
-  <text class="text small" x="390" y="268">margin=-40</text>
+  <text class="text small" x="390" y="268">margin=(-40, -40)</text>
   <text class="text small" x="390" y="286">overlaps the corner from outside</text>
   <text class="text label" x="30" y="354">Different anchors, positive margin</text>
   <rect class="parent" x="40" y="390" width="160" height="80" rx="4"/>
@@ -67,7 +67,7 @@
   <circle class="dot" cx="200" cy="470" r="5"/>
   <circle class="dot" cx="240" cy="510" r="5"/>
   <text class="text small" x="30" y="592">anchor=TOP_LEFT, parent_anchor=BOTTOM_RIGHT</text>
-  <text class="text small" x="30" y="610">margin=40</text>
+  <text class="text small" x="30" y="610">margin=(40, 40)</text>
   <text class="text small" x="30" y="628">moves outside the corner</text>
   <text class="text label" x="390" y="354">Different anchors, negative margin</text>
   <rect class="parent" x="400" y="390" width="160" height="80" rx="4"/>
@@ -85,6 +85,6 @@
   <circle class="dot" cx="560" cy="470" r="5"/>
   <circle class="dot" cx="520" cy="430" r="5"/>
   <text class="text small" x="390" y="592">anchor=TOP_LEFT, parent_anchor=BOTTOM_RIGHT</text>
-  <text class="text small" x="390" y="610">margin=-40</text>
+  <text class="text small" x="390" y="610">margin=(-40, -40)</text>
   <text class="text small" x="390" y="628">overlaps the corner from inside</text>
 </svg>

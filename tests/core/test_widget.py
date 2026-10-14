@@ -85,12 +85,11 @@ def test_negative_size_raises(ui_root: UIRoot, size):
 @pytest.mark.parametrize(
     ("margin_values", "expected_vector"),
     [
-        (1.0, pg.Vector2(1.0, 1.0)),
         ((1.0, 2.0), pg.Vector2(1.0, 2.0)),
         ([2.0, 3.0], pg.Vector2(2.0, 3.0)),
         (pg.Vector2(4.0, 2.0), pg.Vector2(4.0, 2.0)),
     ],
-    ids=["single float", "tuple", "list", "pg.Vector2"],
+    ids=["tuple", "list", "pg.Vector2"],
 )
 def test_margin_converts_to_vec2_on_correct_axes(
     ui_root: UIRoot,
@@ -101,6 +100,12 @@ def test_margin_converts_to_vec2_on_correct_axes(
 
     assert isinstance(widget.margin, pg.Vector2)
     assert widget.margin == expected_vector
+
+
+@pytest.mark.parametrize("margin_value", [1, 2.0], ids=["int", "float"])
+def test_setting_margin_to_single_value_raises(ui_root: UIRoot, margin_value):
+    with pytest.raises(TypeError):
+        Widget(ui_root, ANY_SIZE, ANY_SKIN, margin=margin_value)
 
 
 @pytest.mark.parametrize(
