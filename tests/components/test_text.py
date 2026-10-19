@@ -1,18 +1,22 @@
 from dataclasses import replace
+from pathlib import Path
 
 import pygame as pg
+import pytest
 
 from puigame.components.text import Text
 from puigame.core.anchor import Anchor
-from puigame.themes.theme import DEFAULT_THEME
+from puigame.themes.theme import DEFAULT_THEME, BundledTypeface
 
 # region --- Constants --------------------------------------------------------
 
 ANY_STRING = "snath is the specific word for the handle of a scythe"
+ANY_FONT_PATH = Path(__file__).parent.parent / "assets" / "fonts" / "neb0font.ttf"
 
 WHITE = (255, 255, 255, 255)
 BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
+
 # endregion
 
 
@@ -155,6 +159,54 @@ def test_render_does_not_antialias():
     }
 
     assert colours_present == {BLUE, BLACK}
+
+
+# endregion
+
+
+# region --- Font loading -----------------------------------------------------
+
+
+@pytest.mark.parametrize("bundled_typeface", [*BundledTypeface])
+def test_render_all_bundled_fonts_create_non_zero_images(bundled_typeface):
+    text = Text(ANY_STRING)
+    image = text.render(
+        (30, 40),
+        replace(
+            DEFAULT_THEME.base_style,
+            text_typeface=bundled_typeface,
+            text_font_size=12,
+        ),
+    ).image
+
+    assert image.width != 0
+    assert image.height != 0
+
+
+def test_render_missing_path_raises(tmp_path):
+    text = Text(ANY_STRING)
+    style = replace(
+        DEFAULT_THEME.base_style,
+        text_typeface=tmp_path / "missing.ttf",
+    )
+
+    with pytest.raises(FileNotFoundError):
+        text.render((30, 40), style)
+
+
+def test_render_can_take_typeface_path():
+    text = Text(ANY_STRING)
+
+    image = text.render(
+        (30, 40),
+        replace(
+            DEFAULT_THEME.base_style,
+            text_typeface=ANY_FONT_PATH,
+        ),
+    ).image
+
+    assert image.width != 0
+    assert image.height != 0
 
 
 # endregion
