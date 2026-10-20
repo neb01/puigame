@@ -47,21 +47,21 @@
   <rect class="body" x="184" y="141" width="112" height="68" rx="14"/>
   <rect class="wrect" x="188" y="145" width="104" height="60" rx="0"/>
   <text class="text small" x="240" y="262" text-anchor="middle">surface 148×104, border rect 128×84</text>
-  <text class="text small" x="240" y="278" text-anchor="middle">body rect 112×68, blit_offset 22</text>
+  <text class="text small" x="240" y="278" text-anchor="middle">body rect 112×68, pos −22</text>
   <rect class="halo" x="418" y="135" width="124" height="80" rx="20"/>
   <rect class="surface" x="418" y="135" width="124" height="80" rx="0"/>
   <rect class="border" x="428" y="145" width="104" height="60" rx="10"/>
   <rect class="body" x="436" y="153" width="88" height="44" rx="2"/>
   <rect class="wrect" x="428" y="145" width="104" height="60" rx="0"/>
   <text class="text small" x="480" y="262" text-anchor="middle">surface 124×80, border rect 104×60</text>
-  <text class="text small" x="480" y="278" text-anchor="middle">body rect 88×44, blit_offset 10</text>
+  <text class="text small" x="480" y="278" text-anchor="middle">body rect 88×44, pos −10</text>
   <rect class="halo" x="670" y="147" width="100" height="56" rx="8"/>
   <rect class="surface" x="670" y="147" width="100" height="56" rx="0"/>
   <rect class="border" x="680" y="157" width="80" height="36" rx="0"/>
   <rect class="body" x="688" y="165" width="64" height="20" rx="0"/>
   <rect class="wrect" x="668" y="145" width="104" height="60" rx="0"/>
   <text class="text small" x="720" y="262" text-anchor="middle">surface 100×56, border rect 80×36</text>
-  <text class="text small" x="720" y="278" text-anchor="middle">body rect 64×20, blit_offset -2</text>
+  <text class="text small" x="720" y="278" text-anchor="middle">body rect 64×20, pos 2</text>
   <line class="sep" x1="20" y1="290" x2="840" y2="290"/>
   <text class="text label" x="20" y="391" text-anchor="start">No border</text>
   <text class="text small muted" x="20" y="409" text-anchor="start">border 0</text>
@@ -71,21 +71,21 @@
   <rect class="body" x="176" y="343" width="128" height="84" rx="22"/>
   <rect class="wrect" x="188" y="355" width="104" height="60" rx="0"/>
   <text class="text small" x="240" y="472" text-anchor="middle">surface 148×104, border rect 128×84</text>
-  <text class="text small" x="240" y="488" text-anchor="middle">body rect 128×84, blit_offset 22</text>
+  <text class="text small" x="240" y="488" text-anchor="middle">body rect 128×84, pos −22</text>
   <rect class="halo" x="418" y="345" width="124" height="80" rx="20"/>
   <rect class="surface" x="418" y="345" width="124" height="80" rx="0"/>
   <rect class="border" x="428" y="355" width="104" height="60" rx="10"/>
   <rect class="body" x="428" y="355" width="104" height="60" rx="10"/>
   <rect class="wrect" x="428" y="355" width="104" height="60" rx="0"/>
   <text class="text small" x="480" y="472" text-anchor="middle">surface 124×80, border rect 104×60</text>
-  <text class="text small" x="480" y="488" text-anchor="middle">body rect 104×60, blit_offset 10</text>
+  <text class="text small" x="480" y="488" text-anchor="middle">body rect 104×60, pos −10</text>
   <rect class="halo" x="670" y="357" width="100" height="56" rx="8"/>
   <rect class="surface" x="670" y="357" width="100" height="56" rx="0"/>
   <rect class="border" x="680" y="367" width="80" height="36" rx="0"/>
   <rect class="body" x="680" y="367" width="80" height="36" rx="0"/>
   <rect class="wrect" x="668" y="355" width="104" height="60" rx="0"/>
   <text class="text small" x="720" y="472" text-anchor="middle">surface 100×56, border rect 80×36</text>
-  <text class="text small" x="720" y="488" text-anchor="middle">body rect 80×36, blit_offset -2</text>
+  <text class="text small" x="720" y="488" text-anchor="middle">body rect 80×36, pos 2</text>
   <line class="sep" x1="20" y1="500" x2="840" y2="500"/>
   <rect class="halo" x="30" y="519" width="26" height="14" rx="2"/>
   <text class="text small" x="64" y="530" text-anchor="start">halo</text>
