@@ -168,13 +168,13 @@ A `Text` component is **not** a child widget: it is not a Sprite, receives no in
 
 A skin turns a size and a style into a surface. Skins hold no per-widget data and no theme: the widget looks up the `Style` for each of its states in its theme and passes it in. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
 
-`Skin` is an abstract base class: it defines `render(size, style)` and cannot be created itself. Every skin takes the same parameters, so any skin can stand in for any other; a skin that ignores the style, such as `TransparentSkin`, still accepts it. Every skin's `render()` returns a `BlitOffsetImage`: a **new** surface, as `image`, so a widget can draw its content onto it without affecting other widgets, together with a **blit offset**, as `blit_offset`.
+`Skin` is an abstract base class: it defines `render(size, style)` and cannot be created itself. Every skin takes the same parameters, so any skin can stand in for any other; a skin that ignores the style, such as `TransparentSkin`, still accepts it. Every skin's `render()` returns a `PlacedImage`: a **new** surface, as `image`, so a widget can draw its content onto it without affecting other widgets, together with the position of its top-left corner relative to the widget's `rect.topleft`, as `pos`.
 
-- Without effects, the surface is exactly the requested size and the offset is `(0, 0)`.
-- A halo or a positive swell makes the surface **larger** than the widget, and a negative swell makes it smaller. The offset says how far up and to the left of `rect.topleft` to draw the surface, so the drawing stays centred on the widget's rect.
+- Without effects, the surface is exactly the requested size and its position is `(0, 0)`.
+- A halo or a positive swell makes the surface **larger** than the widget, and a negative swell makes it smaller. The position is `-(swell + halo)` on each axis, so the drawing stays centred on the widget's rect: negative (up and to the left of `rect.topleft`) when the surface is larger, and positive when it is smaller.
 - The widget's `rect` stays the size it was given, so effects are purely visual: hit-testing ignores the halo.
 
-![Drawing a skin surface at rect.topleft minus blit_offset](images/skin_offset.svg)
+![Drawing a skin surface at rect.topleft plus pos](images/skin_offset.svg)
 
 - **`NoSkin`**: an empty (0x0) surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw. It is internal to puigame and not re-exported. An empty surface is the one exception to the size rules above.
 - **`TransparentSkin`**: a fully transparent surface of the widget's size, the same in every state. For widgets with content but no background, such as a bare label: the content is drawn onto it.
@@ -368,15 +368,16 @@ Not every combination can occur, so each class lists the combinations it can be 
 
 Each widget builds its image in layers:
 
-1. The skin renders the widget's background for a state, returning the image and its blit offset as a `BlitOffsetImage`.
-2. Content (`Text` components, check marks, and so on) is drawn on top. Content is positioned relative to the widget's rect, so the blit offset is added to its position to land it on the body rather than in a halo margin.
-3. The result is stored in the widget's cache, a `dict[State, BlitOffsetImage]`. The image and its offset are kept together, since they are made together and drawing needs both.
+1. The skin renders the widget's background for a state, returning the image and its position as a `PlacedImage`.
+2. Content (`Text` components, check marks, and so on) renders its own `PlacedImage`, also positioned relative to the widget's `rect.topleft`.
+3. The layers are combined into one `PlacedImage`, in the order given, with the skin first. Its surface covers the union of the layers' rects, skipping empty layers, and its position is the union's top-left. Each layer is drawn onto it at the layer's position minus the union's top-left, so content lands on the body rather than in a halo margin. If every layer is empty, the result is 0x0 at `(0, 0)`.
+4. The result is stored in the widget's cache, a `dict[State, PlacedImage]`. The image and its position are kept together, since they are made together and drawing needs both.
 
 Caching rules:
 
 - **Per widget, per state**: one image for every combination in the class's [`possible_states`](#valid-states).
 - **Eager**: all states are rendered when the widget is created. Lazy rendering (on first use) is a later optimisation.
-- **State changes swap `image`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its image, so `image` always matches the widget's flags and its ancestors' flags.
+- **State changes swap the current `PlacedImage`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its entry, so `image` and `image_pos` always match the widget's flags and its ancestors' flags. Both are read-only properties: `image` comes from the skin, theme, and state, so assigning it raises `AttributeError`, as assigning `rect` does.
 - **Invalidation**: `rebuild_image_cache()` renders every state again. Setters for text and size, when added, will call it. Assigning a new `skin` does not, so `rebuild_image_cache()` is called afterwards. The theme is fixed for the life of the UI, so it never makes the cache out of date.
 
 Because rendering happens at creation, widgets must be created after `pygame.init()`. Converting surfaces for display (`convert_alpha()`) also requires a display window to exist.
@@ -507,7 +508,7 @@ The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicO
 
 Each layer imports only from the layers above it:
 
-1. `core/anchor`, `core/state`
+1. `components/placed_image`, `core/anchor`, `core/state`
 2. `themes/theme`
 3. `components/skin`, `components/text`
 4. `core/widget`

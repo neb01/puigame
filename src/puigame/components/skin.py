@@ -19,47 +19,25 @@ between those images as their state changes.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import assert_never
 
 import pygame as pg
 from pygame.typing import Point
 
+from puigame.components.placed_image import PlacedImage
 from puigame.themes.theme import FadeProfile, Style
-
-
-@dataclass(frozen=True)
-class BlitOffsetImage:
-    """A rendered image and where to draw it relative to the widget.
-
-    The field names match the attributes they set on a widget: ``image`` is the
-    sprite's image, and ``blit_offset`` is where to draw it.
-
-    Attributes:
-        image: The rendered surface. It is larger than the widget when a halo
-            or positive swell extends past its edges, and smaller when a
-            negative swell shrinks it.
-        blit_offset: How far up and to the left of the widget's
-            ``rect.topleft`` to draw ``image``, as ``(x, y)`` in pixels.
-            Subtract it from ``rect.topleft`` to get the drawing position.
-            ``(0, 0)`` when the surface matches the widget's size, and
-            negative when the surface is smaller than it.
-    """
-
-    image: pg.Surface
-    blit_offset: tuple[int, int]
 
 
 class Skin(ABC):
     """Abstract base class for skins.
 
-    A skin turns a size and a style into a surface and a blit offset. Subclasses
+    A skin turns a size and a style into a surface and its position. Subclasses
     implement ``render()``, keeping its signature, so any skin can stand in for
     any other. ``Skin`` itself cannot be created.
     """
 
     @abstractmethod
-    def render(self, size: Point, style: Style) -> BlitOffsetImage:
+    def render(self, size: Point, style: Style) -> PlacedImage:
         """Render a surface for a widget of the given size in the given style.
 
         Every subclass implements this. Widgets call it once per state they can
@@ -71,8 +49,8 @@ class Skin(ABC):
                 ``Theme.style_for()``.
 
         Returns:
-            A new surface with its blit offset. Without effects, the surface
-            is exactly ``size`` and the blit offset is ``(0, 0)``. A skin that draws
+            A new surface and its position. Without effects, the surface is
+            exactly ``size`` and its position is ``(0, 0)``. A skin that draws
             nothing, such as ``NoSkin``, may return an empty surface instead.
         """
 
@@ -86,7 +64,7 @@ class NoSkin(Skin):
     its content needs a surface of the widget's size to be drawn on.
     """
 
-    def render(self, size: Point, style: Style) -> BlitOffsetImage:
+    def render(self, size: Point, style: Style) -> PlacedImage:
         """Return an empty surface, whatever the size and style.
 
         Args:
@@ -94,12 +72,12 @@ class NoSkin(Skin):
             style: Not used; accepted so the signature matches ``Skin.render()``.
 
         Returns:
-            A new 0x0 surface, with blit offset ``(0, 0)``.
+            A new 0x0 surface at position ``(0, 0)``.
         """
         surface = pg.Surface((0, 0), pg.SRCALPHA)
-        blit_offset = (0, 0)
+        pos = (0, 0)
 
-        return BlitOffsetImage(surface, blit_offset)
+        return PlacedImage(surface, pos)
 
 
 class TransparentSkin(Skin):
@@ -110,22 +88,24 @@ class TransparentSkin(Skin):
     all use ``NoSkin`` instead. The surface is the same whatever the style.
     """
 
-    def render(self, size: Point, style: Style) -> BlitOffsetImage:
+    def render(self, size: Point, style: Style) -> PlacedImage:
         """Return a fully transparent surface of the requested size.
 
-        Nothing is drawn, so ``style`` is not used, and the blit offset is
-        always ``(0, 0)``.
+        Nothing is drawn, so ``style`` is not used, and the position is always
+        ``(0, 0)``.
 
         Args:
             size: Width and height of the widget in pixels.
             style: Not used; accepted so the signature matches ``Skin.render()``.
 
         Returns:
-            A new transparent surface of exactly ``size``, with blit offset
+            A new transparent surface of exactly ``size``, at position
             ``(0, 0)``.
         """
         surface = pg.Surface(size, pg.SRCALPHA)
-        return BlitOffsetImage(surface, (0, 0))
+        pos = (0, 0)
+
+        return PlacedImage(surface, pos)
 
 
 def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
@@ -171,7 +151,7 @@ class DrawnSkin(Skin):
     passed to ``render()``.
     """
 
-    def render(self, size: Point, style: Style) -> BlitOffsetImage:
+    def render(self, size: Point, style: Style) -> PlacedImage:
         """Draw the widget's halo, border, and body for a size and style.
 
         The swell grows (or, if negative, shrinks) the border and body on every
@@ -186,8 +166,8 @@ class DrawnSkin(Skin):
                 ``Theme.style_for()``.
 
         Returns:
-            The drawn surface with its blit offset, the swell plus the halo
-            thickness on each axis.
+            The drawn surface, at ``-(swell_px + halo_thickness_px)`` on each
+            axis, so that the body lines up with the widget's rect.
 
         Raises:
             ValueError: If the swell and border thickness would give the body
@@ -330,12 +310,12 @@ class DrawnSkin(Skin):
             border_radius=body_corner_radius,
         )
 
-        blit_offset = (
-            style.swell_px + style.halo_thickness_px,
-            style.swell_px + style.halo_thickness_px,
+        pos = (
+            -style.swell_px - style.halo_thickness_px,
+            -style.swell_px - style.halo_thickness_px,
         )
 
-        return BlitOffsetImage(surface, blit_offset)
+        return PlacedImage(surface, pos)
 
 
 class ImageSkin(Skin):
