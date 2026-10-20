@@ -9,9 +9,8 @@ itself.
 from pygame.typing import Point
 
 from puigame.components.skin import NoSkin
+from puigame.core.widget import Widget
 from puigame.themes.theme import Theme
-
-from .widget import Widget
 
 
 class UIRoot(Widget):

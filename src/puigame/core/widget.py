@@ -9,13 +9,12 @@ import pygame as pg
 from pygame.typing import Point
 
 from puigame.components.skin import BlitOffsetImage, Skin
+from puigame.core.anchor import Anchor
+from puigame.core.state import State
 from puigame.themes.theme import Theme
 
-from .anchor import Anchor
-from .state import State
-
 if TYPE_CHECKING:
-    from .ui_root import UIRoot
+    from puigame.core.ui_root import UIRoot
 
 
 class Widget(pg.sprite.Sprite):
