@@ -119,12 +119,12 @@ class Text:
             surface.set_alpha(style.text_colour[3])
 
             pos = get_pos_from_anchor_match(
-                surface.get_size(),
-                style.text_anchor,
-                size,
-                style.text_parent_anchor,
-                style.text_margin,
-                style.text_offset,
+                child_size=surface.get_size(),
+                child_anchor=style.text_anchor,
+                parent_size=size,
+                parent_anchor=style.text_parent_anchor,
+                margin=style.text_margin,
+                offset=style.text_offset,
             )
 
         return PlacedImage(surface, pos)

@@ -67,6 +67,7 @@ def _get_anchor_pos_in_rect_coords(size: Point, anchor: Anchor) -> pg.Vector2:
 
 
 def get_pos_from_anchor_match(
+    *,
     child_size: Point,
     child_anchor: Anchor,
     parent_size: Point,
