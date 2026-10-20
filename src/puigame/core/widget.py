@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import pygame as pg
 from pygame.typing import Point
 
-from puigame.components.skin import BlitOffsetImage, Skin
+from puigame.components.placed_image import PlacedImage
+from puigame.components.skin import Skin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.themes.theme import Theme
@@ -142,9 +143,8 @@ class Widget(pg.sprite.Sprite):
         self.enabled = enabled
         self.visible = visible
 
-        self._image_cache: dict[State, BlitOffsetImage] = {}
-        self.image: pg.Surface
-        self.blit_offset: tuple[int, int]
+        self._placed_image_cache: dict[State, PlacedImage] = {}
+        self._placed_image: PlacedImage
         # needs the flags above, since it picks the image for the current state
         self.rebuild_image_cache()
 
@@ -168,6 +168,33 @@ class Widget(pg.sprite.Sprite):
             "rect cannot be set directly; "
             "position the widget via anchor, parent_anchor, margin, and offset"
         )
+
+    @property
+    def image(self) -> pg.Surface:
+        """The widget's current image, drawn at ``image_pos``.
+
+        The image comes from the skin, using the theme's style for the current
+        state. Replacing it raises an error, since it is rendered from the
+        widget's skin, theme, and state.
+        """
+        return self._placed_image.image
+
+    @image.setter
+    def image(self, value: pg.Surface | None) -> None:
+        raise AttributeError(
+            "image cannot be set directly; "
+            "it is derived from the widget's skin, theme, and state"
+        )
+
+    @property
+    def image_pos(self) -> tuple[int, int]:
+        """The position of ``image``'s top-left corner, relative to ``rect.topleft``.
+
+        Add it to ``rect.topleft`` to get the drawing position. Negative on an
+        axis where the image starts above or to the left of the rect, for
+        example when a halo extends past the widget's edges.
+        """
+        return self._placed_image.pos
 
     @property
     def parent(self) -> Widget | None:
@@ -228,6 +255,7 @@ class Widget(pg.sprite.Sprite):
                 f"offset cannot be a single value, got {value!r}; "
                 "offset must be an (x, y) pair"
             )
+
         self._offset = pg.Vector2(value)
 
     @property
@@ -261,10 +289,10 @@ class Widget(pg.sprite.Sprite):
         return state
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        """Refresh ``image`` and ``blit_offset`` from the current state each frame."""
+        """Refresh ``image`` and ``image_pos`` from the current state each frame."""
         super().update(*args, **kwargs)
 
-        self._refresh_current_image_blit_offset()
+        self._refresh_current_placed_image()
 
     def kill(self) -> None:
         """Remove the widget and its descendants from the tree and all groups.
@@ -330,28 +358,29 @@ class Widget(pg.sprite.Sprite):
     def rebuild_image_cache(self) -> None:
         """Render every state in ``possible_states`` and cache the results.
 
-        Each state's image is cached together with its blit offset, as a
-        ``BlitOffsetImage``, using the theme's style for that state.
+        Each state's image is cached together with its position, as a
+        ``PlacedImage``, using the theme's style for that state.
         """
         for state in self.possible_states:
-            self._image_cache[state] = self._render_state_image(state)
+            self._placed_image_cache[state] = self._render_state_placed_image(state)
 
-        self._refresh_current_image_blit_offset()
+        self._refresh_current_placed_image()
 
-    def _render_state_image(self, state: State) -> BlitOffsetImage:
-        """Return a new image and its blit offset for ``state``.
+    def _render_state_placed_image(self, state: State) -> PlacedImage:
+        """Return a new image and its position for ``state``.
 
         Uses the skin's rendering. Subclasses extend this to draw their content
-        on top, adding the blit offset to any position so the content lands on
-        the widget's body rather than in a halo margin.
+        on top, subtracting the image's position from any position relative to
+        ``rect.topleft``, so the content lands on the widget's body rather than
+        in a halo margin.
         """
         style = self.theme.style_for(state)
         return self.skin.render(self.rect.size, style)
 
-    def _refresh_current_image_blit_offset(self) -> None:
-        """Show the cached image and blit offset for the widget's current state.
+    def _refresh_current_placed_image(self) -> None:
+        """Show the cached image and position for the widget's current state.
 
-        Reads ``current_state`` once and looks up its ``BlitOffsetImage`` in the
+        Reads ``current_state`` once and looks up its ``PlacedImage`` in the
         image cache. Called whenever the cache is rebuilt, and each frame by
         ``update()`` so the image follows changes to the widget's and its
         ancestors' flags.
@@ -370,6 +399,4 @@ class Widget(pg.sprite.Sprite):
                 f"add {state} to {type(self).__name__}.possible_states"
             )
 
-        blit_offset_image = self._image_cache[state]  # look up once
-        self.image = blit_offset_image.image
-        self.blit_offset = blit_offset_image.blit_offset
+        self._placed_image = self._placed_image_cache[state]

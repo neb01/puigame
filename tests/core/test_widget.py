@@ -5,7 +5,8 @@ import pygame as pg
 import pytest
 from pygame.typing import Point
 
-from puigame.components.skin import BlitOffsetImage, Skin, TransparentSkin
+from puigame.components.placed_image import PlacedImage
+from puigame.components.skin import Skin, TransparentSkin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui_root import UIRoot
@@ -534,7 +535,7 @@ def test_disabled_state_when_ancestor_is_disabled(
 # endregion
 
 
-# region --- update and blit_offset -------------------------------------------
+# region --- update and image_pos ---------------------------------------------
 
 
 def test_update_with_state_not_in_possible_states_raises(ui_root: UIRoot):
@@ -549,15 +550,20 @@ def test_update_with_state_not_in_possible_states_raises(ui_root: UIRoot):
         widget.update()
 
 
-def test_blit_offset_from_skin_is_set_in_widget(ui_root: UIRoot):
-    # stub required to generate an asymmetric blit_offset
+def test_image_pos_from_skin_is_set_in_widget(ui_root: UIRoot):
+    # stub required to generate an asymmetric image_pos
     class AsymmetricOffsetSkin(Skin):
-        def render(self, size: Point, style: Style) -> BlitOffsetImage:
-            return BlitOffsetImage(pg.Surface(size, pg.SRCALPHA), (3, 5))
+        def render(self, size: Point, style: Style) -> PlacedImage:
+            return PlacedImage(pg.Surface(size, pg.SRCALPHA), (3, 5))
 
     widget = Widget(ui_root, ANY_SIZE, AsymmetricOffsetSkin())
 
-    assert widget.blit_offset == (3, 5)
+    assert widget.image_pos == (3, 5)
+
+
+def test_assigning_to_image_raises(widget: Widget):
+    with pytest.raises(AttributeError):
+        widget.image = pg.Surface(ANY_SIZE)
 
 
 # endregion
@@ -569,7 +575,7 @@ def test_blit_offset_from_skin_is_set_in_widget(ui_root: UIRoot):
 def test_image_cache_has_one_image_per_state(widget: Widget):
     # set provides just keys of dictionary
     # set comparison ignores element order
-    assert set(widget._image_cache) == set(widget.possible_states)
+    assert set(widget._placed_image_cache) == set(widget.possible_states)
 
 
 @pytest.mark.parametrize("state", Widget.possible_states)
@@ -578,7 +584,7 @@ def test_every_transparent_image_cache_image_is_same_size_as_rect(
 ):
     widget = Widget(ui_root, (10, 20), TransparentSkin())
 
-    assert widget._image_cache[state].image.get_size() == widget.rect.size
+    assert widget._placed_image_cache[state].image.get_size() == widget.rect.size
 
 
 def test_disabling_parent_changes_child_image_after_update(
@@ -611,11 +617,11 @@ def test_new_skin_only_shows_after_rebuild_image_cache(ui_root: UIRoot):
             super().__init__()
             self.colour = colour
 
-        def render(self, size: Point, style: Style) -> BlitOffsetImage:
+        def render(self, size: Point, style: Style) -> PlacedImage:
             surface = pg.Surface(size, pg.SRCALPHA)
             surface.fill(self.colour)
 
-            return BlitOffsetImage(surface, (0, 0))
+            return PlacedImage(surface, (0, 0))
 
     widget = Widget(ui_root, ANY_SIZE, ColourSkin(RED))
     assert widget.image.get_at((0, 0)) == RED
@@ -634,10 +640,10 @@ def test_theme_receives_style_for_each_possible_state():
             super().__init__()
             self.received_styles: list[Style] = []
 
-        def render(self, size: Point, style: Style) -> BlitOffsetImage:
+        def render(self, size: Point, style: Style) -> PlacedImage:
             self.received_styles.append(style)
 
-            return BlitOffsetImage(pg.Surface(size, pg.SRCALPHA), (0, 0))
+            return PlacedImage(pg.Surface(size, pg.SRCALPHA), (0, 0))
 
     base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
     theme = Theme(

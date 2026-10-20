@@ -95,10 +95,10 @@ def test_no_skin_always_returns_size_zero_surface(size):
     assert surface.get_size() == (0, 0)
 
 
-def test_no_skin_always_returns_zero_blit_offset():
-    blit_offset = NoSkin().render(ANY_SIZE, ANY_STYLE).blit_offset
+def test_no_skin_always_returns_zero_image_pos():
+    image_pos = NoSkin().render(ANY_SIZE, ANY_STYLE).pos
 
-    assert blit_offset == (0, 0)
+    assert image_pos == (0, 0)
 
 
 # endregion
@@ -145,11 +145,14 @@ def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
         halo_thickness_px=halo_thickness_px,
     )
 
-    blit_offset_image = DrawnSkin().render((10, 10), style)
-    blit_offset = blit_offset_image.blit_offset
-    surface_width, surface_height = blit_offset_image.image.get_size()
+    placed_image = DrawnSkin().render((10, 10), style)
+    image_pos = placed_image.pos
+    surface_width, surface_height = placed_image.image.get_size()
 
-    assert blit_offset == (swell_px + halo_thickness_px, swell_px + halo_thickness_px)
+    assert image_pos == (
+        -swell_px - halo_thickness_px,
+        -swell_px - halo_thickness_px,
+    )
     assert surface_width == 10 + (swell_px + halo_thickness_px) * 2
     assert surface_height == 10 + (swell_px + halo_thickness_px) * 2
 
