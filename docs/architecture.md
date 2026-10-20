@@ -160,7 +160,7 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 | Component | Held by | Job |
 |---|---|---|
 | **`Skin`** | Every `Widget` (required; `Container` and `UIRoot` use `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
-| **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string, font, and colour; is positioned within its owner by an anchor and margin; renders onto the owner's image; notifies the owner when it changes |
+| **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; notifies the owner when it changes |
 
 A `Text` component is **not** a child widget: it is not a Sprite, receives no input, and is drawn into its owner's image rather than on its own.
 
@@ -183,6 +183,19 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 - Custom skins subclass `Skin` and implement `render()`.
 
 Scaling behaviour is a per-skin option, not a global setting.
+
+### Text
+
+`Text` holds only its string. Its typeface, font size, colour, and placement come from the `Style` the widget passes to `render(size, style)`, so it follows the widget's theme and state. `render()` returns a `PlacedImage`: the rendered surface, as `image`, and the position of its top-left corner relative to the widget's `rect.topleft`, as `pos`. `pos` is signed and is added to `rect.topleft`.
+
+- Text is placed relative to the widget's **rect**, not the skin's image or body, using the style's `text_anchor`, `text_parent_anchor`, `text_margin`, and `text_offset` in the same way as widgets are placed (see [Anchors](#anchors)).
+- `text_offset` can change between states, for example to move the text down 1 pixel when a button is pressed. `text_margin` stays the same in every state.
+- Text is **not clipped**: it can extend past the rect, for example to hang a label beside a widget. Hit-testing still uses the rect.
+- Empty text renders a 0x0 image at `(0, 0)`.
+- Text is drawn **without antialiasing**, which keeps pixel fonts crisp. The alpha channel of `text_colour` sets the text's transparency; pygame-ce's `Font.render()` ignores it, so `Text` applies it to the rendered surface.
+- **Multiline** text uses pygame-ce's own rendering: each newline starts a new line, and lines are left-aligned and spaced by the font's line size. A trailing newline, or text that is only a newline or carriage return, is drawn as a glyph. A fuller multiline design, such as alignment and wrapping, is deferred.
+- Bold, italic, and underline are not supported.
+- Neb0Font is a pixel font drawn on a 6-pixel grid, so it is crisp only at font sizes that are multiples of 6.
 
 #### DrawnSkin layers
 
@@ -212,9 +225,10 @@ A `Theme` holds the shared rules skins and text read. It is made of two parts:
 - Themes are **immutable**: `Theme`, `Style`, and `StyleOverride` are frozen dataclasses, and `style_overrides` is stored as a read-only copy. Cached images therefore never go out of date because a theme changed. A variation is made with `dataclasses.replace()`.
 - `State.BASE` cannot be a key in `style_overrides`, because it is part of every state and its override would always apply. Combined flags, such as `State.DISABLED | State.HIGHLIGHTED`, cannot be keys either: a combination of states is styled by applying each flag's override in turn. Both raise `ValueError` when the theme is created.
 - Overrides combine best when each state changes its own fields: for example, highlighting changes the border, checking changes the body, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the order of `style_overrides` decides which wins.
-- Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
+- Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. A text margin or offset that is not a tuple, or a typeface that is neither a `BundledTypeface` nor a `Path`, raises `TypeError`. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
+- Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
 - The theme lives on the UI's **`UIRoot`**, and every widget reaches it through the root of its tree, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
-- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font until a bundled font is added.
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font (`BundledTypeface.PYGAME_DEFAULT`).
 - **Later:** individual widgets, or whole subtrees, could have a different theme from the UI's. An earlier attempt, with themes inherited down the tree, is kept at the tag `archive/per-widget-themes`.
 
 ## Anchors
@@ -432,7 +446,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 
 - Bundled assets live in `assets/images/` (default skin art, nine-slice-ready) and `assets/fonts/`, all MIT-compatible.
 - They are loaded with `importlib.resources`, so they are found wherever the package is installed.
-- Fonts are cached, since rendering text is the most expensive step.
+- Loaded fonts are cached by typeface and size, since loading a font file is slow. All text with the same typeface and size shares one `pg.Font`, which is never changed after it is created, including attributes such as `bold` and `align`.
 - Loading failures raise exceptions (for example `FileNotFoundError`) and never exit the program.
 - Game-side concerns stay in games: asset folder conventions, resource paths, and PyInstaller handling. Games bundled with PyInstaller need puigame's data files included in their build.
 
@@ -459,6 +473,7 @@ src/puigame/
 │   └── images/
 ├── components/                objects widgets hold
 │   ├── __init__.py
+│   ├── placed_image.py        PlacedImage
 │   ├── skin.py                Skin, NoSkin, TransparentSkin, DrawnSkin, ImageSkin
 │   └── text.py                Text and the font cache
 ├── core/

@@ -11,6 +11,7 @@ window with ``pg.SCALED``.
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, replace
 from enum import Enum, auto
+from pathlib import Path
 from types import MappingProxyType
 
 from puigame.core.anchor import Anchor
@@ -47,6 +48,25 @@ class FadeProfile(Enum):
     HARD_CUBIC = auto()
 
 
+class BundledTypeface(Enum):
+    """Typefaces bundled with puigame.
+
+    Each member's value is the file name of its font file in puigame's
+    ``assets/fonts`` folder, or ``None`` for pygame-ce's built-in font,
+    ``freesansbold.ttf``. Games use their own font files by passing a ``Path``
+    instead of a member.
+
+    ``NEB0FONT`` is a pixel font drawn on a 6-pixel grid, so it is crisp only at
+    font sizes that are multiples of 6; other sizes distort its glyphs. Other
+    sizes are not rejected.
+    """
+
+    _value_: str | None
+
+    PYGAME_DEFAULT = None
+    NEB0FONT = "neb0font.ttf"
+
+
 @dataclass(frozen=True)
 class Style:
     """Complete appearance of a widget: every value needed to draw it.
@@ -57,7 +77,9 @@ class Style:
 
     A negative corner radius, border thickness, or halo thickness, or a font
     size of 0 or less, raises ``ValueError`` when the style is created. A
-    negative swell is allowed.
+    negative swell is allowed. A text margin or offset that is not a tuple, or
+    a typeface that is neither a ``BundledTypeface`` nor a ``Path``, raises
+    ``TypeError``.
 
     Attributes:
         body_colour: Colour of the body, the fill inside the border, as
@@ -81,16 +103,17 @@ class Style:
         swell_px: How many pixels the widget grows by on each side. Negative
             values shrink it. 0 means no swell.
         text_colour: Text colour as RGBA.
-        text_font_name: Name or path of the font used for text, or ``None``
-            for pygame-ce's built-in font.
+        text_typeface: Typeface used for text: a ``BundledTypeface``, or the
+            path to a font file supplied by the game.
         text_font_size: Font size for text, in pixels.
         text_anchor: Point on the text that is aligned to the widget.
         text_parent_anchor: Point on the widget that the text is aligned to.
         text_margin: Distance in pixels that the text is moved from its anchor
             point towards its own centre, as an ``(x, y)`` pair.
-        text_is_bold: Whether text is bold.
-        text_is_underlined: Whether text is underlined.
-        text_is_italic: Whether text is italic.
+        text_offset: Shift in pixels applied to the text after its anchors and
+            margin, as an ``(x, y)`` pair, with ``+x`` to the right and ``+y``
+            down. Can change between states, for example to move the text
+            down 1 pixel when a button is pressed.
     """
 
     # general appearance options
@@ -109,17 +132,15 @@ class Style:
 
     # text options
     text_colour: RGBA
+    text_offset: tuple[int, int]
 
     # text options (state-agnostic)
-    # None gives pygame-ce's built-in font, freesansbold.ttf
-    text_font_name: str | None
+    # BundledTypeface.PYGAME_DEFAULT is pygame-ce's built-in font, freesansbold.ttf
+    text_typeface: BundledTypeface | Path
     text_font_size: int
     text_anchor: Anchor
     text_parent_anchor: Anchor
     text_margin: tuple[int, int]
-    text_is_bold: bool
-    text_is_underlined: bool
-    text_is_italic: bool
 
     def __post_init__(self) -> None:
         """Reject values that cannot be drawn.
@@ -129,10 +150,25 @@ class Style:
         is not checked, since a negative swell is valid and shrinks the widget.
 
         Raises:
+            TypeError: If ``text_margin`` or ``text_offset`` is not a tuple, or
+                if ``text_typeface`` is neither a ``BundledTypeface`` nor a
+                ``Path``.
             ValueError: If ``corner_radius_px``, ``border_thickness_px``, or
                 ``halo_thickness_px`` is negative, or if ``text_font_size`` is
                 not positive.
         """
+        if not isinstance(self.text_margin, tuple):
+            raise TypeError(f"text_margin must be a tuple, got {self.text_margin!r}")
+
+        if not isinstance(self.text_offset, tuple):
+            raise TypeError(f"text_offset must be a tuple, got {self.text_offset!r}")
+
+        if not isinstance(self.text_typeface, (BundledTypeface, Path)):
+            raise TypeError(
+                "text_typeface must be a BundledTypeface or Path, "
+                f"got {self.text_typeface!r}"
+            )
+
         if self.corner_radius_px < 0:
             raise ValueError(
                 f"corner_radius_px cannot be negative, got {self.corner_radius_px} px"
@@ -177,6 +213,8 @@ class StyleOverride:
             ``None`` to keep it. Negative values shrink it, and 0 turns the
             swell off.
         text_colour: Text colour as RGBA, or ``None`` to keep it.
+        text_offset: Shift in pixels applied to the text after its anchors and
+            margin, as an ``(x, y)`` pair, or ``None`` to keep it.
     """
 
     # general appearance options
@@ -191,6 +229,7 @@ class StyleOverride:
 
     # text options
     text_colour: RGBA | None = None
+    text_offset: tuple[int, int] | None = None
 
     def __post_init__(self) -> None:
         """Reject values that cannot be drawn, as soon as the override is made.
@@ -199,8 +238,14 @@ class StyleOverride:
         since a negative swell is valid and shrinks the widget.
 
         Raises:
+            TypeError: If ``text_offset`` is not a tuple.
             ValueError: If ``halo_thickness_px`` is negative.
         """
+        if not (isinstance(self.text_offset, tuple) or self.text_offset is None):
+            raise TypeError(
+                f"text_offset must be a tuple or None, got {self.text_offset!r}"
+            )
+
         if self.halo_thickness_px is not None and self.halo_thickness_px < 0:
             raise ValueError(
                 f"halo_thickness_px cannot be negative, got {self.halo_thickness_px} px"
@@ -290,14 +335,12 @@ DEFAULT_THEME = Theme(
         halo_thickness_px=0,
         swell_px=0,
         text_colour=(255, 255, 255, 255),
-        text_font_name=None,
+        text_typeface=BundledTypeface.PYGAME_DEFAULT,
         text_font_size=12,
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,
         text_margin=(0, 0),
-        text_is_bold=False,
-        text_is_underlined=False,
-        text_is_italic=False,
+        text_offset=(0, 0),
     ),
     style_overrides={
         State.DISABLED: StyleOverride(

@@ -1,0 +1,16 @@
+neb0font design rules
+
+glyphs are drawn in a 3x5 grid, which gives a 4x6 repeating cell with blank space
+counting from top left:
+row 5 is for the 'descenders'
+capital letters and numbers fill rows 1-4, with Q also using row 5
+lower case letters fill either rows 2-4 or 3-4;
+3-4 is preferred, with 'tall' letters also using row 2, but not always possible (c, f, x, g)
+generally try to avoid shapes composed entirely of isolated pixels, but not always possible (lower case x, /, \, *)
+usually break the top corner of a shape that is too 'square' (A, C, G, Q)
+!, ?, &, % are allowed to use row 5, though they should sit on the line
+1 column letters are centred, and 2 column letters are left aligned
+
+
+author: neb01
+designed in aseprite

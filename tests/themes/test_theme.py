@@ -1,11 +1,14 @@
 from dataclasses import fields, replace
+from pathlib import Path
 
+import pygame as pg
 import pytest
 
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.themes.theme import (
     DEFAULT_THEME,
+    BundledTypeface,
     FadeProfile,
     Style,
     StyleOverride,
@@ -13,6 +16,9 @@ from puigame.themes.theme import (
 )
 
 # region --- Constants --------------------------------------------------------
+
+ANY_STRING = "snath is the specific word for the handle of a scythe"
+ANY_PATH = Path("fonts/any_font.ttf")
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
@@ -29,14 +35,12 @@ BASE_STYLE = Style(
     halo_thickness_px=0,
     swell_px=0,
     text_colour=BLACK,
-    text_font_name=None,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
     text_margin=(0, 0),
-    text_is_bold=False,
-    text_is_underlined=False,
-    text_is_italic=False,
+    text_offset=(0, 0),
 )
 
 ANY_STYLE_OVERRIDES = {
@@ -98,6 +102,90 @@ def test_style_override_halo_thickness_can_be_zero():
 def test_style_non_positive_font_size_raises(text_font_size):
     with pytest.raises(ValueError):
         replace(BASE_STYLE, text_font_size=text_font_size)
+
+
+@pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
+@pytest.mark.parametrize(
+    "value",
+    [1, 3.5, [2, 3], pg.Vector2(4, 5)],
+    ids=["int", "float", "list", "pg Vector2"],
+)
+def test_style_non_tuple_margin_or_offset_raises(field_name, value):
+    with pytest.raises(TypeError):
+        replace(BASE_STYLE, **{field_name: value})
+
+
+@pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
+@pytest.mark.parametrize(
+    "value",
+    [
+        (0, 0),
+        (-1, -4),
+        (2, 5),
+        (-3, 4),
+    ],
+    ids=[
+        "zero",
+        "both negative",
+        "both positive",
+        "one negative, one positive",
+    ],
+)
+def test_style_margin_or_offset_can_take_tuple_of_int(field_name, value):
+    style = replace(BASE_STYLE, **{field_name: value})
+
+    assert getattr(style, field_name) == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    [1, 3.5, [2, 3], pg.Vector2(4, 5)],
+    ids=["int", "float", "list", "pg Vector2"],
+)
+def test_style_override_non_tuple_offset_raises(value):
+    with pytest.raises(TypeError):
+        StyleOverride(text_offset=value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        (0, 0),
+        (-1, -4),
+        (2, 5),
+        (-3, 4),
+        None,
+    ],
+    ids=[
+        "zero",
+        "both negative",
+        "both positive",
+        "one negative, one positive",
+        "None",
+    ],
+)
+def test_style_override_text_offset_can_take_tuple_of_int_or_None(value):
+    style_override = StyleOverride(text_offset=value)
+
+    assert style_override.text_offset == value
+
+
+def test_style_str_text_typeface_raises():
+    with pytest.raises(TypeError):
+        replace(BASE_STYLE, text_typeface=ANY_STRING)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        *BundledTypeface,
+        pytest.param(ANY_PATH, id="Path"),
+    ],
+)
+def test_style_text_typeface_can_take_bundled_font_or_path(value):
+    style = replace(BASE_STYLE, text_typeface=value)
+
+    assert style.text_typeface == value
 
 
 # endregion
