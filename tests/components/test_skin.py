@@ -3,7 +3,7 @@ from dataclasses import replace
 import pygame as pg
 import pytest
 
-from puigame.components.skin import DrawnSkin, NoSkin, Skin, TransparentSkin
+from puigame.components.skin import DrawnSkin, NoSkin, Skin
 from puigame.themes.theme import DEFAULT_THEME, FadeProfile
 
 # region --- Constants --------------------------------------------------------
@@ -27,39 +27,13 @@ def test_base_skin_instantiated_raises():
         Skin()  # pyright: ignore[reportAbstractUsage]
 
 
-@pytest.mark.parametrize("make_skin", [TransparentSkin, DrawnSkin, NoSkin])
+@pytest.mark.parametrize("make_skin", [DrawnSkin, NoSkin])
 def test_rendered_surfaces_are_unique(make_skin):
     skin = make_skin()
     surface_1 = skin.render(ANY_SIZE, ANY_STYLE).image
     surface_2 = skin.render(ANY_SIZE, ANY_STYLE).image
 
     assert surface_1 is not surface_2
-
-
-# NoSkin is left out: it is the documented exception to the size contract
-@pytest.mark.parametrize("make_skin", [TransparentSkin, DrawnSkin])
-@pytest.mark.parametrize(
-    ("point", "expected_size"),
-    [
-        ((10, 20), (10, 20)),
-        ([20, 30], (20, 30)),
-        (pg.Vector2(4, 10), (4, 10)),
-        (pg.Vector2(5.2, 7.9), (5, 7)),
-    ],
-    ids=["tuple", "list", "pg.Vector2", "pg.Vector2 float"],
-)
-def test_render_truncates_any_point_type(make_skin, point, expected_size):
-    # no halo, swell, or border, so DrawnSkin's surface is exactly the given size
-    style = replace(
-        ANY_STYLE,
-        border_thickness_px=0,
-        halo_thickness_px=0,
-        swell_px=0,
-    )
-
-    surface = make_skin().render(point, style).image
-
-    assert surface.get_size() == expected_size
 
 
 # endregion
@@ -104,33 +78,31 @@ def test_no_skin_always_returns_zero_image_pos():
 # endregion
 
 
-# region --- TransparentSkin --------------------------------------------------
+# region --- DrawnSkin: size and offset ---------------------------------------
 
 
 @pytest.mark.parametrize(
-    "size",
-    [(0, 0), (1, 1), (100, 30), (30, 100), (1000, 1000)],
-    ids=["empty", "tiny", "wide", "tall", "huge"],
+    ("point", "expected_size"),
+    [
+        ((10, 20), (10, 20)),
+        ([20, 30], (20, 30)),
+        (pg.Vector2(4, 10), (4, 10)),
+        (pg.Vector2(5.2, 7.9), (5, 7)),
+    ],
+    ids=["tuple", "list", "pg.Vector2", "pg.Vector2 float"],
 )
-def test_transparent_skin_render_returns_requested_size(size):
-    surface = TransparentSkin().render(size, ANY_STYLE).image
+def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
+    # no halo, swell, or border, so DrawnSkin's surface is exactly the given size
+    style = replace(
+        ANY_STYLE,
+        border_thickness_px=0,
+        halo_thickness_px=0,
+        swell_px=0,
+    )
 
-    assert surface.get_size() == size
+    surface = DrawnSkin().render(point, style).image
 
-
-def test_transparent_skin_image_is_transparent():
-    # get_bounding_rect() covers every pixel that isn't fully transparent, so a
-    # fully transparent surface gives a 0x0 rect
-    surface = TransparentSkin().render(ANY_SIZE, ANY_STYLE).image
-    bounding_box = surface.get_bounding_rect()
-
-    assert bounding_box.size == (0, 0)
-
-
-# endregion
-
-
-# region --- DrawnSkin: size and offset ---------------------------------------
+    assert surface.get_size() == expected_size
 
 
 @pytest.mark.parametrize("swell_px", [-2, 0, 2])

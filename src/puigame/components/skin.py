@@ -10,8 +10,7 @@ the widget. Each render therefore returns the surface together with its
 position relative to the widget's rect, as a ``PlacedImage``, which keeps the
 drawing centred on the rect.
 
-NoSkin renders a 0x0 surface, for widgets with no appearance at all.
-TransparentSkin renders a transparent surface, for content with no background.
+NoSkin renders a 0x0 surface, for widgets with no background.
 DrawnSkin draws surfaces in code from the style it is given.
 ImageSkin loads an image file and scales it with nine-slice scaling.
 
@@ -57,12 +56,13 @@ class Skin(ABC):
 
 
 class NoSkin(Skin):
-    """Skin that renders a 0x0 surface, for widgets with no appearance.
+    """Skin that renders a 0x0 surface, for widgets with no background.
 
     Used by ``Container`` and ``UIRoot``, which draw nothing, so their images
     cost almost nothing to store or draw. A widget with content but no
-    background, such as a bare label, uses ``TransparentSkin`` instead, since
-    its content needs a surface of the widget's size to be drawn on.
+    background, such as a bare label, uses it too: zero-size layers are
+    skipped when layers are combined, so its image is the size of its
+    content.
     """
 
     def render(self, size: Point, style: Style) -> PlacedImage:
@@ -76,34 +76,6 @@ class NoSkin(Skin):
             A new 0x0 surface at position ``(0, 0)``.
         """
         surface = pg.Surface((0, 0), pg.SRCALPHA)
-        pos = (0, 0)
-
-        return PlacedImage(surface, pos)
-
-
-class TransparentSkin(Skin):
-    """Skin that renders a fully transparent surface.
-
-    Used for widgets with content but no background, such as a bare label: the
-    content is drawn onto the transparent surface. Widgets that draw nothing at
-    all use ``NoSkin`` instead. The surface is the same whatever the style.
-    """
-
-    def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a fully transparent surface of the requested size.
-
-        Nothing is drawn, so ``style`` is not used, and the position is always
-        ``(0, 0)``.
-
-        Args:
-            size: Width and height of the widget in pixels.
-            style: Not used; accepted so the signature matches ``Skin.render()``.
-
-        Returns:
-            A new transparent surface of exactly ``size``, at position
-            ``(0, 0)``.
-        """
-        surface = pg.Surface(size, pg.SRCALPHA)
         pos = (0, 0)
 
         return PlacedImage(surface, pos)

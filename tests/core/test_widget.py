@@ -6,7 +6,7 @@ import pytest
 from pygame.typing import Point
 
 from puigame.components.placed_image import PlacedImage
-from puigame.components.skin import Skin, TransparentSkin
+from puigame.components.skin import NoSkin, Skin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui_root import UIRoot
@@ -20,7 +20,7 @@ BLUE = (0, 0, 255, 255)
 
 ANY_SIZE = (10, 10)
 ANY_POINT = (3, 5)
-ANY_SKIN = TransparentSkin()
+ANY_SKIN = NoSkin()
 
 # endregion
 
@@ -576,15 +576,6 @@ def test_image_cache_has_one_image_per_state(widget: Widget):
     # set provides just keys of dictionary
     # set comparison ignores element order
     assert set(widget._placed_image_cache) == set(widget.possible_states)
-
-
-@pytest.mark.parametrize("state", Widget.possible_states)
-def test_every_transparent_image_cache_image_is_same_size_as_rect(
-    ui_root: UIRoot, state
-):
-    widget = Widget(ui_root, (10, 20), TransparentSkin())
-
-    assert widget._placed_image_cache[state].image.get_size() == widget.rect.size
 
 
 def test_disabling_parent_changes_child_image_after_update(
