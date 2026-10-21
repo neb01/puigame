@@ -17,7 +17,7 @@ class UIRoot(Widget):
     """Widget at the top of a UI's tree, holding the tree's theme.
 
     A UIRoot has no parent and no appearance: it uses a ``NoSkin``, so its image
-    is empty. Its rect is placed directly from ``pos`` and ``size`` rather than
+    is 0x0. Its rect is placed directly from ``pos`` and ``size`` rather than
     by anchors, and the UI's top-level widgets anchor against it. ``UI``
     creates it, so games rarely need to.
     """

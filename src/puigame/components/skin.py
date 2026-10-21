@@ -6,10 +6,11 @@ states and passes it in. One skin can therefore serve many widgets, each with
 its own size and theme.
 
 Effects such as a halo or a swell can make the surface larger or smaller than
-the widget. Each render therefore returns the surface together with a blit
-offset that keeps the drawing centred on the widget's rect.
+the widget. Each render therefore returns the surface together with its
+position relative to the widget's rect, as a ``PlacedImage``, which keeps the
+drawing centred on the rect.
 
-NoSkin renders an empty surface, for widgets with no appearance at all.
+NoSkin renders a 0x0 surface, for widgets with no appearance at all.
 TransparentSkin renders a transparent surface, for content with no background.
 DrawnSkin draws surfaces in code from the style it is given.
 ImageSkin loads an image file and scales it with nine-slice scaling.
@@ -51,12 +52,12 @@ class Skin(ABC):
         Returns:
             A new surface and its position. Without effects, the surface is
             exactly ``size`` and its position is ``(0, 0)``. A skin that draws
-            nothing, such as ``NoSkin``, may return an empty surface instead.
+            nothing, such as ``NoSkin``, may return a 0x0 surface instead.
         """
 
 
 class NoSkin(Skin):
-    """Skin that renders an empty surface, for widgets with no appearance.
+    """Skin that renders a 0x0 surface, for widgets with no appearance.
 
     Used by ``Container`` and ``UIRoot``, which draw nothing, so their images
     cost almost nothing to store or draw. A widget with content but no
@@ -65,7 +66,7 @@ class NoSkin(Skin):
     """
 
     def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return an empty surface, whatever the size and style.
+        """Return a 0x0 surface, whatever the size and style.
 
         Args:
             size: Not used; accepted so the signature matches ``Skin.render()``.

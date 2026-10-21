@@ -10,7 +10,7 @@ from puigame.core.widget import Widget
 class Container(Widget):
     """Invisible widget that holds and positions children.
 
-    A Container has no appearance: it uses a ``NoSkin``, so its image is empty
+    A Container has no appearance: it uses a ``NoSkin``, so its image is 0x0
     and costs almost nothing to draw. For a group of children with a
     background, use a ``Panel``.
     """
