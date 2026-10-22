@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pygame as pg
 from pygame.typing import Point
 
-from puigame.components.placed_image import PlacedImage
+from puigame.components.placed_image import PlacedImage, compose_layers
 from puigame.components.skin import Skin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.themes.theme import Theme
 
 if TYPE_CHECKING:
+    from puigame.components.component import Component
     from puigame.core.ui_root import UIRoot
 
 
@@ -49,6 +50,7 @@ class Widget(pg.sprite.Sprite):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
+        components: Iterable[Component] = (),
     ) -> None:
         """Create a widget as the last child of ``parent``.
 
@@ -71,6 +73,11 @@ class Widget(pg.sprite.Sprite):
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the widget responds to input.
             visible: Whether the widget is drawn.
+            components: Parts drawn above the skin, in the order given, each
+                rendered at the widget's size in the theme's style for each
+                state. Fixed on creation. Internal: for puigame's own widgets,
+                since subclassing ``Widget`` is not yet supported. Defaults to
+                no components.
 
         Raises:
             ValueError: If either dimension of ``size`` is negative. The widget
@@ -91,6 +98,7 @@ class Widget(pg.sprite.Sprite):
             offset=offset,
             enabled=enabled,
             visible=visible,
+            components=components,
         )
 
         # join the parent only once setup has succeeded, so that a widget whose
@@ -108,6 +116,7 @@ class Widget(pg.sprite.Sprite):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
+        components: Iterable[Component] = (),
     ) -> None:
         """Set up everything that ``Widget`` and ``UIRoot`` share.
 
@@ -143,9 +152,12 @@ class Widget(pg.sprite.Sprite):
         self.enabled = enabled
         self.visible = visible
 
+        self._components = tuple(components)
+
         self._placed_image_cache: dict[State, PlacedImage] = {}
         self._placed_image: PlacedImage
-        # needs the flags above, since it picks the image for the current state
+        # needs the components above to render, and the flags to pick the image
+        # for the current state
         self.rebuild_image_cache()
 
     def __repr__(self) -> str:
@@ -369,13 +381,19 @@ class Widget(pg.sprite.Sprite):
     def _render_state_placed_image(self, state: State) -> PlacedImage:
         """Return a new image and its position for ``state``.
 
-        Uses the skin's rendering. Subclasses extend this to draw their content
-        on top, subtracting the image's position from any position relative to
-        ``rect.topleft``, so the content lands on the widget's body rather than
-        in a halo margin.
+        Renders the skin, then each component in the order given, all at the
+        rect's size in the theme's style for ``state``. The layers are combined
+        with ``compose_layers()``, so the skin is at the bottom and the result
+        covers every layer. With no components, the result is the skin's.
         """
         style = self.theme.style_for(state)
-        return self.skin.render(self.rect.size, style)
+
+        skin_layer = self.skin.render(self.rect.size, style)
+        component_layers = [
+            component.render(self.rect.size, style) for component in self._components
+        ]
+
+        return compose_layers([skin_layer, *component_layers])
 
     def _refresh_current_placed_image(self) -> None:
         """Show the cached image and position for the widget's current state.
