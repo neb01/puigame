@@ -103,7 +103,7 @@ Widget                  pygame Sprite: rect, anchor, fixed parent, children, fla
 ├── UIRoot              top of a UI's tree: fills the UI's area, holds the theme, has no parent
 ├── Container           invisible group of children (NoSkin)
 ├── Panel               Container behaviour with a skin, so it has a background
-├── Label               + Text component, non-interactive
+├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + highlightable, plus the highlight and activation behaviour interactive widgets share
     ├── Button          + press and release, on_click; optional Text
     │   └── Checkbox    + checked, can_untoggle, optional CheckboxGroup
@@ -160,7 +160,7 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 | Component | Held by | Job |
 |---|---|---|
 | **`Skin`** | Every `Widget` (required; `Container` and `UIRoot` use `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
-| **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; notifies the owner when it changes |
+| **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; keeps no reference to its owner, so the owner rebuilds its images when it changes the text |
 
 A `Text` component is **not** a child widget: it is not a Sprite, receives no input, and is drawn into its owner's image rather than on its own.
 
@@ -168,7 +168,7 @@ A `Text` component is **not** a child widget: it is not a Sprite, receives no in
 
 A skin turns a size and a style into a surface. Skins hold no per-widget data and no theme: the widget looks up the `Style` for each of its states in its theme and passes it in. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
 
-`Skin` is an abstract base class: it defines `render(size, style)` and cannot be created itself. Every skin takes the same parameters, so any skin can stand in for any other; a skin that ignores the style, such as `TransparentSkin`, still accepts it. Every skin's `render()` returns a `PlacedImage`: a **new** surface, as `image`, so a widget can draw its content onto it without affecting other widgets, together with the position of its top-left corner relative to the widget's `rect.topleft`, as `pos`.
+`Skin` is an abstract base class: it defines `render(size, style)` and cannot be created itself. Every skin takes the same parameters, so any skin can stand in for any other; a skin that ignores the style, such as `NoSkin`, still accepts it. Every skin's `render()` returns a `PlacedImage`: a **new** surface, as `image`, never shared with another widget, together with the position of its top-left corner relative to the widget's `rect.topleft`, as `pos`.
 
 - Without effects, the surface is exactly the requested size and its position is `(0, 0)`.
 - A halo or a positive swell makes the surface **larger** than the widget, and a negative swell makes it smaller. The position is `-(swell + halo)` on each axis, so the drawing stays centred on the widget's rect: negative (up and to the left of `rect.topleft`) when the surface is larger, and positive when it is smaller.
@@ -176,8 +176,7 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 
 ![Drawing a skin surface at rect.topleft plus pos](images/skin_offset.svg)
 
-- **`NoSkin`**: an empty (0x0) surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw. It is internal to puigame and not re-exported. An empty surface is the one exception to the size rules above.
-- **`TransparentSkin`**: a fully transparent surface of the widget's size, the same in every state. For widgets with content but no background, such as a bare label: the content is drawn onto it.
+- **`NoSkin`**: a 0x0 surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw, and for widgets with content but no background, such as a bare label, whose image is then the size of its content. It is public, so any widget can go without a background, such as a clear button; its hitbox is still its `rect`. A widget with `NoSkin` shows changes of state only through its components' styles, such as text colour and text offset. `Label` always uses it: for text on a background, place a `Label` in a `Panel`. A 0x0 surface is the one exception to the size rules above.
 - **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
 - **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
@@ -370,7 +369,7 @@ Each widget builds its image in layers:
 
 1. The skin renders the widget's background for a state, returning the image and its position as a `PlacedImage`.
 2. Content (`Text` components, check marks, and so on) renders its own `PlacedImage`, also positioned relative to the widget's `rect.topleft`.
-3. The layers are combined into one `PlacedImage`, in the order given, with the skin first. Its surface covers the union of the layers' rects, skipping empty layers, and its position is the union's top-left. Each layer is drawn onto it at the layer's position minus the union's top-left, so content lands on the body rather than in a halo margin. If every layer is empty, the result is 0x0 at `(0, 0)`.
+3. `compose_layers()` (in `components/placed_image`) combines the layers into one `PlacedImage`, in the order given, with the skin first, so the first layer is at the bottom. Layers with zero width or height are skipped. The surface covers the union of the remaining layers' rects, and its position is the union's top-left. Each layer is drawn onto it at the layer's position minus the union's top-left, so content lands on the body rather than in a halo margin. If no layer has a size, including when there are none, the result is a new 0x0 image at `(0, 0)`; if exactly one does, that layer is returned unchanged.
 4. The result is stored in the widget's cache, a `dict[State, PlacedImage]`. The image and its position are kept together, since they are made together and drawing needs both.
 
 Caching rules:
@@ -378,7 +377,7 @@ Caching rules:
 - **Per widget, per state**: one image for every combination in the class's [`possible_states`](#valid-states).
 - **Eager**: all states are rendered when the widget is created. Lazy rendering (on first use) is a later optimisation.
 - **State changes swap the current `PlacedImage`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its entry, so `image` and `image_pos` always match the widget's flags and its ancestors' flags. Both are read-only properties: `image` comes from the skin, theme, and state, so assigning it raises `AttributeError`, as assigning `rect` does.
-- **Invalidation**: `rebuild_image_cache()` renders every state again. Setters for text and size, when added, will call it. Assigning a new `skin` does not, so `rebuild_image_cache()` is called afterwards. The theme is fixed for the life of the UI, so it never makes the cache out of date.
+- **Invalidation**: `rebuild_image_cache()` renders every state again. `Label.text`'s setter calls it when the text changes, and a size setter, when added, will too. Assigning a new `skin` does not, so `rebuild_image_cache()` is called afterwards. The theme is fixed for the life of the UI, so it never makes the cache out of date.
 
 Because rendering happens at creation, widgets must be created after `pygame.init()`. Converting surfaces for display (`convert_alpha()`) also requires a display window to exist.
 
@@ -457,7 +456,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 - **Tree-aware values** end in `_in_tree`: `enabled_in_tree`, `visible_in_tree`, `highlightable_in_tree`. They are calculated on demand, never stored.
 - **Permissions** start with `can_`: `can_untoggle`.
 - **Possession** starts with `has_`: `has_text`, `has_children`.
-- **Methods** are verbs: `show()`, `hide()`, `toggle()`, `set_text()`.
+- **Methods** are verbs: `show()`, `hide()`, `toggle()`. Values that read and write like attributes, such as `Label.text`, are properties instead.
 - **Classes** use `CapWords` with capitalised acronyms (`UIManager`); public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos` and `mouse.get_pos()`); English spelling is used (`CENTRE`, `colour`).
 - **Docstrings and documentation** use English spelling and the Oxford comma in lists of three or more.
 - **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`, `WidgetGroup` in `widget_group.py`.
@@ -474,8 +473,9 @@ src/puigame/
 │   └── images/
 ├── components/                objects widgets hold
 │   ├── __init__.py
+│   ├── component.py           Component
 │   ├── placed_image.py        PlacedImage
-│   ├── skin.py                Skin, NoSkin, TransparentSkin, DrawnSkin, ImageSkin
+│   ├── skin.py                Skin, NoSkin, DrawnSkin, ImageSkin
 │   └── text.py                Text and the font cache
 ├── core/
 │   ├── __init__.py
@@ -521,7 +521,7 @@ Each layer imports only from the layers above it:
 
 ## v0.1 scope
 
-**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `WidgetGroup`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
+**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `WidgetGroup`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
 
 **Features:**
 

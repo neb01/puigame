@@ -6,7 +6,7 @@ import pytest
 from pygame.typing import Point
 
 from puigame.components.placed_image import PlacedImage
-from puigame.components.skin import Skin, TransparentSkin
+from puigame.components.skin import NoSkin, Skin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui_root import UIRoot
@@ -17,10 +17,61 @@ from puigame.themes.theme import DEFAULT_THEME, RGBA, Style, StyleOverride, Them
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
+WHITE = (255, 255, 255, 255)
 
 ANY_SIZE = (10, 10)
 ANY_POINT = (3, 5)
-ANY_SKIN = TransparentSkin()
+ANY_SKIN = NoSkin()
+
+# endregion
+
+
+# region --- Stubs ------------------------------------------------------------
+
+
+class FixedLayer(Skin):
+    """Skin or component that draws a fixed-size block of colour.
+
+    Ignores the size and style it is given, so a layer can differ from the
+    widget's rect.
+    """
+
+    def __init__(self, size: Point, colour: RGBA, pos: tuple[int, int]) -> None:
+        """Set up a layer of ``size``, filled with ``colour``, placed at ``pos``."""
+        super().__init__()
+
+        self.size = size
+        self.colour = colour
+        self.pos = pos
+
+    def render(self, size: Point, style: Style) -> PlacedImage:
+        """Return a new surface of the layer's colour and size at its position."""
+        image = pg.Surface(self.size, pg.SRCALPHA)
+        image.fill(self.colour)
+
+        return PlacedImage(image, self.pos)
+
+
+class RecordingLayer(Skin):
+    """Skin or component that records every size and style it is given."""
+
+    def __init__(self) -> None:
+        """Set up empty lists of received sizes and styles."""
+        super().__init__()
+
+        self.received_sizes: list[Point] = []
+        self.received_styles: list[Style] = []
+
+    def render(self, size: Point, style: Style) -> PlacedImage:
+        """Record ``size`` and ``style``, and return a transparent image."""
+        self.received_sizes.append(size)
+        self.received_styles.append(style)
+
+        return PlacedImage(
+            pg.Surface(size, pg.SRCALPHA),
+            (0, 0),
+        )
+
 
 # endregion
 
@@ -550,17 +601,6 @@ def test_update_with_state_not_in_possible_states_raises(ui_root: UIRoot):
         widget.update()
 
 
-def test_image_pos_from_skin_is_set_in_widget(ui_root: UIRoot):
-    # stub required to generate an asymmetric image_pos
-    class AsymmetricOffsetSkin(Skin):
-        def render(self, size: Point, style: Style) -> PlacedImage:
-            return PlacedImage(pg.Surface(size, pg.SRCALPHA), (3, 5))
-
-    widget = Widget(ui_root, ANY_SIZE, AsymmetricOffsetSkin())
-
-    assert widget.image_pos == (3, 5)
-
-
 def test_assigning_to_image_raises(widget: Widget):
     with pytest.raises(AttributeError):
         widget.image = pg.Surface(ANY_SIZE)
@@ -576,15 +616,6 @@ def test_image_cache_has_one_image_per_state(widget: Widget):
     # set provides just keys of dictionary
     # set comparison ignores element order
     assert set(widget._placed_image_cache) == set(widget.possible_states)
-
-
-@pytest.mark.parametrize("state", Widget.possible_states)
-def test_every_transparent_image_cache_image_is_same_size_as_rect(
-    ui_root: UIRoot, state
-):
-    widget = Widget(ui_root, (10, 20), TransparentSkin())
-
-    assert widget._placed_image_cache[state].image.get_size() == widget.rect.size
 
 
 def test_disabling_parent_changes_child_image_after_update(
@@ -611,22 +642,10 @@ def test_image_cache_reuses_object(widget: Widget):
 
 
 def test_new_skin_only_shows_after_rebuild_image_cache(ui_root: UIRoot):
-    # stub that draws a single colour, so two skins can be told apart
-    class ColourSkin(Skin):
-        def __init__(self, colour: RGBA) -> None:
-            super().__init__()
-            self.colour = colour
-
-        def render(self, size: Point, style: Style) -> PlacedImage:
-            surface = pg.Surface(size, pg.SRCALPHA)
-            surface.fill(self.colour)
-
-            return PlacedImage(surface, (0, 0))
-
-    widget = Widget(ui_root, ANY_SIZE, ColourSkin(RED))
+    widget = Widget(ui_root, ANY_SIZE, FixedLayer(ANY_SIZE, RED, (0, 0)))
     assert widget.image.get_at((0, 0)) == RED
 
-    widget.skin = ColourSkin(BLUE)
+    widget.skin = FixedLayer(ANY_SIZE, BLUE, (0, 0))
     assert widget.image.get_at((0, 0)) == RED  # image_cache not yet rebuilt
 
     widget.rebuild_image_cache()
@@ -634,17 +653,6 @@ def test_new_skin_only_shows_after_rebuild_image_cache(ui_root: UIRoot):
 
 
 def test_theme_receives_style_for_each_possible_state():
-    # stub that records every style it is given
-    class RecordingSkin(Skin):
-        def __init__(self) -> None:
-            super().__init__()
-            self.received_styles: list[Style] = []
-
-        def render(self, size: Point, style: Style) -> PlacedImage:
-            self.received_styles.append(style)
-
-            return PlacedImage(pg.Surface(size, pg.SRCALPHA), (0, 0))
-
     base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
     theme = Theme(
         base_style,
@@ -652,7 +660,7 @@ def test_theme_receives_style_for_each_possible_state():
     )
 
     ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
-    skin = RecordingSkin()
+    skin = RecordingLayer()
     Widget(ui_root, ANY_SIZE, skin)
 
     expected_base_style = base_style
@@ -664,6 +672,98 @@ def test_theme_receives_style_for_each_possible_state():
     }
 
     assert len(skin.received_styles) == 2
+
+
+# endregion
+
+
+# region --- Skin and components ----------------------------------------------
+
+
+def test_image_without_components_gives_skin_image(ui_root: UIRoot):
+    widget = Widget(
+        ui_root,
+        (10, 12),
+        FixedLayer((5, 6), BLUE, (-3, 10)),
+        components=[],
+    )
+
+    assert widget.image.size == (5, 6)
+    assert widget.image_pos == (-3, 10)
+    assert widget.image.get_at((0, 0)) == BLUE
+
+
+def test_image_draws_components_over_skin_in_given_order(ui_root: UIRoot):
+    widget = Widget(
+        ui_root,
+        ANY_SIZE,
+        FixedLayer((9, 10), WHITE, (1, 0)),
+        components=[
+            FixedLayer((5, 6), RED, (2, 3)),
+            FixedLayer((7, 8), BLUE, (4, 5)),
+        ],
+    )
+
+    assert widget.image.get_at((0, 0)) == WHITE
+    assert widget.image.get_at((1, 3)) == RED
+    assert widget.image.get_at((3, 5)) == BLUE
+
+
+def test_image_covers_all_layers(ui_root: UIRoot):
+    widget = Widget(
+        ui_root,
+        ANY_SIZE,
+        FixedLayer((10, 12), WHITE, (0, 0)),
+        components=[
+            FixedLayer((5, 5), RED, (-3, 2)),
+            FixedLayer((20, 3), BLUE, (4, -1)),
+        ],
+    )
+
+    assert widget.image.size == (27, 13)
+    assert widget.image_pos == (-3, -1)
+
+
+def test_components_receive_rect_size_and_style_for_each_possible_state():
+    ui_root = UIRoot(
+        ANY_SIZE,
+        ANY_POINT,
+        theme=Theme(
+            DEFAULT_THEME.base_style,
+            {State.DISABLED: StyleOverride(body_colour=RED)},
+        ),
+    )
+    recording_layer = RecordingLayer()
+
+    Widget(
+        ui_root,
+        (10, 12),
+        ANY_SKIN,
+        components=[recording_layer],
+    )
+
+    assert set(recording_layer.received_styles) == {
+        DEFAULT_THEME.base_style,
+        replace(DEFAULT_THEME.base_style, body_colour=RED),
+    }
+    assert len(recording_layer.received_styles) == 2
+    assert recording_layer.received_sizes == [(10, 12), (10, 12)]
+
+
+def test_image_keeps_components_given_as_generator(ui_root: UIRoot):
+    single_use_components = (layer for layer in [FixedLayer((5, 6), RED, (-3, 2))])
+    widget = Widget(
+        ui_root,
+        ANY_SIZE,
+        ANY_SKIN,
+        components=single_use_components,
+    )
+
+    widget.rebuild_image_cache()
+
+    assert widget.image.size == (5, 6)
+    assert widget.image_pos == (-3, 2)
+    assert widget.image.get_at((1, 1)) == RED
 
 
 # endregion
