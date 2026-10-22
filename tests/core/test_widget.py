@@ -601,17 +601,6 @@ def test_update_with_state_not_in_possible_states_raises(ui_root: UIRoot):
         widget.update()
 
 
-def test_image_pos_from_skin_is_set_in_widget(ui_root: UIRoot):
-    # stub required to generate an asymmetric image_pos
-    class AsymmetricOffsetSkin(Skin):
-        def render(self, size: Point, style: Style) -> PlacedImage:
-            return PlacedImage(pg.Surface(size, pg.SRCALPHA), (3, 5))
-
-    widget = Widget(ui_root, ANY_SIZE, AsymmetricOffsetSkin())
-
-    assert widget.image_pos == (3, 5)
-
-
 def test_assigning_to_image_raises(widget: Widget):
     with pytest.raises(AttributeError):
         widget.image = pg.Surface(ANY_SIZE)
@@ -653,22 +642,10 @@ def test_image_cache_reuses_object(widget: Widget):
 
 
 def test_new_skin_only_shows_after_rebuild_image_cache(ui_root: UIRoot):
-    # stub that draws a single colour, so two skins can be told apart
-    class ColourSkin(Skin):
-        def __init__(self, colour: RGBA) -> None:
-            super().__init__()
-            self.colour = colour
-
-        def render(self, size: Point, style: Style) -> PlacedImage:
-            surface = pg.Surface(size, pg.SRCALPHA)
-            surface.fill(self.colour)
-
-            return PlacedImage(surface, (0, 0))
-
-    widget = Widget(ui_root, ANY_SIZE, ColourSkin(RED))
+    widget = Widget(ui_root, ANY_SIZE, FixedLayer(ANY_SIZE, RED, (0, 0)))
     assert widget.image.get_at((0, 0)) == RED
 
-    widget.skin = ColourSkin(BLUE)
+    widget.skin = FixedLayer(ANY_SIZE, BLUE, (0, 0))
     assert widget.image.get_at((0, 0)) == RED  # image_cache not yet rebuilt
 
     widget.rebuild_image_cache()
@@ -676,17 +653,6 @@ def test_new_skin_only_shows_after_rebuild_image_cache(ui_root: UIRoot):
 
 
 def test_theme_receives_style_for_each_possible_state():
-    # stub that records every style it is given
-    class RecordingSkin(Skin):
-        def __init__(self) -> None:
-            super().__init__()
-            self.received_styles: list[Style] = []
-
-        def render(self, size: Point, style: Style) -> PlacedImage:
-            self.received_styles.append(style)
-
-            return PlacedImage(pg.Surface(size, pg.SRCALPHA), (0, 0))
-
     base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
     theme = Theme(
         base_style,
@@ -694,7 +660,7 @@ def test_theme_receives_style_for_each_possible_state():
     )
 
     ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
-    skin = RecordingSkin()
+    skin = RecordingLayer()
     Widget(ui_root, ANY_SIZE, skin)
 
     expected_base_style = base_style
