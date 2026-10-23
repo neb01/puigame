@@ -102,7 +102,7 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 Widget                  pygame Sprite: rect, anchor, fixed parent, children, flags, skin, per-state image cache
 ├── UIRoot              top of a UI's tree: fills the UI's area, holds the theme, has no parent
 ├── Container           invisible group of children (NoSkin)
-├── Panel               Container behaviour with a skin, so it has a background
+├── Panel               group of children with a background (skin given on creation)
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + highlightable, plus the highlight and activation behaviour interactive widgets share
     ├── Button          + press and release, on_click; optional Text
@@ -116,7 +116,7 @@ UIManager               runs one UI: routes input, tracks the highlight and pres
 ```
 
 - **`InteractiveWidget` lives in `core`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing from `widgets`. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
-- **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear.
+- **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear, and differ only in appearance: a `Container` is invisible, and a `Panel` is drawn by the skin it is given. `Panel` extends `Widget`, not `Container`, since a `Container` promises to be invisible.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
 ### Widgets are pygame Sprites
