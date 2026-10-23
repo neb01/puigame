@@ -11,7 +11,6 @@ from puigame.themes.theme import DEFAULT_THEME, Theme
 # region --- Constants --------------------------------------------------------
 
 ANY_SIZE = (10, 10)
-ANY_POINT = (3, 5)
 ANY_SKIN = NoSkin()
 
 BLUE = (0, 0, 255, 255)

@@ -12,7 +12,7 @@ from stubs import FixedLayer
 BLUE = (0, 0, 255, 255)
 
 ANY_SIZE = (10, 10)
-ANY_POINT = (3, 5)
+ANY_POS = (3, 5)
 ANY_SKIN = NoSkin()
 
 # endregion
@@ -32,7 +32,7 @@ def test_rect_has_given_size(ui_root: UIRoot):
     panel = Panel(
         ui_root,
         (4, 5),
-        FixedLayer(size=ANY_SIZE, colour=BLUE, pos=ANY_POINT),
+        FixedLayer(size=ANY_SIZE, colour=BLUE, pos=ANY_POS),
     )
 
     assert panel.rect.size == (4, 5)
