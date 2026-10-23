@@ -68,7 +68,9 @@ venv = ".venv"
 venvPath = "."
 typeCheckingMode = "standard"
 include = [ "src", "tests" ]
+extraPaths = [ "tests" ]  # resolves imports of shared test helpers, as pytest's pythonpath does
 
 [tool.pytest]
 ini_options.testpaths = [ "tests" ]
+ini_options.pythonpath = [ "tests" ]  # lets tests import shared helpers, such as tests/stubs.py
 ini_options.addopts = [ "-ra", "--strict-markers", "--strict-config", "--import-mode=importlib" ]

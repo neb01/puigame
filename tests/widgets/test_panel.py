@@ -1,13 +1,10 @@
-import pygame as pg
 import pytest
-from pygame.typing import Point
 
-from puigame.components.placed_image import PlacedImage
-from puigame.components.skin import NoSkin, Skin
+from puigame.components.skin import NoSkin
 from puigame.core.anchor import Anchor
 from puigame.core.ui_root import UIRoot
-from puigame.themes.theme import RGBA, Style
 from puigame.widgets.panel import Panel
+from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------
 
@@ -16,35 +13,6 @@ BLUE = (0, 0, 255, 255)
 ANY_SIZE = (10, 10)
 ANY_POINT = (3, 5)
 ANY_SKIN = NoSkin()
-
-# endregion
-
-
-# region --- Stubs ------------------------------------------------------------
-
-
-class FixedLayer(Skin):
-    """Skin that draws a fixed-size block of colour.
-
-    Ignores the size and style it is given, so its image can differ from the
-    panel's rect.
-    """
-
-    def __init__(self, size: Point, colour: RGBA, pos: tuple[int, int]) -> None:
-        """Set up a layer of ``size``, filled with ``colour``, placed at ``pos``."""
-        super().__init__()
-
-        self.size = size
-        self.colour = colour
-        self.pos = pos
-
-    def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a new surface of the layer's colour and size at its position."""
-        image = pg.Surface(self.size, pg.SRCALPHA)
-        image.fill(self.colour)
-
-        return PlacedImage(image, self.pos)
-
 
 # endregion
 
