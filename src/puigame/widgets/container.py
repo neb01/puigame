@@ -18,8 +18,8 @@ class Container(Widget):
     def __init__(
         self,
         parent: Widget,
-        size: Point,
         *,
+        size: Point,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
         margin: Point = (0, 0),
@@ -52,8 +52,8 @@ class Container(Widget):
         """
         super().__init__(
             parent,
-            size,
-            NoSkin(),
+            size=size,
+            skin=NoSkin(),
             anchor=anchor,
             parent_anchor=parent_anchor,
             margin=margin,

@@ -26,33 +26,36 @@ def test_parent_is_none(ui_root: UIRoot):
 
 
 def test_rect_has_given_size():
-    ui_root = UIRoot((10, 20), DEFAULT_THEME)
+    ui_root = UIRoot(size=(10, 20), theme=DEFAULT_THEME)
 
     assert ui_root.rect.size == (10, 20)
 
 
 def test_root_position_is_origin():
-    ui_root = UIRoot(ANY_SIZE, DEFAULT_THEME)
+    ui_root = UIRoot(size=ANY_SIZE, theme=DEFAULT_THEME)
 
     assert ui_root.rect.topleft == (0, 0)
 
 
 def test_theme_is_given_theme():
-    theme = Theme(replace(DEFAULT_THEME.base_style, body_colour=BLUE), {})
-    ui_root = UIRoot(ANY_SIZE, theme)
+    theme = Theme(
+        base_style=replace(DEFAULT_THEME.base_style, body_colour=BLUE),
+        style_overrides={},
+    )
+    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
 
     assert ui_root.theme is theme
 
 
 def test_image_is_size_zero():
-    ui_root = UIRoot((10, 20), DEFAULT_THEME)
+    ui_root = UIRoot(size=(10, 20), theme=DEFAULT_THEME)
 
     assert ui_root.image.get_size() == (0, 0)
 
 
 def test_negative_size_raises():
     with pytest.raises(ValueError):
-        UIRoot((-1, 0), DEFAULT_THEME)
+        UIRoot(size=(-1, 0), theme=DEFAULT_THEME)
 
 
 # endregion
@@ -73,11 +76,11 @@ def test_kill_raises(ui_root: UIRoot):
 
 
 def test_offset_change_passes_down_to_descendants():
-    ui_root = UIRoot((10, 20), DEFAULT_THEME)
+    ui_root = UIRoot(size=(10, 20), theme=DEFAULT_THEME)
     parent = Widget(
         ui_root,
-        (3, 5),
-        ANY_SKIN,
+        size=(3, 5),
+        skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
@@ -86,8 +89,8 @@ def test_offset_change_passes_down_to_descendants():
 
     child = Widget(
         parent,
-        (1, 2),
-        ANY_SKIN,
+        size=(1, 2),
+        skin=ANY_SKIN,
         anchor=Anchor.BOTTOM_RIGHT,
         parent_anchor=Anchor.BOTTOM_RIGHT,
         margin=(0, 0),
@@ -106,7 +109,7 @@ def test_offset_change_passes_down_to_descendants():
 
 
 def test_given_offset_is_floored():
-    ui_root = UIRoot(ANY_SIZE, DEFAULT_THEME)
+    ui_root = UIRoot(size=ANY_SIZE, theme=DEFAULT_THEME)
 
     assert ui_root.rect.topleft == (0, 0)
 

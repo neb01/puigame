@@ -40,9 +40,9 @@ class Widget(pg.sprite.Sprite):
     def __init__(
         self,
         parent: Widget,
+        *,
         size: Point,
         skin: Skin,
-        *,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
         margin: Point = (0, 0),
@@ -92,8 +92,8 @@ class Widget(pg.sprite.Sprite):
         self._root: UIRoot = self._parent._root
 
         self._setup(
-            size,
-            skin,
+            size=size,
+            skin=skin,
             anchor=anchor,
             parent_anchor=parent_anchor,
             margin=margin,
@@ -111,9 +111,9 @@ class Widget(pg.sprite.Sprite):
 
     def _setup(
         self,
+        *,
         size: Point,
         skin: Skin,
-        *,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
         margin: Point = (0, 0),

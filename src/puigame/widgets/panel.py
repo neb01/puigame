@@ -18,9 +18,9 @@ class Panel(Widget):
     def __init__(
         self,
         parent: Widget,
+        *,
         size: Point,
         skin: Skin,
-        *,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
         margin: Point = (0, 0),
@@ -56,8 +56,8 @@ class Panel(Widget):
         """
         super().__init__(
             parent,
-            size,
-            skin,
+            size=size,
+            skin=skin,
             anchor=anchor,
             parent_anchor=parent_anchor,
             margin=margin,

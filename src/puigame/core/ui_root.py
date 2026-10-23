@@ -27,6 +27,7 @@ class UIRoot(Widget):
 
     def __init__(
         self,
+        *,
         size: Point,
         theme: Theme,
     ) -> None:
@@ -49,7 +50,7 @@ class UIRoot(Widget):
         self._root = self
 
         # a root ignores its anchors and margin, so it keeps the defaults
-        self._setup(size, NoSkin())
+        self._setup(size=size, skin=NoSkin())
 
     @property
     def theme(self) -> Theme:

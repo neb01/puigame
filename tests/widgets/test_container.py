@@ -16,13 +16,13 @@ ANY_SIZE = (10, 10)
 
 
 def test_image_is_size_zero(ui_root: UIRoot):
-    container = Container(ui_root, (5, 10))
+    container = Container(ui_root, size=(5, 10))
 
     assert container.image.get_size() == (0, 0)
 
 
 def test_rect_has_given_size(ui_root: UIRoot):
-    container = Container(ui_root, (5, 10))
+    container = Container(ui_root, size=(5, 10))
 
     assert container.rect.size == (5, 10)
 
@@ -37,16 +37,16 @@ def test_rect_has_given_size(ui_root: UIRoot):
     ids=["offset", "enabled", "visible"],
 )
 def test_forwards_public_keyword_arguments(ui_root: UIRoot, argument, value):
-    container = Container(ui_root, ANY_SIZE, **{argument: value})
+    container = Container(ui_root, size=ANY_SIZE, **{argument: value})
 
     assert getattr(container, argument) == value
 
 
 def test_forwards_private_keyword_arguements():
-    ui_root = UIRoot((20, 30), DEFAULT_THEME)
+    ui_root = UIRoot(size=(20, 30), theme=DEFAULT_THEME)
     container = Container(
         ui_root,
-        (3, 5),
+        size=(3, 5),
         anchor=Anchor.BOTTOM_RIGHT,
         parent_anchor=Anchor.BOTTOM_LEFT,
         margin=(2, 4),
