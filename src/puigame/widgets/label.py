@@ -35,8 +35,8 @@ class Label(Widget):
     def __init__(
         self,
         parent: Widget,
-        size: Point,
         *,
+        size: Point,
         text: str = "",
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
@@ -78,8 +78,8 @@ class Label(Widget):
 
         super().__init__(
             parent,
-            size,
-            NoSkin(),
+            size=size,
+            skin=NoSkin(),
             anchor=anchor,
             parent_anchor=parent_anchor,
             margin=margin,

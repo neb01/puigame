@@ -15,13 +15,13 @@ ANY_STRING = "ordinary northumbrian spokeshaver's coracle"
 
 
 def test_text_getter_returns_given_text(ui_root: UIRoot):
-    label = Label(ui_root, ANY_SIZE, text="schmip")
+    label = Label(ui_root, size=ANY_SIZE, text="schmip")
 
     assert label.text == "schmip"
 
 
 def test_text_defaults_to_empty_string(ui_root: UIRoot):
-    label = Label(ui_root, ANY_SIZE)
+    label = Label(ui_root, size=ANY_SIZE)
 
     assert label.text == ""
 
@@ -33,19 +33,19 @@ def test_text_defaults_to_empty_string(ui_root: UIRoot):
 
 
 def test_label_with_text_has_non_zero_size_image(ui_root: UIRoot):
-    label = Label(ui_root, ANY_SIZE, text="coracle")
+    label = Label(ui_root, size=ANY_SIZE, text="coracle")
 
     assert 0 not in label.image.size
 
 
 def test_label_without_text_has_zero_size_image(ui_root: UIRoot):
-    label = Label(ui_root, ANY_SIZE, text="")
+    label = Label(ui_root, size=ANY_SIZE, text="")
 
     assert label.image.size == (0, 0)
 
 
 def test_text_setter_updates_image(ui_root: UIRoot):
-    label = Label(ui_root, ANY_SIZE, text="")
+    label = Label(ui_root, size=ANY_SIZE, text="")
 
     assert label.image.size == (0, 0)
 
@@ -55,7 +55,7 @@ def test_text_setter_updates_image(ui_root: UIRoot):
 
 
 def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
-    label = Label(ui_root, ANY_SIZE, text="calcium")
+    label = Label(ui_root, size=ANY_SIZE, text="calcium")
     image_1 = label.image
 
     label.text = "calcium"
@@ -76,7 +76,7 @@ def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
 )
 def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
     with pytest.raises(TypeError):
-        Label(ui_root, ANY_SIZE, text=text)
+        Label(ui_root, size=ANY_SIZE, text=text)
 
     assert ui_root.children == ()
 
@@ -87,7 +87,7 @@ def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
     ids=["int", "float", "None", "bytes"],
 )
 def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
-    label = Label(ui_root, ANY_SIZE, text="vociferous")
+    label = Label(ui_root, size=ANY_SIZE, text="vociferous")
 
     with pytest.raises(TypeError):
         label.text = text
