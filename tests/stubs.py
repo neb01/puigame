@@ -15,7 +15,7 @@ class FixedLayer(Skin):
     widget's rect.
     """
 
-    def __init__(self, size: Point, colour: RGBA, pos: tuple[int, int]) -> None:
+    def __init__(self, *, size: Point, colour: RGBA, pos: tuple[int, int]) -> None:
         """Set up a layer of ``size``, filled with ``colour``, placed at ``pos``."""
         super().__init__()
 

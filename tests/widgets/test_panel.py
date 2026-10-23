@@ -12,7 +12,7 @@ from stubs import FixedLayer
 BLUE = (0, 0, 255, 255)
 
 ANY_SIZE = (10, 10)
-ANY_POINT = (3, 5)
+ANY_POS = (3, 5)
 ANY_SKIN = NoSkin()
 
 # endregion
@@ -22,14 +22,18 @@ ANY_SKIN = NoSkin()
 
 
 def test_image_comes_from_skin(ui_root: UIRoot):
-    panel = Panel(ui_root, ANY_SIZE, FixedLayer((2, 3), BLUE, (10, 12)))
+    panel = Panel(ui_root, ANY_SIZE, FixedLayer(size=(2, 3), colour=BLUE, pos=(10, 12)))
 
     assert panel.image.get_size() == (2, 3)
     assert panel.image_pos == (10, 12)
 
 
 def test_rect_has_given_size(ui_root: UIRoot):
-    panel = Panel(ui_root, (4, 5), FixedLayer(ANY_SIZE, BLUE, ANY_POINT))
+    panel = Panel(
+        ui_root,
+        (4, 5),
+        FixedLayer(size=ANY_SIZE, colour=BLUE, pos=ANY_POS),
+    )
 
     assert panel.rect.size == (4, 5)
 
