@@ -166,7 +166,7 @@ class DrawnSkin(Skin):
                 "border_thickness_px and swell_px cannot combine to make the "
                 f"body size negative, got body_size={body_size} px, size={size} px, "
                 f"border_thickness_px={style.border_thickness_px} px, "
-                f"swell_px={style.swell_px} px"
+                f"swell_px={style.swell_px} px",
             )
 
         # border size and radius
@@ -176,7 +176,8 @@ class DrawnSkin(Skin):
         )
 
         border_corner_radius = _clamp_radius(
-            style.corner_radius_px + style.swell_px, border_size
+            style.corner_radius_px + style.swell_px,
+            border_size,
         )
 
         # outer surface size, sized for the outer edge of the halo

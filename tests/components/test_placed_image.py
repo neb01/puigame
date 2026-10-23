@@ -55,7 +55,7 @@ def test_compose_returns_0x0_at_origin_for_all_zero_size_layers():
             zero_size_layer_1,
             zero_size_layer_2,
             zero_size_layer_3,
-        ]
+        ],
     )
 
     assert composition.image.size == (0, 0)
@@ -74,7 +74,7 @@ def test_compose_returns_only_non_zero_layer_itself():
             zero_size_layer_2,
             zero_size_layer_3,
             layer_1,
-        ]
+        ],
     )
 
     assert composition is layer_1
@@ -98,7 +98,7 @@ def test_compose_ignores_zero_size_layers():
             zero_axis_layer_1,
             zero_axis_layer_2,
             layer_2,
-        ]
+        ],
     )
 
     assert composition.image.size == (15, 20)
