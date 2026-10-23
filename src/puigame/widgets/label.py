@@ -107,4 +107,4 @@ class Label(Widget):
             return
 
         self._text.content = value
-        self.rebuild_image_cache()
+        self._rebuild_image_cache()
