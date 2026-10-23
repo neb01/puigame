@@ -136,7 +136,7 @@ class Widget(pg.sprite.Sprite):
                 than an ``(x, y)`` pair.
         """
         if min(size[0], size[1]) < 0:
-            raise ValueError(f"size cannot be negative, got {size} px")
+            raise ValueError(f"size cannot be negative, got {size!r} px")
 
         super().__init__()
         self._rect = pg.Rect((0, 0), size)
