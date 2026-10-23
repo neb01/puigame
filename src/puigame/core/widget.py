@@ -26,14 +26,15 @@ class Widget(pg.sprite.Sprite):
 
     - a rect, sized on creation and positioned by its anchors
     - a parent to anchor against, fixed on creation, and its children
-    - a skin that draws its images, in the theme held by the tree's
-      ``UIRoot``
+    - a skin, fixed on creation, that draws its images in the theme held by
+      the tree's ``UIRoot``
     - ``enabled`` and ``visible`` flags, with ``_in_tree`` versions that take
       its ancestors into account
-    - its current State, and the States it can be in
+    - an image for each state it can be in, rendered on creation, so that
+      ``image`` follows its flags
     """
 
-    possible_states: ClassVar[tuple[State, ...]] = (State.BASE, State.DISABLED)
+    _possible_states: ClassVar[tuple[State, ...]] = (State.BASE, State.DISABLED)
 
     _margin: pg.Vector2
     _offset: pg.Vector2
@@ -136,7 +137,7 @@ class Widget(pg.sprite.Sprite):
 
         super().__init__()
         self._rect = pg.Rect((0, 0), size)
-        self.skin = skin
+        self._skin = skin
 
         self._children: list[Widget] = []
 
@@ -158,7 +159,7 @@ class Widget(pg.sprite.Sprite):
         self._placed_image: PlacedImage
         # needs the components above to render, and the flags to pick the image
         # for the current state
-        self.rebuild_image_cache()
+        self._rebuild_image_cache()
 
     def __repr__(self) -> str:
         """Return a representation for debugging."""
@@ -207,6 +208,20 @@ class Widget(pg.sprite.Sprite):
         example when a halo extends past the widget's edges.
         """
         return self._placed_image.pos
+
+    @property
+    def skin(self) -> Skin:
+        """The skin that draws the widget's images.
+
+        Set on creation and never changed, so it is read-only.
+        """
+        return self._skin
+
+    @skin.setter
+    def skin(self, value: Skin) -> None:
+        raise AttributeError(
+            "skin cannot be set directly; it is set only in the constructor"
+        )
 
     @property
     def parent(self) -> Widget | None:
@@ -286,20 +301,6 @@ class Widget(pg.sprite.Sprite):
         else:
             return self.visible and self.parent.visible_in_tree
 
-    @property
-    def current_state(self) -> State:
-        """The widget's current State, built from its flags.
-
-        Subclasses extend this by calling ``super().current_state`` and adding
-        their own flags.
-        """
-        state = State.BASE
-
-        if not self.enabled_in_tree:
-            state |= State.DISABLED
-
-        return state
-
     def update(self, *args: Any, **kwargs: Any) -> None:
         """Refresh ``image`` and ``image_pos`` from the current state each frame."""
         super().update(*args, **kwargs)
@@ -352,7 +353,7 @@ class Widget(pg.sprite.Sprite):
         self.parent_anchor = Anchor.TOP_LEFT
         self.margin = pos
 
-    def iter_descendants(self) -> Iterator[Widget]:
+    def _iter_descendants(self) -> Iterator[Widget]:
         """Yield every widget below this one in the tree, parents first.
 
         The order is depth-first pre-order: each child is followed by all of its
@@ -365,15 +366,15 @@ class Widget(pg.sprite.Sprite):
         """
         for child in self.children:
             yield child
-            yield from child.iter_descendants()
+            yield from child._iter_descendants()
 
-    def rebuild_image_cache(self) -> None:
-        """Render every state in ``possible_states`` and cache the results.
+    def _rebuild_image_cache(self) -> None:
+        """Render every state in ``_possible_states`` and cache the results.
 
         Each state's image is cached together with its position, as a
         ``PlacedImage``, using the theme's style for that state.
         """
-        for state in self.possible_states:
+        for state in self._possible_states:
             self._placed_image_cache[state] = self._render_state_placed_image(state)
 
         self._refresh_current_placed_image()
@@ -398,23 +399,37 @@ class Widget(pg.sprite.Sprite):
     def _refresh_current_placed_image(self) -> None:
         """Show the cached image and position for the widget's current state.
 
-        Reads ``current_state`` once and looks up its ``PlacedImage`` in the
+        Reads ``_current_state`` once and looks up its ``PlacedImage`` in the
         image cache. Called whenever the cache is rebuilt, and each frame by
         ``update()`` so the image follows changes to the widget's and its
         ancestors' flags.
 
         Raises:
-            RuntimeError: If ``current_state`` is not in ``possible_states``,
-                which means the class's ``possible_states`` is missing a
+            RuntimeError: If ``_current_state`` is not in ``_possible_states``,
+                which means the class's ``_possible_states`` is missing a
                 combination its flags can produce.
         """
-        state = self.current_state  # read the property once
+        state = self._current_state  # read the property once
 
-        if state not in self.possible_states:
+        if state not in self._possible_states:
             raise RuntimeError(
-                "current_state is not in possible_states, "
-                f"got state={state}, possible_states={self.possible_states}; "
-                f"add {state} to {type(self).__name__}.possible_states"
+                "_current_state is not in _possible_states, "
+                f"got state={state}, _possible_states={self._possible_states}; "
+                f"add {state} to {type(self).__name__}._possible_states"
             )
 
         self._placed_image = self._placed_image_cache[state]
+
+    @property
+    def _current_state(self) -> State:
+        """The widget's current State, built from its flags.
+
+        Subclasses extend this by calling ``super()._current_state`` and adding
+        their own flags.
+        """
+        state = State.BASE
+
+        if not self.enabled_in_tree:
+            state |= State.DISABLED
+
+        return state

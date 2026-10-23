@@ -166,7 +166,7 @@ A `Text` component is **not** a child widget: it is not a Sprite, receives no in
 
 ### Skins
 
-A skin turns a size and a style into a surface. Skins hold no per-widget data and no theme: the widget looks up the `Style` for each of its states in its theme and passes it in. Widgets are given a skin when they are created and do not know which kind they have. One skin can serve many widgets.
+A skin turns a size and a style into a surface. Skins hold no per-widget data and no theme: the widget looks up the `Style` for each of its states in its theme and passes it in. Widgets are given a skin when they are created, keep it for life, and do not know which kind they have. One skin can serve many widgets.
 
 `Skin` is an abstract base class: it defines `render(size, style)` and cannot be created itself. Every skin takes the same parameters, so any skin can stand in for any other; a skin that ignores the style, such as `NoSkin`, still accepts it. Every skin's `render()` returns a `PlacedImage`: a **new** surface, as `image`, never shared with another widget, together with the position of its top-left corner relative to the widget's `rect.topleft`, as `pos`.
 
@@ -342,10 +342,10 @@ Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRES
 
 ### Current state
 
-`current_state` is a property built by composing flags with `|=`. Each class adds its own flags on top of its parent's:
+`_current_state` is a private property built by composing flags with `|=`. It is private, like `_possible_states` below, while subclassing `Widget` is unsupported. Each class adds its own flags on top of its parent's:
 
 - `Widget` starts from `BASE` and adds `DISABLED` when not `enabled_in_tree`.
-- `InteractiveWidget` calls `super().current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED`.
+- `InteractiveWidget` calls `super()._current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED`.
 - `Button` adds `PRESSED`, again only when not `DISABLED`.
 - `Checkbox` adds `CHECKED` when `checked` is true.
 - `TextBox` adds `EDITING`.
@@ -354,9 +354,9 @@ Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRES
 
 ### Valid states
 
-Not every combination can occur, so each class lists the combinations it can be in **explicitly**, in a class-level `possible_states` tuple, annotated as a `ClassVar`. The cache renders exactly these.
+Not every combination can occur, so each class lists the combinations it can be in **explicitly**, in a private class-level `_possible_states` tuple, annotated as a `ClassVar`. The cache renders exactly these.
 
-| Class | `possible_states` |
+| Class | `_possible_states` |
 |---|---|
 | `Widget`, `Container`, `Panel`, `Label` | `BASE`, `DISABLED` |
 | `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
@@ -374,10 +374,10 @@ Each widget builds its image in layers:
 
 Caching rules:
 
-- **Per widget, per state**: one image for every combination in the class's [`possible_states`](#valid-states).
+- **Per widget, per state**: one image for every combination in the class's [`_possible_states`](#valid-states).
 - **Eager**: all states are rendered when the widget is created. Lazy rendering (on first use) is a later optimisation.
-- **State changes swap the current `PlacedImage`** from the cache, with no drawing. Each frame, `update()` reads `current_state` and looks up its entry, so `image` and `image_pos` always match the widget's flags and its ancestors' flags. Both are read-only properties: `image` comes from the skin, theme, and state, so assigning it raises `AttributeError`, as assigning `rect` does.
-- **Invalidation**: `rebuild_image_cache()` renders every state again. `Label.text`'s setter calls it when the text changes, and a size setter, when added, will too. Assigning a new `skin` does not, so `rebuild_image_cache()` is called afterwards. The theme is fixed for the life of the UI, so it never makes the cache out of date.
+- **State changes swap the current `PlacedImage`** from the cache, with no drawing. Each frame, `update()` reads `_current_state` and looks up its entry, so `image` and `image_pos` always match the widget's flags and its ancestors' flags. Both are read-only properties: `image` comes from the skin, theme, and state, so assigning it raises `AttributeError`, as assigning `rect` does.
+- **Invalidation**: the private `_rebuild_image_cache()` renders every state again. `Label.text`'s setter calls it when the text changes, and a size setter, when added, will too. The skin is fixed on creation and the theme for the life of the UI, so neither makes the cache out of date.
 
 Because rendering happens at creation, widgets must be created after `pygame.init()`. Converting surfaces for display (`convert_alpha()`) also requires a display window to exist.
 

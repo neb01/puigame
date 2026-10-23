@@ -73,6 +73,21 @@ class RecordingLayer(Skin):
         )
 
 
+class BodyColourLayer(Skin):
+    """Skin or component that fills its whole size with the style's body colour.
+
+    Unlike ``FixedLayer``, it reads the style, so its image shows which state's
+    style it was given.
+    """
+
+    def render(self, size: Point, style: Style) -> PlacedImage:
+        """Return a new surface of ``size``, filled with the body colour, at (0, 0)."""
+        image = pg.Surface(size, pg.SRCALPHA)
+        image.fill(style.body_colour)
+
+        return PlacedImage(image, (0, 0))
+
+
 # endregion
 
 
@@ -343,7 +358,7 @@ def test_killing_parent_then_child_explicitly_does_not_raise(
 # endregion
 
 
-# region --- iter_descendants -------------------------------------------------
+# region --- _iter_descendants ------------------------------------------------
 
 
 def test_iter_descendants_multiple_levels_order(ui_root: UIRoot):
@@ -354,7 +369,8 @@ def test_iter_descendants_multiple_levels_order(ui_root: UIRoot):
     widget_b = Widget(ui_root, ANY_SIZE, ANY_SKIN)
     widget_b1 = Widget(widget_b, ANY_SIZE, ANY_SKIN)
 
-    assert list(ui_root.iter_descendants()) == [
+    # white-box: nothing public walks the tree yet
+    assert list(ui_root._iter_descendants()) == [
         widget_a,
         widget_a1,
         widget_a2,
@@ -566,21 +582,38 @@ def test_showing_parent_does_not_override_hidden_grandparent(
 # endregion
 
 
-# region --- current_state ----------------------------------------------------
+# region --- State images -----------------------------------------------------
 
 
-def test_base_state_is_default(widget: Widget):
-    assert widget.current_state is State.BASE
+def test_image_shows_base_style_by_default():
+    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
+    theme = Theme(
+        base_style,
+        {State.DISABLED: StyleOverride(body_colour=RED)},
+    )
+
+    ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
+
+    widget = Widget(ui_root, (12, 10), BodyColourLayer())
+
+    assert widget.image.get_at((4, 5)) == BLUE
 
 
-def test_disabled_state_when_ancestor_is_disabled(
-    parent_and_child: tuple[Widget, Widget],
-):
-    parent, child = parent_and_child
+def test_image_shows_disabled_style_when_ancestor_is_disabled():
+    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
+    theme = Theme(
+        base_style,
+        {State.DISABLED: StyleOverride(body_colour=RED)},
+    )
+
+    ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
+    parent = Widget(ui_root, ANY_SIZE, BodyColourLayer())
+    child = Widget(parent, (10, 12), BodyColourLayer())
 
     parent.enabled = False
+    child.update()
 
-    assert child.current_state is State.DISABLED
+    assert child.image.get_at((3, 5)) == RED
 
 
 # endregion
@@ -591,8 +624,9 @@ def test_disabled_state_when_ancestor_is_disabled(
 
 def test_update_with_state_not_in_possible_states_raises(ui_root: UIRoot):
     class WidgetWithoutDisabledState(Widget):
-        # override possible_states to be just State.BASE
-        possible_states: ClassVar[tuple[State, ...]] = (State.BASE,)
+        # white-box: drops DISABLED, which only puigame's own widgets can do,
+        # so disabling the widget gives a state with no cached image
+        _possible_states: ClassVar[tuple[State, ...]] = (State.BASE,)
 
     widget = WidgetWithoutDisabledState(ui_root, ANY_SIZE, ANY_SKIN)
     widget.enabled = False
@@ -606,6 +640,11 @@ def test_assigning_to_image_raises(widget: Widget):
         widget.image = pg.Surface(ANY_SIZE)
 
 
+def test_assigning_to_skin_raises(widget: Widget):
+    with pytest.raises(AttributeError):
+        widget.skin = ANY_SKIN
+
+
 # endregion
 
 
@@ -613,21 +652,19 @@ def test_assigning_to_image_raises(widget: Widget):
 
 
 def test_image_cache_has_one_image_per_state(widget: Widget):
+    # white-box: the cache has no public view
     # set provides just keys of dictionary
     # set comparison ignores element order
-    assert set(widget._placed_image_cache) == set(widget.possible_states)
+    assert set(widget._placed_image_cache) == set(widget._possible_states)
 
 
-def test_disabling_parent_changes_child_image_after_update(
-    parent_and_child: tuple[Widget, Widget],
-):
-    parent, child = parent_and_child
-    enabled_child_image = child.image
+def test_state_change_swaps_to_different_image(widget: Widget):
+    enabled_image = widget.image
 
-    parent.enabled = False
-    child.update()
+    widget.enabled = False
+    widget.update()
 
-    assert child.image is not enabled_child_image
+    assert widget.image is not enabled_image
 
 
 def test_image_cache_reuses_object(widget: Widget):
@@ -639,17 +676,6 @@ def test_image_cache_reuses_object(widget: Widget):
     widget.update()
 
     assert widget.image is original_base_image
-
-
-def test_new_skin_only_shows_after_rebuild_image_cache(ui_root: UIRoot):
-    widget = Widget(ui_root, ANY_SIZE, FixedLayer(ANY_SIZE, RED, (0, 0)))
-    assert widget.image.get_at((0, 0)) == RED
-
-    widget.skin = FixedLayer(ANY_SIZE, BLUE, (0, 0))
-    assert widget.image.get_at((0, 0)) == RED  # image_cache not yet rebuilt
-
-    widget.rebuild_image_cache()
-    assert widget.image.get_at((0, 0)) == BLUE
 
 
 def test_theme_receives_style_for_each_possible_state():
@@ -759,7 +785,8 @@ def test_image_keeps_components_given_as_generator(ui_root: UIRoot):
         components=single_use_components,
     )
 
-    widget.rebuild_image_cache()
+    # white-box: nothing public renders a plain Widget again
+    widget._rebuild_image_cache()
 
     assert widget.image.size == (5, 6)
     assert widget.image_pos == (-3, 2)
