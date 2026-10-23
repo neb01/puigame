@@ -166,28 +166,29 @@ class Style:
         if not isinstance(self.text_typeface, (BundledTypeface, Path)):
             raise TypeError(
                 "text_typeface must be a BundledTypeface or Path, "
-                f"got {self.text_typeface!r}"
+                f"got {self.text_typeface!r}",
             )
 
         if self.corner_radius_px < 0:
             raise ValueError(
-                f"corner_radius_px cannot be negative, got {self.corner_radius_px} px"
+                f"corner_radius_px cannot be negative, got {self.corner_radius_px} px",
             )
 
         if self.border_thickness_px < 0:
             raise ValueError(
                 "border_thickness_px cannot be negative, "
-                f"got {self.border_thickness_px} px"
+                f"got {self.border_thickness_px} px",
             )
 
         if self.halo_thickness_px < 0:
             raise ValueError(
-                f"halo_thickness_px cannot be negative, got {self.halo_thickness_px} px"
+                "halo_thickness_px cannot be negative, "
+                f"got {self.halo_thickness_px} px",
             )
 
         if self.text_font_size <= 0:
             raise ValueError(
-                f"text_font_size must be positive, got {self.text_font_size} px"
+                f"text_font_size must be positive, got {self.text_font_size} px",
             )
 
 
@@ -243,12 +244,13 @@ class StyleOverride:
         """
         if not (isinstance(self.text_offset, tuple) or self.text_offset is None):
             raise TypeError(
-                f"text_offset must be a tuple or None, got {self.text_offset!r}"
+                f"text_offset must be a tuple or None, got {self.text_offset!r}",
             )
 
         if self.halo_thickness_px is not None and self.halo_thickness_px < 0:
             raise ValueError(
-                f"halo_thickness_px cannot be negative, got {self.halo_thickness_px} px"
+                "halo_thickness_px cannot be negative, "
+                f"got {self.halo_thickness_px} px",
             )
 
 
@@ -288,7 +290,7 @@ class Theme:
         for flag in self.style_overrides:
             if len(flag) > 1:
                 raise ValueError(
-                    f"style_overrides cannot use combined flags as a key, got {flag}"
+                    f"style_overrides cannot use combined flags as a key, got {flag}",
                 )
 
         dict_copy = dict(self.style_overrides)

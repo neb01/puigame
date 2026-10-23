@@ -210,7 +210,8 @@ def test_drawn_skin_pixel_colours():
 @pytest.mark.parametrize("halo_fade_profile", FadeProfile)
 @pytest.mark.parametrize("halo_thickness_px", [0, 1, 2, 5])
 def test_drawn_skin_halo_fade_does_not_overlap_border(
-    halo_fade_profile, halo_thickness_px
+    halo_fade_profile,
+    halo_thickness_px,
 ):
     style = replace(
         ANY_STYLE,
@@ -236,7 +237,9 @@ def test_drawn_skin_halo_fade_does_not_overlap_border(
 
 
 @pytest.mark.parametrize(
-    "halo_colour", [RED, BLUE, BLACK, WHITE], ids=["red", "blue", "black", "white"]
+    "halo_colour",
+    [RED, BLUE, BLACK, WHITE],
+    ids=["red", "blue", "black", "white"],
 )
 @pytest.mark.parametrize(
     ("halo_fade_profile", "alpha_values"),
@@ -258,7 +261,9 @@ def test_drawn_skin_halo_fade_does_not_overlap_border(
     ],
 )
 def test_drawn_skin_halo_fade_profiles_give_correct_colour_and_transparency(
-    halo_colour, halo_fade_profile, alpha_values
+    halo_colour,
+    halo_fade_profile,
+    alpha_values,
 ):
     style = replace(
         ANY_STYLE,

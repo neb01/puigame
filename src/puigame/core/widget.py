@@ -153,7 +153,7 @@ class Widget(pg.sprite.Sprite):
         if isinstance(margin, (int, float)):
             raise TypeError(
                 f"margin cannot be a single value, got {margin!r}; "
-                "margin must be an (x, y) pair"
+                "margin must be an (x, y) pair",
             )
         self._margin = pg.Vector2(margin)
 
@@ -188,7 +188,7 @@ class Widget(pg.sprite.Sprite):
     def rect(self, value: pg.Rect | pg.FRect | None) -> None:
         raise AttributeError(
             "rect cannot be set directly; "
-            "position the widget via anchor, parent_anchor, margin, and offset"
+            "position the widget via anchor, parent_anchor, margin, and offset",
         )
 
     @property
@@ -205,7 +205,7 @@ class Widget(pg.sprite.Sprite):
     def image(self, value: pg.Surface | None) -> None:
         raise AttributeError(
             "image cannot be set directly; "
-            "it is derived from the widget's skin, theme, and state"
+            "it is derived from the widget's skin, theme, and state",
         )
 
     @property
@@ -229,7 +229,7 @@ class Widget(pg.sprite.Sprite):
     @skin.setter
     def skin(self, value: Skin) -> None:
         raise AttributeError(
-            "skin cannot be set directly; it is set only in the constructor"
+            "skin cannot be set directly; it is set only in the constructor",
         )
 
     @property
@@ -270,7 +270,7 @@ class Widget(pg.sprite.Sprite):
         if isinstance(value, (int, float)):
             raise TypeError(
                 f"offset cannot be a single value, got {value!r}; "
-                "offset must be an (x, y) pair"
+                "offset must be an (x, y) pair",
             )
 
         self._offset = pg.Vector2(value)
@@ -379,7 +379,7 @@ class Widget(pg.sprite.Sprite):
             raise RuntimeError(
                 "_current_state is not in _possible_states, "
                 f"got state={state}, _possible_states={self._possible_states}; "
-                f"add {state} to {type(self).__name__}._possible_states"
+                f"add {state} to {type(self).__name__}._possible_states",
             )
 
         self._placed_image = self._placed_image_cache[state]
