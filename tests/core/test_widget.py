@@ -699,7 +699,7 @@ def test_image_without_components_gives_skin_image(ui_root: UIRoot):
     widget = Widget(
         ui_root,
         (10, 12),
-        FixedLayer((5, 6), BLUE, (-3, 10)),
+        FixedLayer(size=(5, 6), colour=BLUE, pos=(-3, 10)),
         components=[],
     )
 
@@ -712,10 +712,10 @@ def test_image_draws_components_over_skin_in_given_order(ui_root: UIRoot):
     widget = Widget(
         ui_root,
         ANY_SIZE,
-        FixedLayer((9, 10), WHITE, (1, 0)),
+        FixedLayer(size=(9, 10), colour=WHITE, pos=(1, 0)),
         components=[
-            FixedLayer((5, 6), RED, (2, 3)),
-            FixedLayer((7, 8), BLUE, (4, 5)),
+            FixedLayer(size=(5, 6), colour=RED, pos=(2, 3)),
+            FixedLayer(size=(7, 8), colour=BLUE, pos=(4, 5)),
         ],
     )
 
@@ -728,10 +728,10 @@ def test_image_covers_all_layers(ui_root: UIRoot):
     widget = Widget(
         ui_root,
         ANY_SIZE,
-        FixedLayer((10, 12), WHITE, (0, 0)),
+        FixedLayer(size=(10, 12), colour=WHITE, pos=(0, 0)),
         components=[
-            FixedLayer((5, 5), RED, (-3, 2)),
-            FixedLayer((20, 3), BLUE, (4, -1)),
+            FixedLayer(size=(5, 5), colour=RED, pos=(-3, 2)),
+            FixedLayer(size=(20, 3), colour=BLUE, pos=(4, -1)),
         ],
     )
 
@@ -765,7 +765,9 @@ def test_components_receive_rect_size_and_style_for_each_possible_state():
 
 
 def test_image_keeps_components_given_as_generator(ui_root: UIRoot):
-    single_use_components = (layer for layer in [FixedLayer((5, 6), RED, (-3, 2))])
+    single_use_components = (
+        layer for layer in [FixedLayer(size=(5, 6), colour=RED, pos=(-3, 2))]
+    )
     widget = Widget(
         ui_root,
         ANY_SIZE,
