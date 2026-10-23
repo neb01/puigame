@@ -15,7 +15,7 @@ ANY_PATH = Path("fonts/any_font.ttf")
 BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 
-BASE_STYLE = Style(
+ANY_STYLE = Style(
     body_colour=WHITE,
     border_colour=BLACK,
     border_thickness_px=2,
@@ -41,7 +41,7 @@ BASE_STYLE = Style(
 
 @pytest.mark.parametrize("swell_px", [-5, 0, 5])
 def test_style_swell_px_can_take_any_int(swell_px):
-    style = replace(BASE_STYLE, swell_px=swell_px)
+    style = replace(ANY_STYLE, swell_px=swell_px)
 
     assert style.swell_px == swell_px
 
@@ -59,7 +59,7 @@ def test_style_override_swell_px_can_take_any_int(swell_px):
 )
 def test_style_negative_radius_or_thicknesses_raise(field_name):
     with pytest.raises(ValueError):
-        replace(BASE_STYLE, **{field_name: -5})
+        replace(ANY_STYLE, **{field_name: -5})
 
 
 def test_style_override_negative_halo_thickness_raises():
@@ -72,7 +72,7 @@ def test_style_override_negative_halo_thickness_raises():
     ["corner_radius_px", "border_thickness_px", "halo_thickness_px"],
 )
 def test_style_radius_or_thicknesses_can_be_zero(field_name):
-    style = replace(BASE_STYLE, **{field_name: 0})
+    style = replace(ANY_STYLE, **{field_name: 0})
 
     assert getattr(style, field_name) == 0
 
@@ -86,7 +86,7 @@ def test_style_override_halo_thickness_can_be_zero():
 @pytest.mark.parametrize("text_font_size", [0, -5])
 def test_style_non_positive_font_size_raises(text_font_size):
     with pytest.raises(ValueError):
-        replace(BASE_STYLE, text_font_size=text_font_size)
+        replace(ANY_STYLE, text_font_size=text_font_size)
 
 
 @pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
@@ -97,7 +97,7 @@ def test_style_non_positive_font_size_raises(text_font_size):
 )
 def test_style_non_tuple_margin_or_offset_raises(field_name, value):
     with pytest.raises(TypeError):
-        replace(BASE_STYLE, **{field_name: value})
+        replace(ANY_STYLE, **{field_name: value})
 
 
 @pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
@@ -117,7 +117,7 @@ def test_style_non_tuple_margin_or_offset_raises(field_name, value):
     ],
 )
 def test_style_margin_or_offset_can_take_tuple_of_int(field_name, value):
-    style = replace(BASE_STYLE, **{field_name: value})
+    style = replace(ANY_STYLE, **{field_name: value})
 
     assert getattr(style, field_name) == value
 
@@ -157,7 +157,7 @@ def test_style_override_text_offset_can_take_tuple_of_int_or_None(value):
 
 def test_style_str_text_typeface_raises():
     with pytest.raises(TypeError):
-        replace(BASE_STYLE, text_typeface=ANY_STRING)
+        replace(ANY_STYLE, text_typeface=ANY_STRING)
 
 
 @pytest.mark.parametrize(
@@ -168,7 +168,7 @@ def test_style_str_text_typeface_raises():
     ],
 )
 def test_style_text_typeface_can_take_bundled_font_or_path(value):
-    style = replace(BASE_STYLE, text_typeface=value)
+    style = replace(ANY_STYLE, text_typeface=value)
 
     assert style.text_typeface == value
 
