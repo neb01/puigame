@@ -67,7 +67,7 @@ class BundledTypeface(Enum):
     NEB0FONT = "neb0font.ttf"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Style:
     """Complete appearance of a widget: every value needed to draw it.
 
@@ -192,7 +192,7 @@ class Style:
             )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class StyleOverride:
     """Changes that one state makes to a ``Style``.
 
@@ -254,7 +254,7 @@ class StyleOverride:
             )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Theme:
     """Shared drawing rules for every widget in a UI.
 

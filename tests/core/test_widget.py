@@ -239,7 +239,10 @@ def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(
 
 
 def test_child_and_grandchild_return_root_theme():
-    theme = Theme(replace(DEFAULT_THEME.base_style, body_colour=BLUE), {})
+    theme = Theme(
+        base_style=replace(DEFAULT_THEME.base_style, body_colour=BLUE),
+        style_overrides={},
+    )
     ui_root = UIRoot(size=ANY_SIZE, theme=theme)
 
     child = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
@@ -576,8 +579,8 @@ def test_showing_parent_does_not_override_hidden_grandparent(
 def test_image_shows_base_style_by_default():
     base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
     theme = Theme(
-        base_style,
-        {State.DISABLED: StyleOverride(body_colour=RED)},
+        base_style=base_style,
+        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
     ui_root = UIRoot(size=ANY_SIZE, theme=theme)
@@ -590,8 +593,8 @@ def test_image_shows_base_style_by_default():
 def test_image_shows_disabled_style_when_ancestor_is_disabled():
     base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
     theme = Theme(
-        base_style,
-        {State.DISABLED: StyleOverride(body_colour=RED)},
+        base_style=base_style,
+        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
     ui_root = UIRoot(size=ANY_SIZE, theme=theme)
@@ -669,8 +672,8 @@ def test_image_cache_reuses_object(widget: Widget):
 def test_theme_receives_style_for_each_possible_state():
     base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
     theme = Theme(
-        base_style,
-        {State.DISABLED: StyleOverride(body_colour=RED)},
+        base_style=base_style,
+        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
     ui_root = UIRoot(size=ANY_SIZE, theme=theme)
@@ -742,8 +745,8 @@ def test_components_receive_rect_size_and_style_for_each_possible_state():
     ui_root = UIRoot(
         size=ANY_SIZE,
         theme=Theme(
-            DEFAULT_THEME.base_style,
-            {State.DISABLED: StyleOverride(body_colour=RED)},
+            base_style=DEFAULT_THEME.base_style,
+            style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
         ),
     )
     recording_layer = RecordingLayer()

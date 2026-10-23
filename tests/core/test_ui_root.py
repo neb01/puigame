@@ -38,7 +38,10 @@ def test_root_position_is_origin():
 
 
 def test_theme_is_given_theme():
-    theme = Theme(replace(DEFAULT_THEME.base_style, body_colour=BLUE), {})
+    theme = Theme(
+        base_style=replace(DEFAULT_THEME.base_style, body_colour=BLUE),
+        style_overrides={},
+    )
     ui_root = UIRoot(size=ANY_SIZE, theme=theme)
 
     assert ui_root.theme is theme

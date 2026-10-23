@@ -197,27 +197,29 @@ def test_style_text_typeface_can_take_bundled_font_or_path(value):
 def test_base_state_in_style_overrides_raises():
     with pytest.raises(ValueError):
         Theme(
-            BASE_STYLE,
-            {State.BASE: StyleOverride(body_colour=RED)},
+            base_style=BASE_STYLE,
+            style_overrides={State.BASE: StyleOverride(body_colour=RED)},
         )
 
 
 def test_combined_state_in_style_overrides_raises():
     with pytest.raises(ValueError):
         Theme(
-            BASE_STYLE,
-            {State.DISABLED | State.HIGHLIGHTED: StyleOverride(body_colour=RED)},
+            base_style=BASE_STYLE,
+            style_overrides={
+                State.DISABLED | State.HIGHLIGHTED: StyleOverride(body_colour=RED),
+            },
         )
 
 
 def test_stored_style_overrides_copy_is_same_as_given():
-    theme = Theme(BASE_STYLE, ANY_STYLE_OVERRIDES)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=ANY_STYLE_OVERRIDES)
 
     assert theme.style_overrides == ANY_STYLE_OVERRIDES
 
 
 def test_adding_key_to_style_overrides_raises():
-    theme = Theme(BASE_STYLE, ANY_STYLE_OVERRIDES)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=ANY_STYLE_OVERRIDES)
 
     with pytest.raises(TypeError):
         theme.style_overrides[State.CHECKED] = StyleOverride(body_colour=RED)  # pyright: ignore[reportIndexIssue]
@@ -225,7 +227,7 @@ def test_adding_key_to_style_overrides_raises():
 
 def test_changing_source_style_overrides_dict_does_not_affect_theme():
     source_style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
-    theme = Theme(BASE_STYLE, source_style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=source_style_overrides)
 
     source_style_overrides[State.DISABLED] = StyleOverride(body_colour=BLACK)
 
@@ -239,7 +241,7 @@ def test_changing_source_style_overrides_dict_does_not_affect_theme():
 
 
 def test_style_for_base_state_returns_base_style():
-    theme = Theme(BASE_STYLE, ANY_STYLE_OVERRIDES)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=ANY_STYLE_OVERRIDES)
 
     style = theme.style_for(State.BASE)
 
@@ -248,7 +250,7 @@ def test_style_for_base_state_returns_base_style():
 
 def test_single_flag_changes_field_set_in_style_override():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
-    theme = Theme(BASE_STYLE, style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=style_overrides)
 
     style = theme.style_for(State.DISABLED)
 
@@ -257,7 +259,7 @@ def test_single_flag_changes_field_set_in_style_override():
 
 def test_single_flag_does_not_change_fields_not_set_in_style_override():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
-    theme = Theme(BASE_STYLE, style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=style_overrides)
 
     style = theme.style_for(State.DISABLED)
 
@@ -271,7 +273,7 @@ def test_inactive_flag_does_not_affect_any_fields():
         State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(border_colour=BLUE),
     }
-    theme = Theme(BASE_STYLE, style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=style_overrides)
 
     style = theme.style_for(State.DISABLED)
 
@@ -280,7 +282,7 @@ def test_inactive_flag_does_not_affect_any_fields():
 
 def test_flag_not_in_theme_is_ignored():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
-    theme = Theme(BASE_STYLE, style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=style_overrides)
 
     style = theme.style_for(State.DISABLED | State.HIGHLIGHTED)
 
@@ -293,7 +295,7 @@ def test_multiple_flags_change_separate_fields_set_in_style_override():
         State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(border_colour=BLUE),
     }
-    theme = Theme(BASE_STYLE, style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=style_overrides)
 
     style = theme.style_for(State.DISABLED | State.HIGHLIGHTED)
 
@@ -307,7 +309,7 @@ def test_later_override_wins_when_multiple_flags_change_same_field():
         State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(body_colour=BLUE),
     }
-    theme = Theme(BASE_STYLE, style_overrides)
+    theme = Theme(base_style=BASE_STYLE, style_overrides=style_overrides)
 
     style = theme.style_for(State.DISABLED | State.HIGHLIGHTED)
 
