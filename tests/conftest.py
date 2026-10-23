@@ -29,4 +29,4 @@ def pygame_session() -> Iterator[None]:
 @pytest.fixture
 def ui_root() -> UIRoot:
     """Return a UIRoot that all test widgets can use as a parent."""
-    return UIRoot((300, 200), (10, 15), DEFAULT_THEME)
+    return UIRoot((300, 200), DEFAULT_THEME)

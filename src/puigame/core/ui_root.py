@@ -1,10 +1,12 @@
 """UIRoot, the widget at the top of a UI's widget tree.
 
-A UIRoot fills its UI's area, and the UI's top-level widgets, created with
-``ui.root`` as their parent, are positioned relative to it. It has no parent,
-holds the theme that every widget in its tree draws with, and draws nothing
-itself.
+A UIRoot covers the surface its UI draws on, and the UI's top-level widgets,
+created with ``ui.root`` as their parent, are positioned relative to it. It has
+no parent, holds the theme that every widget in its tree draws with, and draws
+nothing itself.
 """
+
+import math
 
 from pygame.typing import Point
 
@@ -17,15 +19,15 @@ class UIRoot(Widget):
     """Widget at the top of a UI's tree, holding the tree's theme.
 
     A UIRoot has no parent and no appearance: it uses a ``NoSkin``, so its image
-    is 0x0. Its rect is placed directly from ``pos`` and ``size`` rather than
-    by anchors, and the UI's top-level widgets anchor against it. ``UI``
-    creates it, so games rarely need to.
+    is 0x0. Its rect covers the surface the UI draws on, at ``(0, 0)`` moved by
+    its ``offset``, so changing the offset moves the whole UI, for example to
+    shake it. It ignores its anchors and margin. The UI's top-level widgets
+    anchor against it. ``UI`` creates it, so games rarely need to.
     """
 
     def __init__(
         self,
         size: Point,
-        pos: Point,
         theme: Theme,
     ) -> None:
         """Create the root of a widget tree.
@@ -35,8 +37,7 @@ class UIRoot(Widget):
         images can be built, then runs the setup shared with ``Widget``.
 
         Args:
-            size: Width and height of the UI's area in pixels.
-            pos: ``(x, y)`` position of the area's top-left corner in pixels.
+            size: Width and height of the surface the UI draws on, in pixels.
             theme: Theme that every widget in the tree draws with.
 
         Raises:
@@ -47,9 +48,8 @@ class UIRoot(Widget):
         self._parent = None
         self._root = self
 
-        self._setup(size, NoSkin())  # a root's anchors are unused: keep defaults
-
-        self._rect.topleft = pos
+        # a root ignores its anchors and margin, so it keeps the defaults
+        self._setup(size, NoSkin())
 
     @property
     def theme(self) -> Theme:
@@ -65,3 +65,27 @@ class UIRoot(Widget):
             TypeError: Always.
         """
         raise TypeError("kill() cannot be called on UIRoot")
+
+    def _place_tree(self) -> None:
+        """Place the root, then every widget below it, parents before children.
+
+        This is the layout pass. It runs once per frame, before drawing, so
+        that changes to any widget's offset, the root's included, take effect.
+        Setting an offset moves nothing until the pass runs.
+        """
+        self._place()
+
+        for descendant in self._iter_descendants():
+            descendant._place()
+
+    def _place(self) -> None:
+        """Place the rect at ``(0, 0)`` moved by the offset.
+
+        Overrides ``Widget._place()``, since the root has no parent to be placed
+        against. The offset is rounded down on each axis, as for every other
+        widget, so a fractional offset rounds the same way everywhere.
+        """
+        self.rect.topleft = (
+            math.floor(self.offset.x),
+            math.floor(self.offset.y),
+        )
