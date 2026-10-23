@@ -36,13 +36,13 @@ def test_rect_has_given_size(ui_root: UIRoot):
     ],
     ids=["offset", "enabled", "visible"],
 )
-def test_forwards_public_keyword_arguments(ui_root: UIRoot, argument, value):
+def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
     container = Container(ui_root, size=ANY_SIZE, **{argument: value})
 
     assert getattr(container, argument) == value
 
 
-def test_forwards_private_keyword_arguments():
+def test_forwards_placement_arguments():
     ui_root = UIRoot(size=(20, 30), theme=DEFAULT_THEME)
     container = Container(
         ui_root,

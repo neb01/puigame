@@ -128,7 +128,7 @@ def test_negative_size_raises(ui_root: UIRoot, size):
 
 
 @pytest.mark.parametrize("margin_value", [1, 2.0], ids=["int", "float"])
-def test_setting_margin_to_single_value_raises(ui_root: UIRoot, margin_value):
+def test_constructor_with_single_value_margin_raises(ui_root: UIRoot, margin_value):
     with pytest.raises(TypeError):
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, margin=margin_value)
 
@@ -154,7 +154,7 @@ def test_offset_converts_to_vec2_on_correct_axes(
 
 
 @pytest.mark.parametrize("offset_value", [1, 2.0], ids=["int", "float"])
-def test_setting_offset_to_single_value_raises(ui_root: UIRoot, offset_value):
+def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset_value):
     with pytest.raises(TypeError):
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset_value)
 
