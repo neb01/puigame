@@ -127,26 +127,6 @@ def test_negative_size_raises(ui_root: UIRoot, size):
     assert ui_root.children == ()
 
 
-@pytest.mark.parametrize(
-    ("margin_values", "expected_vector"),
-    [
-        ((1.0, 2.0), pg.Vector2(1.0, 2.0)),
-        ([2.0, 3.0], pg.Vector2(2.0, 3.0)),
-        (pg.Vector2(4.0, 2.0), pg.Vector2(4.0, 2.0)),
-    ],
-    ids=["tuple", "list", "pg.Vector2"],
-)
-def test_margin_converts_to_vec2_on_correct_axes(
-    ui_root: UIRoot,
-    margin_values,
-    expected_vector,
-):
-    widget = Widget(ui_root, ANY_SIZE, ANY_SKIN, margin=margin_values)
-
-    assert isinstance(widget.margin, pg.Vector2)
-    assert widget.margin == expected_vector
-
-
 @pytest.mark.parametrize("margin_value", [1, 2.0], ids=["int", "float"])
 def test_setting_margin_to_single_value_raises(ui_root: UIRoot, margin_value):
     with pytest.raises(TypeError):
@@ -179,13 +159,6 @@ def test_setting_offset_to_single_value_raises(ui_root: UIRoot, offset_value):
         Widget(ui_root, ANY_SIZE, ANY_SKIN, offset=offset_value)
 
 
-@pytest.mark.parametrize("anchor", Anchor)
-def test_parent_anchor_defaults_to_anchor(ui_root: UIRoot, anchor):
-    widget = Widget(ui_root, ANY_SIZE, ANY_SKIN, anchor=anchor)
-
-    assert widget.parent_anchor is anchor
-
-
 # endregion
 
 
@@ -209,6 +182,44 @@ def test_rect_can_change_in_place(widget: Widget):
 
     assert widget.rect is original_rect
     assert widget.rect.topleft == (2, 1)
+
+
+# endregion
+
+
+# region --- Layout -----------------------------------------------------------
+
+
+def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
+    ui_root = UIRoot(ANY_SIZE, DEFAULT_THEME)
+
+    parent = Widget(
+        ui_root,
+        (10, 20),
+        ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(4, 6),
+    )
+
+    child = Widget(
+        parent,
+        (5, 6),
+        ANY_SKIN,
+        anchor=Anchor.BOTTOM_LEFT,
+        parent_anchor=Anchor.BOTTOM_RIGHT,
+        margin=(1, 2),
+        offset=(3, 4),
+    )
+
+    assert child.rect.topleft == (18, 22)
+
+
+def test_parent_anchor_defaults_to_anchor():
+    ui_root = UIRoot((10, 12), DEFAULT_THEME)
+    widget = Widget(ui_root, (5, 10), ANY_SKIN, anchor=Anchor.BOTTOM_RIGHT)
+
+    assert widget.rect.topleft == (5, 2)
 
 
 # endregion
@@ -768,78 +779,6 @@ def test_image_keeps_components_given_as_generator(ui_root: UIRoot):
     assert widget.image.size == (5, 6)
     assert widget.image_pos == (-3, 2)
     assert widget.image.get_at((1, 1)) == RED
-
-
-# endregion
-
-
-# region --- place_at_pos -----------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "pos",
-    [(1.0, 2.0), [2.0, 3.0], pg.Vector2(4.0, 2.0)],
-    ids=["tuple", "list", "pg.Vector2"],
-)
-def test_place_at_pos_sets_anchor_and_margin(widget: Widget, pos):
-    widget.place_at_pos(pos)
-
-    assert widget.anchor is Anchor.TOP_LEFT
-    assert widget.parent_anchor is Anchor.TOP_LEFT
-    assert widget.margin == pos
-
-
-@pytest.mark.parametrize(
-    "pos",
-    [5, 6.1],
-    ids=["int", "float"],
-)
-def test_place_at_pos_with_single_value_raises(ui_root: UIRoot, pos):
-    widget = Widget(
-        ui_root,
-        ANY_SIZE,
-        ANY_SKIN,
-        anchor=Anchor.TOP_RIGHT,
-        parent_anchor=Anchor.BOTTOM_LEFT,
-        margin=(3, 4),
-    )
-    with pytest.raises(TypeError):
-        widget.place_at_pos(pos)
-
-    assert widget.anchor is Anchor.TOP_RIGHT
-    assert widget.parent_anchor is Anchor.BOTTOM_LEFT
-    assert widget.margin == (3, 4)
-
-
-# endregion
-
-
-# region --- Layout -----------------------------------------------------------
-
-
-def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
-    ui_root = UIRoot(ANY_SIZE, DEFAULT_THEME)
-
-    parent = Widget(
-        ui_root,
-        (10, 20),
-        ANY_SKIN,
-        anchor=Anchor.TOP_LEFT,
-        parent_anchor=Anchor.TOP_LEFT,
-        margin=(4, 6),
-    )
-
-    child = Widget(
-        parent,
-        (5, 6),
-        ANY_SKIN,
-        anchor=Anchor.BOTTOM_LEFT,
-        parent_anchor=Anchor.BOTTOM_RIGHT,
-        margin=(1, 2),
-        offset=(3, 4),
-    )
-
-    assert child.rect.topleft == (18, 22)
 
 
 # endregion

@@ -300,7 +300,7 @@ For example, with `anchor=TOP_LEFT` and `parent_anchor=BOTTOM_LEFT`, step 1 hang
 
 ### Absolute placement
 
-`widget.place_at_pos((x, y))` places the widget's top-left corner at `(x, y)` relative to its parent's top-left corner (screen coordinates, for a top-level widget in a full-screen `UI`). It is shorthand that sets `anchor` and `parent_anchor` to `TOP_LEFT` and `margin` to `(x, y)`, not a separate positioning system: layout still runs as normal, and changing the parent's position moves the widget with it. A single number raises `TypeError`, since a position needs both coordinates; the check happens before anything changes, so a rejected call leaves the widget as it was.
+There is no separate positioning system for absolute placement. `anchor=Anchor.TOP_LEFT, margin=(x, y)` places the widget's top-left corner at `(x, y)` from its parent's top-left corner (from the top-left of the draw surface, for a top-level widget), and the widget still moves with its parent.
 
 ### Offset
 
@@ -313,7 +313,9 @@ The two parameters keep one meaning each: `margin` is space relative to the anch
 
 `margin` and `offset` both require an `(x, y)` pair, and a single number raises `TypeError`. This keeps every position-like value in one shape, matching pygame-ce, where positions and sizes are always pairs. For `offset` in particular, an equal shift on both axes is a diagonal move and rarely intended.
 
-Both are stored as `pygame.Vector2`, whatever form they are given in, so layout can use them in calculations directly. They are properties: assigning a new value converts it, while changing the stored vector in place (for example `widget.offset.y -= 2` to animate a slide) works as expected.
+Both are stored as `pygame.Vector2`, whatever form they are given in, so layout can use them in calculations directly.
+
+The anchors and margin are fixed on creation and private: they are given to the constructor and seen only through where the widget is placed. `offset` is the one placement value that can change, so it is how widgets move, for example to animate them. It is a property: assigning a new value converts it, while changing the stored vector in place (for example `widget.offset.y -= 2` to animate a slide) works as expected. Changing anchors after creation may be added later, without breaking existing code.
 
 ### Layout pass
 
@@ -444,7 +446,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 ## Positions and types
 
 - **`pygame.Rect` internally**, for pixel-exact positioning.
-- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset): a widget is placed when it is created, and again by each layout pass. Absolute placement uses [`place_at_pos()`](#absolute-placement).
+- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset): a widget is placed when it is created, and again by each layout pass. For absolute placement, see [Absolute placement](#absolute-placement).
 - Smooth movement, if needed, keeps a precise `pygame.Vector2` and rounds it into the `Rect`.
 - pygame types use pygame-ce's `pygame.typing` aliases. puigame defines its own `Protocol` classes only for its own concepts.
 
@@ -532,7 +534,7 @@ Each layer imports only from the layers above it:
 **Features:**
 
 - The widget tree, with fixed parents, `kill()`, and the `_in_tree` flags
-- Layout every frame from anchors, margin, and offset, plus `place_at_pos()`
+- Layout every frame from anchors, margin, and offset
 - Eager per-state image caching
 - A single highlight shared by mouse and keyboard, with keyboard navigation that can be turned off
 - Press-and-release activation with mouse capture, and a mouse-button enable map
@@ -553,7 +555,7 @@ Each step is one branch and pull request, with tests:
 4. `feat/theme-drawn-skin`: `Theme` and `DrawnSkin`
 5. `feat/widget-tree`: fixed parents, `kill()`, `UIRoot`, `NoSkin`, and `Container`
 6. `feat/text`: `Text` component and font cache
-7. `feat/layout`: positioning from anchors, margin, and offset, plus `place_at_pos()`
+7. `feat/layout`: positioning from anchors, margin, and offset
 8. `feat/widget-group`: `WidgetGroup`
 9. `feat/panel-label`: `Panel` and `Label`
 10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: input routing, highlight, keyboard mode, and cursor management
