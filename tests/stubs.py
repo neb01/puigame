@@ -5,7 +5,7 @@ from pygame.typing import Point
 
 from puigame.components.placed_image import PlacedImage
 from puigame.components.skin import Skin
-from puigame.themes.theme import RGBA, Style
+from puigame.themes.style import RGBA, Style
 
 
 class FixedLayer(Skin):

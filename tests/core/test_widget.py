@@ -11,7 +11,8 @@ from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui_root import UIRoot
 from puigame.core.widget import Widget
-from puigame.themes.theme import DEFAULT_THEME, Style, StyleOverride, Theme
+from puigame.themes.style import Style, StyleOverride
+from puigame.themes.theme import DEFAULT_THEME, Theme
 from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------

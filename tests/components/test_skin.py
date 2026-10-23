@@ -4,7 +4,8 @@ import pygame as pg
 import pytest
 
 from puigame.components.skin import DrawnSkin, NoSkin, Skin
-from puigame.themes.theme import DEFAULT_THEME, FadeProfile
+from puigame.themes.style import FadeProfile
+from puigame.themes.theme import DEFAULT_THEME
 
 # region --- Constants --------------------------------------------------------
 
