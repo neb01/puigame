@@ -6,7 +6,8 @@ import pytest
 
 from puigame.components.text import Text
 from puigame.core.anchor import Anchor
-from puigame.themes.theme import DEFAULT_THEME, BundledTypeface
+from puigame.themes.style import BundledTypeface
+from puigame.themes.theme import DEFAULT_THEME
 
 # region --- Constants --------------------------------------------------------
 

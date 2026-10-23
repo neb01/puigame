@@ -9,7 +9,7 @@ from pygame.typing import Point
 
 from puigame.components.placed_image import PlacedImage
 from puigame.core.anchor import get_pos_from_anchor_match
-from puigame.themes.theme import BundledTypeface, Style
+from puigame.themes.style import BundledTypeface, Style
 
 
 @cache

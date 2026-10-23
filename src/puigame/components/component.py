@@ -14,7 +14,7 @@ from typing import Protocol
 from pygame.typing import Point
 
 from puigame.components.placed_image import PlacedImage
-from puigame.themes.theme import Style
+from puigame.themes.style import Style
 
 
 class Component(Protocol):

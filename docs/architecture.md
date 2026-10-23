@@ -497,6 +497,7 @@ src/puigame/
 │   └── widget_group.py        WidgetGroup
 ├── themes/
 │   ├── __init__.py
+│   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
 │   └── theme.py               Theme and the default theme
 ├── widgets/
 │   ├── __init__.py
@@ -517,8 +518,8 @@ The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicO
 Each layer imports only from the layers above it:
 
 1. `components/placed_image`, `core/anchor`, `core/state`
-2. `themes/theme`
-3. `components/skin`, `components/text`
+2. `themes/style`
+3. `themes/theme`, `components/skin`, `components/text`
 4. `core/widget`
 5. `core/interactive_widget`, `core/ui_root`, `core/widget_group`
 6. `widgets/*`
