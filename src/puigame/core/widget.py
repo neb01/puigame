@@ -10,7 +10,7 @@ from pygame.typing import Point
 
 from puigame.components.placed_image import PlacedImage, compose_layers
 from puigame.components.skin import Skin
-from puigame.core.anchor import Anchor
+from puigame.core.anchor import Anchor, get_pos_from_anchor_match
 from puigame.core.state import State
 from puigame.themes.theme import Theme
 
@@ -24,7 +24,8 @@ class Widget(pg.sprite.Sprite):
 
     A Widget is a pygame Sprite that provides:
 
-    - a rect, sized on creation and positioned by its anchors
+    - a rect, sized on creation and placed against its parent's by its anchors,
+      margin, and offset, on creation and by each layout pass
     - a parent to anchor against, fixed on creation, and its children
     - a skin, fixed on creation, that draws its images in the theme held by
       the tree's ``UIRoot``
@@ -56,7 +57,7 @@ class Widget(pg.sprite.Sprite):
         """Create a widget as the last child of ``parent``.
 
         The widget's images are built straight away, in the theme of the tree's
-        ``UIRoot``.
+        ``UIRoot``, and it is placed against its parent.
 
         Args:
             parent: Widget to anchor against and to be a child of. It cannot be
@@ -101,6 +102,8 @@ class Widget(pg.sprite.Sprite):
             visible=visible,
             components=components,
         )
+
+        self._place()
 
         # join the parent only once setup has succeeded, so that a widget whose
         # setup raised is never left in the tree
@@ -167,11 +170,11 @@ class Widget(pg.sprite.Sprite):
 
     @property
     def rect(self) -> pg.Rect:
-        """The widget's rect, positioned by layout.
+        """The widget's rect, in the coordinates of the UI's draw surface.
 
-        The rect can be read and is updated in place by layout each frame.
-        Replacing it raises an error, since position comes from the anchors,
-        margin, and offset.
+        It is placed against the parent's rect when the widget is created, and
+        updated in place by layout each frame. Replacing it raises an error,
+        since position comes from the anchors, margin, and offset.
         """
         return self._rect
 
@@ -271,7 +274,8 @@ class Widget(pg.sprite.Sprite):
         Applied after the anchor and margin, with ``+x`` to the right and ``+y``
         downwards. Assigning any ``(x, y)`` pair, such as a tuple or another
         ``Vector2``, stores a copy as a ``Vector2``, so it can be changed in
-        place, for example to animate the widget.
+        place, for example to animate the widget. Changes take effect at the
+        next layout pass.
         """
         return self._offset
 
@@ -433,3 +437,25 @@ class Widget(pg.sprite.Sprite):
             state |= State.DISABLED
 
         return state
+
+    def _place(self) -> None:
+        """Place the rect against the parent's from the anchors, margin, and offset.
+
+        The rect is updated in place, in the coordinates of the surface the UI
+        draws on. The parent must already be placed, since its rect is read as
+        it is. ``UIRoot`` overrides this, since it has no parent.
+        """
+        # all widgets have a parent apart from UIRoot, which overrides _place()
+        assert self.parent is not None
+
+        pos_from_anchor_match = get_pos_from_anchor_match(
+            child_size=self.rect.size,
+            child_anchor=self.anchor,
+            parent_size=self.parent.rect.size,
+            parent_anchor=self.parent_anchor,
+            margin=self.margin,
+            offset=self.offset,
+        )
+
+        self.rect.topleft = self.parent.rect.topleft
+        self.rect.move_ip(pos_from_anchor_match)

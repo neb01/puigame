@@ -38,7 +38,7 @@ Out of scope: event buses, scene management, game key bindings, and game-specifi
 
 A game uses puigame through a `UI` object. Each `UI` combines two parts:
 
-- **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It fills the UI's area (the whole screen by default) instead of anchoring to a parent, has no parent itself, and holds the UI's theme. Every widget in the UI is its child, directly or further down the tree.
+- **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It covers the surface the UI draws on, at `(0, 0)` moved by its `offset`, instead of anchoring to a parent; it has no parent itself, and holds the UI's theme. A UI that covers only part of the surface is a top-level `Container` anchored inside the root, and changing the root's `offset` moves the whole UI, for example to shake it. Every widget in the UI is its child, directly or further down the tree.
 - **`ui.manager`**: a `UIManager` that runs the UI: input routing, the highlight, press capture, and the cursor (see [Input](#input)).
 
 `UI` passes the common calls through, so a game rarely needs either part directly. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with `ui.root` as its parent.
@@ -100,7 +100,7 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 
 ```
 Widget                  pygame Sprite: rect, anchor, fixed parent, children, flags, skin, per-state image cache
-├── UIRoot              top of a UI's tree: fills the UI's area, holds the theme, has no parent
+├── UIRoot              top of a UI's tree: covers the draw surface, holds the theme, has no parent
 ├── Container           invisible group of children (NoSkin)
 ├── Panel               group of children with a background (skin given on creation)
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
@@ -234,7 +234,7 @@ A `Theme` holds the shared rules skins and text read. It is made of two parts:
 
 Positions are set with a nine-point `Anchor` (`CENTRE`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `MID_LEFT`, `MID_RIGHT`, `MID_TOP`, `MID_BOTTOM`) plus a margin.
 
-- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A top-level widget is created with `ui.root` as its parent, so it is anchored to the UI's area (the whole screen by default).
+- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A top-level widget is created with `ui.root` as its parent, so it is anchored to the surface the UI draws on.
 - A `Text` component is anchored relative to its **owner widget's rect**.
 
 ### Anchor points
@@ -314,6 +314,12 @@ The two parameters keep one meaning each: `margin` is space relative to the anch
 `margin` and `offset` both require an `(x, y)` pair, and a single number raises `TypeError`. This keeps every position-like value in one shape, matching pygame-ce, where positions and sizes are always pairs. For `offset` in particular, an equal shift on both axes is a diagonal move and rarely intended.
 
 Both are stored as `pygame.Vector2`, whatever form they are given in, so layout can use them in calculations directly. They are properties: assigning a new value converts it, while changing the stored vector in place (for example `widget.offset.y -= 2` to animate a slide) works as expected.
+
+### Layout pass
+
+Layout runs once per frame, before drawing, as a single pass down the tree from the root: the root is placed first, then every widget below it, parents before children, so each widget is placed against its parent's up-to-date rect. Each widget is also placed once when it is created.
+
+Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset are combined, so a fractional offset rounds the same way on every widget, the root included.
 
 ## State
 
@@ -438,7 +444,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 ## Positions and types
 
 - **`pygame.Rect` internally**, for pixel-exact positioning.
-- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset), so a widget's rect sits at `(0, 0)` until layout first runs. Absolute placement uses [`place_at_pos()`](#absolute-placement).
+- Constructors take a **size**, not a position or rect. Position always comes from layout (parent, anchors, margin, and offset): a widget is placed when it is created, and again by each layout pass. Absolute placement uses [`place_at_pos()`](#absolute-placement).
 - Smooth movement, if needed, keeps a precise `pygame.Vector2` and rounds it into the `Rect`.
 - pygame types use pygame-ce's `pygame.typing` aliases. puigame defines its own `Protocol` classes only for its own concepts.
 

@@ -230,7 +230,7 @@ def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(
 
 def test_child_and_grandchild_return_root_theme():
     theme = Theme(replace(DEFAULT_THEME.base_style, body_colour=BLUE), {})
-    ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
+    ui_root = UIRoot(ANY_SIZE, theme)
 
     child = Widget(ui_root, ANY_SIZE, ANY_SKIN)
     grandchild = Widget(child, ANY_SIZE, ANY_SKIN)
@@ -570,7 +570,7 @@ def test_image_shows_base_style_by_default():
         {State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
-    ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
+    ui_root = UIRoot(ANY_SIZE, theme)
 
     widget = Widget(ui_root, (12, 10), BodyColourLayer())
 
@@ -584,7 +584,7 @@ def test_image_shows_disabled_style_when_ancestor_is_disabled():
         {State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
-    ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
+    ui_root = UIRoot(ANY_SIZE, theme)
     parent = Widget(ui_root, ANY_SIZE, BodyColourLayer())
     child = Widget(parent, (10, 12), BodyColourLayer())
 
@@ -663,7 +663,7 @@ def test_theme_receives_style_for_each_possible_state():
         {State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
-    ui_root = UIRoot(ANY_SIZE, ANY_POINT, theme)
+    ui_root = UIRoot(ANY_SIZE, theme)
     skin = RecordingLayer()
     Widget(ui_root, ANY_SIZE, skin)
 
@@ -731,7 +731,6 @@ def test_image_covers_all_layers(ui_root: UIRoot):
 def test_components_receive_rect_size_and_style_for_each_possible_state():
     ui_root = UIRoot(
         ANY_SIZE,
-        ANY_POINT,
         theme=Theme(
             DEFAULT_THEME.base_style,
             {State.DISABLED: StyleOverride(body_colour=RED)},
@@ -810,6 +809,37 @@ def test_place_at_pos_with_single_value_raises(ui_root: UIRoot, pos):
     assert widget.anchor is Anchor.TOP_RIGHT
     assert widget.parent_anchor is Anchor.BOTTOM_LEFT
     assert widget.margin == (3, 4)
+
+
+# endregion
+
+
+# region --- Layout -----------------------------------------------------------
+
+
+def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
+    ui_root = UIRoot(ANY_SIZE, DEFAULT_THEME)
+
+    parent = Widget(
+        ui_root,
+        (10, 20),
+        ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(4, 6),
+    )
+
+    child = Widget(
+        parent,
+        (5, 6),
+        ANY_SKIN,
+        anchor=Anchor.BOTTOM_LEFT,
+        parent_anchor=Anchor.BOTTOM_RIGHT,
+        margin=(1, 2),
+        offset=(3, 4),
+    )
+
+    assert child.rect.topleft == (18, 22)
 
 
 # endregion
