@@ -31,7 +31,7 @@ def test_rect_has_given_size():
     assert ui_root.rect.size == (10, 20)
 
 
-def rest_root_position_is_origin():
+def test_root_position_is_origin():
     ui_root = UIRoot(ANY_SIZE, DEFAULT_THEME)
 
     assert ui_root.rect.topleft == (0, 0)
