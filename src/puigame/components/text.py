@@ -56,8 +56,8 @@ class Text:
 
     ``Text`` holds only its string. The typeface, font size, colour, and
     placement come from the ``Style`` passed to ``render()``, so the text
-    follows the widget's theme and state. It is not a widget: it is not a
-    sprite, receives no input, and is drawn into its owner's image.
+    follows the widget's theme and state. It is not a widget: it is not in the
+    tree, receives no input, and is drawn into its owner's image.
 
     The text is placed relative to the widget's rect with the style's anchors,
     margin, and offset, and is not clipped, so it can extend past the rect. It

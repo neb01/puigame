@@ -15,7 +15,7 @@ All puigame code is written by hand. This document, like the rest of the documen
 - [Anchors](#anchors)
 - [State](#state)
 - [Rendering and caching](#rendering-and-caching)
-- [Drawing: WidgetGroup](#drawing-widgetgroup)
+- [Drawing](#drawing)
 - [Input](#input)
 - [Callbacks](#callbacks)
 - [Positions and types](#positions-and-types)
@@ -99,7 +99,7 @@ The default is stated in the `update()` docstring, so it appears in editor toolt
 The hierarchy is shallow and describes **behaviour** only. Appearance (skins) and content (text) are added by composition.
 
 ```
-Widget                  pygame Sprite: rect, anchor, fixed parent, children, flags, skin, per-state image cache
+Widget                  rect, anchor, fixed parent, children, flags, skin, per-state image cache
 ├── UIRoot              top of a UI's tree: covers the draw surface, holds the theme, has no parent
 ├── Container           invisible group of children (NoSkin)
 ├── Panel               group of children with a background (skin given on creation)
@@ -110,8 +110,7 @@ Widget                  pygame Sprite: rect, anchor, fixed parent, children, fla
     └── TextBox         + editable Text, editing mode (no PRESSED state)
 
 CheckboxGroup           helper: mutual exclusion between checkboxes (radio behaviour)
-WidgetGroup             LayeredUpdates subclass that draws the widget tree
-UI                      composes root (a UIRoot, which holds the theme) and manager; owns the root group
+UI                      composes root (a UIRoot, which holds the theme) and manager; draws the tree
 UIManager               runs one UI: routes input, tracks the highlight and presses, manages the cursor
 ```
 
@@ -119,9 +118,11 @@ UIManager               runs one UI: routes input, tracks the highlight and pres
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear, and differ only in appearance: a `Container` is invisible, and a `Panel` is drawn by the skin it is given. `Panel` extends `Widget`, not `Container`, since a `Container` promises to be invisible.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
-### Widgets are pygame Sprites
+### Widgets are not pygame Sprites
 
-Every widget is a `pygame.sprite.Sprite` with an `image` and a `rect`, so widgets work with sprite groups and fit games that organise objects into groups. pygame's sprite system is part of pygame itself, so this does not tie puigame to any game framework.
+A widget has an `image` and a `rect`, like a pygame `Sprite`, but does not extend `Sprite`. A sprite group draws each `image` at its `rect`, in the order the group holds its sprites, including hidden ones. None of that is right for widgets: an image is offset from the rect by `image_pos`, the draw order follows the tree, and hidden subtrees are skipped (see [Drawing](#drawing)). Being a `Sprite` would invite games to draw widgets the one way that silently goes wrong.
+
+Games can still check collisions against a widget's `rect`, with `Rect` methods such as `colliderect()` or with `pygame.sprite.collide_rect()`, which accepts any object with a `rect`.
 
 ## Widget tree and flags
 
@@ -135,7 +136,7 @@ Every widget except a `UIRoot` is created with its `parent` as the first argumen
 - Each widget keeps a reference to the `UIRoot` at the top of its tree, copied from its parent. Parents never change, so neither does the root, and the reference cannot go out of date.
 - To move a widget, kill it and create a new one under the new parent. Moving widgets directly is a later feature.
 
-`kill()` removes a widget for good. It extends pygame's `Sprite.kill()`: the widget leaves its parent's children, each of its children is killed in turn, and every one of them leaves all its sprite groups. Like `Sprite.kill()`, it can safely be called more than once. A killed widget keeps its link to its old parent, but should not be used again. `UIRoot.kill()` raises `TypeError`: to remove a whole UI, the game drops every reference to it.
+`kill()` removes a widget for good: the widget leaves its parent's children, and each of its children is killed in turn. It can safely be called more than once. A killed widget keeps its link to its old parent, but should not be used again. `UIRoot.kill()` raises `TypeError`: to remove a whole UI, the game drops every reference to it.
 
 `UIRoot` is created differently from other widgets, since it has no parent. It sets up its root reference and its theme itself, then runs the setup that every widget shares, without calling `Widget.__init__()`.
 
@@ -162,7 +163,7 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 | **`Skin`** | Every `Widget` (required; `Container` and `UIRoot` use `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
 | **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; keeps no reference to its owner, so the owner rebuilds its images when it changes the text |
 
-A `Text` component is **not** a child widget: it is not a Sprite, receives no input, and is drawn into its owner's image rather than on its own.
+A `Text` component is **not** a child widget: it is not in the tree, receives no input, and is drawn into its owner's image rather than on its own.
 
 ### Skins
 
@@ -389,14 +390,15 @@ Caching rules:
 
 Because rendering happens at creation, widgets must be created after `pygame.init()`. Converting surfaces for display (`convert_alpha()`) also requires a display window to exist.
 
-## Drawing: WidgetGroup
+## Drawing
 
-`WidgetGroup` subclasses pygame's `LayeredUpdates`:
+The `UI` draws its tree directly, with no sprite group:
 
-- **Layers follow the tree**: children draw above their parents. Layers are corrected whenever the tree changes, so layering can change while the game runs.
-- **Hidden widgets are skipped**: widgets that are not `visible_in_tree` are not drawn.
+- **Tree order**: widgets are drawn in depth-first pre-order: each widget, then its whole subtree, then its next sibling. Children draw above their parents, and one sibling's subtree never interleaves with another's. The order comes from the tree, so it changes as soon as the tree does.
+- **Offset images**: each image is drawn at `rect.topleft + image_pos`, so halos and swell can extend past the rect without moving it.
+- **Hidden subtrees are skipped**: a widget that is not `visible` is not drawn, and nor is anything below it.
 
-The `UI` owns the root `WidgetGroup`. Games that keep their own sprite groups can still add widgets to them, since widgets are ordinary sprites.
+Hit-testing uses the reverse of this order, so the widget drawn on top is the first to be offered input.
 
 ## Input
 
@@ -467,7 +469,7 @@ Callbacks are plain callables passed to widgets and receive the widget as their 
 - **Methods** are verbs: `show()`, `hide()`, `toggle()`. Values that read and write like attributes, such as `Label.text`, are properties instead.
 - **Classes** use `CapWords` with capitalised acronyms (`UIManager`); public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos` and `mouse.get_pos()`); English spelling is used (`CENTRE`, `colour`).
 - **Docstrings and documentation** use English spelling and the Oxford comma in lists of three or more.
-- **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`, `WidgetGroup` in `widget_group.py`.
+- **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`, `UIRoot` in `ui_root.py`.
 - **Error messages** start lowercase, name the exact parameter or field, and have no final full stop. Requirements use "must" and prohibitions use "cannot" (never "must not", which is easy to misread). The bad value follows ", got": `"border_thickness_px cannot be negative, got -2 px"`. Several values are written `name=value` with no spaces around `=`, units are separated by a space (`2 px`), and a second clause follows a semicolon. When a message is split across several string literals, each break comes after a space, so the space ends one line and the next line starts with a word.
 - **Exhaustive `match` statements** over an enum end with `case _: assert_never(value)`, so Pyright reports any member that is not handled.
 - **`None` checks** use `is None` and `is not None`, never truthiness (`x or default`), so valid falsy values such as `0` or `""` are never replaced by a default. Optional arguments default to `None`, never to a mutable object such as a list, and the real default is created inside the function.
@@ -493,8 +495,7 @@ src/puigame/
 │   ├── ui.py                  UI
 │   ├── ui_manager.py          UIManager
 │   ├── ui_root.py             UIRoot
-│   ├── widget.py              Widget, DEFAULT_DT
-│   └── widget_group.py        WidgetGroup
+│   └── widget.py              Widget, DEFAULT_DT
 ├── themes/
 │   ├── __init__.py
 │   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
@@ -521,16 +522,16 @@ Each layer imports only from the layers above it:
 2. `themes/style`
 3. `themes/theme`, `components/skin`, `components/text`
 4. `core/widget`
-5. `core/interactive_widget`, `core/ui_root`, `core/widget_group`
+5. `core/interactive_widget`, `core/ui_root`
 6. `widgets/*`
 7. `core/ui_manager`
 8. `core/ui`
 
-`UIManager` and `UI` need only `Widget`, `InteractiveWidget`, `UIRoot`, and `WidgetGroup`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
+`UIManager` and `UI` need only `Widget`, `InteractiveWidget`, and `UIRoot`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
 
 ## v0.1 scope
 
-**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `WidgetGroup`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
+**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
 
 **Features:**
 
@@ -557,9 +558,9 @@ Each step is one branch and pull request, with tests:
 5. `feat/widget-tree`: fixed parents, `kill()`, `UIRoot`, `NoSkin`, and `Container`
 6. `feat/text`: `Text` component and font cache
 7. `feat/layout`: positioning from anchors, margin, and offset
-8. `feat/widget-group`: `WidgetGroup`
+8. `refactor/drop-sprite`: widgets stop being pygame Sprites, and `WidgetGroup` is dropped in favour of drawing the tree from `UI`
 9. `feat/panel-label`: `Panel` and `Label`
-10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: input routing, highlight, keyboard mode, and cursor management
+10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: drawing, input routing, highlight, keyboard mode, and cursor management
 11. `feat/button`: `Button`
 12. `feat/checkbox`: `Checkbox` and `CheckboxGroup`
 13. `feat/textbox`: `TextBox`

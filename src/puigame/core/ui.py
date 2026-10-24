@@ -2,7 +2,7 @@
 
 A UI combines a UIRoot, the top of its widget tree, which holds the theme,
 with a UIManager that runs it: input routing, the highlight, press capture, and
-the cursor. It also owns the WidgetGroup that draws the tree.
+the cursor. It also draws the tree, each widget above its parent.
 
 UI passes the common calls through, so a game rarely needs the manager
 directly. A top-level widget is created with ``ui.root`` as its parent, and
