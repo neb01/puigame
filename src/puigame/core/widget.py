@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pygame as pg
 from pygame.typing import Point
@@ -19,10 +19,10 @@ if TYPE_CHECKING:
     from puigame.core.ui_root import UIRoot
 
 
-class Widget(pg.sprite.Sprite):
+class Widget:
     """Base class for all puigame widgets.
 
-    A Widget is a pygame Sprite that provides:
+    A Widget provides:
 
     - a rect, sized on creation and placed against its parent's by its anchors,
       margin, and offset, on creation and by each layout pass
@@ -138,7 +138,6 @@ class Widget(pg.sprite.Sprite):
         if min(size[0], size[1]) < 0:
             raise ValueError(f"size cannot be negative, got {size!r} px")
 
-        super().__init__()
         self._rect = pg.Rect((0, 0), size)
         self._skin = skin
 
@@ -202,7 +201,7 @@ class Widget(pg.sprite.Sprite):
         return self._placed_image.image
 
     @image.setter
-    def image(self, value: pg.Surface | None) -> None:
+    def image(self, value: pg.Surface) -> None:
         raise AttributeError(
             "image cannot be set directly; "
             "it is derived from the widget's skin, theme, and state",
@@ -291,20 +290,16 @@ class Widget(pg.sprite.Sprite):
         else:
             return self.visible and self.parent.visible_in_tree
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self) -> None:
         """Refresh ``image`` and ``image_pos`` from the current state each frame."""
-        super().update(*args, **kwargs)
-
         self._refresh_current_placed_image()
 
     def kill(self) -> None:
-        """Remove the widget and its descendants from the tree and all groups.
+        """Remove the widget and its descendants from the tree.
 
-        Extends ``Sprite.kill()``: the widget leaves its parent's children, each
-        of its children is killed in turn, and every one of them leaves all its
-        sprite groups. Like ``Sprite.kill()``, it can safely be called more than
-        once. A killed widget keeps its link to its old parent, but should not
-        be used again.
+        The widget leaves its parent's children, and each of its children is
+        killed in turn. It can safely be called more than once. A killed widget
+        keeps its link to its old parent, but should not be used again.
         """
         # all widgets have a parent apart from UIRoot, which overrides kill()
         assert self.parent is not None
@@ -314,8 +309,6 @@ class Widget(pg.sprite.Sprite):
 
         for child in self.children:
             child.kill()
-
-        super().kill()
 
     def _iter_descendants(self) -> Iterator[Widget]:
         """Yield every widget below this one in the tree, parents first.

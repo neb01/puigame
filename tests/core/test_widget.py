@@ -289,26 +289,21 @@ def test_assigning_to_children_raises(ui_root: UIRoot):
 # region --- kill -------------------------------------------------------------
 
 
-def test_killing_parent_also_kills_children(ui_root: UIRoot):
-    parent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    child_1 = Widget(parent, size=ANY_SIZE, skin=ANY_SKIN)
-    child_2 = Widget(parent, size=ANY_SIZE, skin=ANY_SKIN)
-    child_3 = Widget(parent, size=ANY_SIZE, skin=ANY_SKIN)
+def test_killing_widget_kills_all_descendants(ui_root: UIRoot):
+    grandparent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+    parent_1 = Widget(grandparent, size=ANY_SIZE, skin=ANY_SKIN)
+    parent_2 = Widget(grandparent, size=ANY_SIZE, skin=ANY_SKIN)
 
-    parent_group = pg.sprite.Group(parent)
-    child_group = pg.sprite.Group(child_1, child_2, child_3)
-    joint_group = pg.sprite.Group(parent, child_1, child_2, child_3)
+    Widget(parent_1, size=ANY_SIZE, skin=ANY_SKIN)
+    Widget(parent_1, size=ANY_SIZE, skin=ANY_SKIN)
+    Widget(parent_2, size=ANY_SIZE, skin=ANY_SKIN)
 
-    parent.kill()
+    grandparent.kill()
 
-    assert parent_group.sprites() == []
-    assert child_group.sprites() == []
-    assert joint_group.sprites() == []
-
-    assert not parent.alive()
-    assert not child_1.alive()
-    assert not child_2.alive()
-    assert not child_3.alive()
+    assert ui_root.children == ()
+    assert grandparent.children == ()
+    assert parent_1.children == ()
+    assert parent_2.children == ()
 
 
 def test_killing_child_causes_it_to_leave_parents_children(
