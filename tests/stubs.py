@@ -29,3 +29,18 @@ class FixedLayer(Skin):
         image.fill(self.colour)
 
         return PlacedImage(image, self.pos)
+
+
+class BodyColourLayer(Skin):
+    """Skin or component that fills its whole size with the style's body colour.
+
+    Unlike ``FixedLayer``, it reads the style, so its image shows which state's
+    style it was given.
+    """
+
+    def render(self, size: Point, style: Style) -> PlacedImage:
+        """Return a new surface of ``size``, filled with the body colour, at (0, 0)."""
+        image = pg.Surface(size, pg.SRCALPHA)
+        image.fill(style.body_colour)
+
+        return PlacedImage(image, (0, 0))
