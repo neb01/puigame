@@ -74,10 +74,17 @@ class UIRoot(Widget):
         that changes to any widget's offset, the root's included, take effect.
         Setting an offset moves nothing until the pass runs.
         """
-        self._place()
+        for widget in self._iter_subtree():
+            widget._place()
 
-        for descendant in self._iter_descendants():
-            descendant._place()
+    def _update_tree(self) -> None:
+        """Refresh the image of the root and of every widget below it.
+
+        Each widget shows the cached image and position for its current state.
+        This runs once per frame, after the layout pass.
+        """
+        for widget in self._iter_subtree():
+            widget._update()
 
     def _place(self) -> None:
         """Place the rect at ``(0, 0)`` moved by the offset.

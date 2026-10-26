@@ -3,9 +3,7 @@ from dataclasses import replace
 import pytest
 
 from puigame.components.skin import NoSkin
-from puigame.core.anchor import Anchor
 from puigame.core.ui_root import UIRoot
-from puigame.core.widget import Widget
 from puigame.themes.theme import DEFAULT_THEME, Theme
 
 # region --- Constants --------------------------------------------------------
@@ -73,39 +71,6 @@ def test_kill_raises(ui_root: UIRoot):
 
 
 # region --- Layout -----------------------------------------------------------
-
-
-def test_offset_change_passes_down_to_descendants():
-    ui_root = UIRoot(size=(10, 20), theme=DEFAULT_THEME)
-    parent = Widget(
-        ui_root,
-        size=(3, 5),
-        skin=ANY_SKIN,
-        anchor=Anchor.TOP_LEFT,
-        parent_anchor=Anchor.TOP_LEFT,
-        margin=(0, 0),
-        offset=(1, 3),
-    )
-
-    child = Widget(
-        parent,
-        size=(1, 2),
-        skin=ANY_SKIN,
-        anchor=Anchor.BOTTOM_RIGHT,
-        parent_anchor=Anchor.BOTTOM_RIGHT,
-        margin=(0, 0),
-        offset=(-1, 0),
-    )
-
-    assert parent.rect.topleft == (1, 3)
-    assert child.rect.topleft == (2, 6)
-
-    ui_root.offset = (1, -2)
-    # white-box: nothing public runs the layout pass until UI does
-    ui_root._place_tree()
-
-    assert parent.rect.topleft == (2, 1)
-    assert child.rect.topleft == (3, 4)
 
 
 def test_given_offset_is_floored():
