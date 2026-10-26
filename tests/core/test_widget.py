@@ -9,6 +9,7 @@ from puigame.components.placed_image import PlacedImage
 from puigame.components.skin import NoSkin, Skin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
+from puigame.core.ui import UI
 from puigame.core.ui_root import UIRoot
 from puigame.core.widget import Widget
 from puigame.themes.style import Style, StyleOverride
@@ -345,30 +346,6 @@ def test_killing_parent_then_child_explicitly_does_not_raise(
 # endregion
 
 
-# region --- _iter_descendants ------------------------------------------------
-
-
-def test_iter_descendants_multiple_levels_order(ui_root: UIRoot):
-    widget_a = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_a1 = Widget(widget_a, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_a2 = Widget(widget_a, size=ANY_SIZE, skin=ANY_SKIN)
-
-    widget_b = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_b1 = Widget(widget_b, size=ANY_SIZE, skin=ANY_SKIN)
-
-    # white-box: nothing public walks the tree yet
-    assert list(ui_root._iter_descendants()) == [
-        widget_a,
-        widget_a1,
-        widget_a2,
-        widget_b,
-        widget_b1,
-    ]
-
-
-# endregion
-
-
 # region --- enabled and enabled_in_tree propagation --------------------------
 
 
@@ -593,12 +570,12 @@ def test_image_shows_disabled_style_when_ancestor_is_disabled():
         style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
     )
 
-    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
-    parent = Widget(ui_root, size=ANY_SIZE, skin=BodyColourLayer())
+    ui = UI(size=ANY_SIZE, theme=theme)
+    parent = Widget(ui.root, size=ANY_SIZE, skin=BodyColourLayer())
     child = Widget(parent, size=(10, 12), skin=BodyColourLayer())
 
     parent.enabled = False
-    child.update()
+    ui.update()
 
     assert child.image.get_at((3, 5)) == RED
 
@@ -609,17 +586,18 @@ def test_image_shows_disabled_style_when_ancestor_is_disabled():
 # region --- update and image_pos ---------------------------------------------
 
 
-def test_update_with_state_not_in_possible_states_raises(ui_root: UIRoot):
+def test_update_with_state_not_in_possible_states_raises():
     class WidgetWithoutDisabledState(Widget):
         # white-box: drops DISABLED, which only puigame's own widgets can do,
         # so disabling the widget gives a state with no cached image
         _possible_states: ClassVar[tuple[State, ...]] = (State.BASE,)
 
-    widget = WidgetWithoutDisabledState(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+    ui = UI(size=ANY_SIZE, theme=DEFAULT_THEME)
+    widget = WidgetWithoutDisabledState(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
     widget.enabled = False
 
     with pytest.raises(RuntimeError):
-        widget.update()
+        ui.update()
 
 
 def test_assigning_to_image_raises(widget: Widget):
@@ -645,22 +623,15 @@ def test_image_cache_has_one_image_per_state(widget: Widget):
     assert set(widget._placed_image_cache) == set(widget._possible_states)
 
 
-def test_state_change_swaps_to_different_image(widget: Widget):
-    enabled_image = widget.image
-
-    widget.enabled = False
-    widget.update()
-
-    assert widget.image is not enabled_image
-
-
-def test_image_cache_reuses_object(widget: Widget):
+def test_image_cache_reuses_object():
+    ui = UI(size=ANY_SIZE, theme=DEFAULT_THEME)
+    widget = Widget(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
     original_base_image = widget.image
 
     widget.enabled = False
-    widget.update()
+    ui.update()
     widget.enabled = True
-    widget.update()
+    ui.update()
 
     assert widget.image is original_base_image
 

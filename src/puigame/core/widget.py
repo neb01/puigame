@@ -290,8 +290,12 @@ class Widget:
         else:
             return self.visible and self.parent.visible_in_tree
 
-    def update(self) -> None:
-        """Refresh ``image`` and ``image_pos`` from the current state each frame."""
+    def _update(self) -> None:
+        """Refresh ``image`` and ``image_pos`` from the current state.
+
+        ``UI.update()`` calls this for every widget each frame, after the layout
+        pass.
+        """
         self._refresh_current_placed_image()
 
     def kill(self) -> None:
@@ -310,20 +314,41 @@ class Widget:
         for child in self.children:
             child.kill()
 
-    def _iter_descendants(self) -> Iterator[Widget]:
-        """Yield every widget below this one in the tree, parents first.
+    def _iter_subtree(self) -> Iterator[Widget]:
+        """Yield this widget and every widget below it in the tree, parents first.
 
-        The order is depth-first pre-order: each child is followed by all of its
-        own descendants before the next child. The widget itself is not
-        included. The tree is read as it is walked, so take a ``list()`` first
-        if the walk will kill widgets.
+        The order is depth-first pre-order: the widget itself, then each child
+        followed by all of its own descendants before the next child. The tree
+        is read as it is walked, so take a ``list()`` first if the walk will
+        kill widgets.
 
         Yields:
-            Each descendant, in depth-first pre-order.
+            This widget, then each descendant, in depth-first pre-order.
         """
+        yield self
+
         for child in self.children:
-            yield child
-            yield from child._iter_descendants()
+            yield from child._iter_subtree()
+
+    def _iter_visible_subtree(self) -> Iterator[Widget]:
+        """Yield this widget and the widgets below it, skipping hidden subtrees.
+
+        The order is the same depth-first pre-order as ``_iter_subtree()``, but
+        a widget that is not ``visible`` is skipped along with everything below
+        it. Only ``visible`` is read, not ``visible_in_tree``, so the walk
+        ignores the starting widget's ancestors and each widget is checked
+        once. Started from the root, it yields exactly the widgets to draw.
+
+        Yields:
+            Each visible widget, in depth-first pre-order.
+        """
+        if not self.visible:
+            return
+
+        yield self
+
+        for child in self.children:
+            yield from child._iter_visible_subtree()
 
     def _rebuild_image_cache(self) -> None:
         """Render every state in ``_possible_states`` and cache the results.
@@ -358,7 +383,7 @@ class Widget:
 
         Reads ``_current_state`` once and looks up its ``PlacedImage`` in the
         image cache. Called whenever the cache is rebuilt, and each frame by
-        ``update()`` so the image follows changes to the widget's and its
+        ``_update()`` so the image follows changes to the widget's and its
         ancestors' flags.
 
         Raises:

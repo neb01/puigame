@@ -44,7 +44,7 @@ A game uses puigame through a `UI` object. Each `UI` combines two parts:
 `UI` passes the common calls through, so a game rarely needs either part directly. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with `ui.root` as its parent.
 
 ```python
-ui = puigame.UI()
+ui = puigame.UI(size=(640, 360))
 puigame.Button(ui.root, ..., text="Back", on_click=go_back)
 
 while running:
@@ -57,6 +57,8 @@ while running:
     draw_game(screen)
     ui.draw(screen)  # UI drawn on top
 ```
+
+`UI`'s `size` is the size of the surface it draws on, and its rects and event positions are in that surface's pixels. A game that draws at a low resolution and scales up to the window, as pixel-art games do, opens its display with `pg.display.set_mode(size, pg.SCALED)`: pygame scales the display to the window and maps mouse positions back to the display's own pixels, so puigame needs no scaling setting. A game that scales by hand converts event positions before passing events in. puigame never opens or changes the display itself.
 
 In an event-bus framework, a scene owns a `UI` like any other manager: the scene subscribes `ui.handle_event` to the bus, calls `ui.update` and `ui.draw` each frame, and passes callbacks that publish to the bus. puigame never imports the framework.
 
@@ -385,12 +387,24 @@ Caching rules:
 
 - **Per widget, per state**: one image for every combination in the class's [`_possible_states`](#valid-states).
 - **Eager**: all states are rendered when the widget is created. Lazy rendering (on first use) is a later optimisation.
-- **State changes swap the current `PlacedImage`** from the cache, with no drawing. Each frame, `update()` reads `_current_state` and looks up its entry, so `image` and `image_pos` always match the widget's flags and its ancestors' flags. Both are read-only properties: `image` comes from the skin, theme, and state, so assigning it raises `AttributeError`, as assigning `rect` does.
+- **State changes swap the current `PlacedImage`** from the cache, with no drawing. Each frame, `ui.update()` reads `_current_state` and looks up its entry, so `image` and `image_pos` always match the widget's flags and its ancestors' flags. Both are read-only properties: `image` comes from the skin, theme, and state, so assigning it raises `AttributeError`, as assigning `rect` does.
 - **Invalidation**: the private `_rebuild_image_cache()` renders every state again. `Label.text`'s setter calls it when the text changes, and a size setter, when added, will too. The skin is fixed on creation and the theme for the life of the UI, so neither makes the cache out of date.
 
 Because rendering happens at creation, widgets must be created after `pygame.init()`. Converting surfaces for display (`convert_alpha()`) also requires a display window to exist.
 
 ## Drawing
+
+### Each frame
+
+`ui.update(dt)` changes state and `ui.draw(surface)` only renders it, so drawing can run any number of times, or be skipped, without changing anything. `update()` runs:
+
+1. **Time-based steps**, using `dt`, such as animations and the caret blink. None exist yet; when the first arrives, it becomes its own walk here, before layout, since it may change offsets or state, and a change made after layout would be drawn a frame late.
+2. **The layout pass** (see [Layout pass](#layout-pass)).
+3. **Image refresh**: each widget picks its `image` and `image_pos` for its current state.
+
+Events are handled before `update()`, so they are hit-tested against the rects placed in the previous frame, which are where the widgets were drawn.
+
+### Tree order
 
 The `UI` draws its tree directly, with no sprite group:
 
