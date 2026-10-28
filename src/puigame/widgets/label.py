@@ -8,19 +8,6 @@ from puigame.core.anchor import Anchor
 from puigame.core.widget import Widget
 
 
-def _check_text(value: object) -> None:
-    """Check that a label's text is a string.
-
-    Args:
-        value: The value given for the text.
-
-    Raises:
-        TypeError: If ``value`` is not a string.
-    """
-    if not isinstance(value, str):
-        raise TypeError(f"text must be a string, got {value!r}")
-
-
 class Label(Widget):
     """Non-interactive widget that displays text, with no background.
 
@@ -77,7 +64,6 @@ class Label(Widget):
                 ``offset`` is a single number rather than an ``(x, y)`` pair.
                 The label is not added to ``parent``.
         """
-        _check_text(text)
         # Widget.__init__ renders the components, so the text must exist first
         self._text = Text(text)
 
@@ -107,8 +93,6 @@ class Label(Widget):
 
     @text.setter
     def text(self, value: str) -> None:
-        _check_text(value)
-
         if value == self._text.content:
             return
 

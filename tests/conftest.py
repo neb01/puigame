@@ -6,6 +6,7 @@ from collections.abc import Iterator
 import pygame as pg
 import pytest
 
+from puigame.core.ui import UI
 from puigame.core.ui_root import UIRoot
 from puigame.themes.theme import DEFAULT_THEME
 
@@ -30,3 +31,9 @@ def pygame_session() -> Iterator[None]:
 def ui_root() -> UIRoot:
     """Return a UIRoot that all test widgets can use as a parent."""
     return UIRoot(size=(300, 200), theme=DEFAULT_THEME)
+
+
+@pytest.fixture
+def ui() -> UI:
+    """Return a UI with the default theme, for tests that ignore colours."""
+    return UI(size=(300, 200), theme=DEFAULT_THEME)

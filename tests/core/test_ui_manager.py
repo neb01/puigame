@@ -123,12 +123,6 @@ def _left_click(ui: UI, *, pos: Point) -> None:
 
 
 @pytest.fixture
-def ui() -> UI:
-    """Return a UI with the default theme, for tests that ignore colours."""
-    return UI(size=(300, 200), theme=DEFAULT_THEME)
-
-
-@pytest.fixture
 def highlight_ui() -> UI:
     """Return a UI whose theme gives each state its own body colour."""
     return UI(size=(300, 200), theme=HIGHLIGHT_THEME)
