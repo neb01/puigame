@@ -14,7 +14,7 @@ from puigame.core.ui_root import UIRoot
 from puigame.core.widget import Widget
 from puigame.themes.style import Style, StyleOverride
 from puigame.themes.theme import DEFAULT_THEME, Theme
-from stubs import FixedLayer
+from stubs import BodyColourLayer, FixedLayer
 
 # region --- Constants --------------------------------------------------------
 
@@ -50,21 +50,6 @@ class RecordingLayer(Skin):
             pg.Surface(size, pg.SRCALPHA),
             (0, 0),
         )
-
-
-class BodyColourLayer(Skin):
-    """Skin or component that fills its whole size with the style's body colour.
-
-    Unlike ``FixedLayer``, it reads the style, so its image shows which state's
-    style it was given.
-    """
-
-    def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a new surface of ``size``, filled with the body colour, at (0, 0)."""
-        image = pg.Surface(size, pg.SRCALPHA)
-        image.fill(style.body_colour)
-
-        return PlacedImage(image, (0, 0))
 
 
 # endregion
@@ -158,6 +143,12 @@ def test_offset_converts_to_vec2_on_correct_axes(
 def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset_value):
     with pytest.raises(TypeError):
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset_value)
+
+
+def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert widget.consumes_clicks
 
 
 # endregion

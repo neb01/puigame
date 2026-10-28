@@ -49,8 +49,9 @@ class UIRoot(Widget):
         self._parent = None
         self._root = self
 
-        # a root ignores its anchors and margin, so it keeps the defaults
-        self._setup(size=size, skin=NoSkin())
+        # a root ignores its anchors and margin, so it keeps the defaults, and it
+        # never consumes clicks, so that clicks on empty space reach the game
+        self._setup(size=size, skin=NoSkin(), consumes_clicks=False)
 
     @property
     def theme(self) -> Theme:

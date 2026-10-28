@@ -39,9 +39,9 @@ Out of scope: event buses, scene management, game key bindings, and game-specifi
 A game uses puigame through a `UI` object. Each `UI` combines two parts:
 
 - **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It covers the surface the UI draws on, at `(0, 0)` moved by its `offset`, instead of anchoring to a parent; it has no parent itself, and holds the UI's theme. A UI that covers only part of the surface is a top-level `Container` anchored inside the root, and changing the root's `offset` moves the whole UI, for example to shake it. Every widget in the UI is its child, directly or further down the tree.
-- **`ui.manager`**: a `UIManager` that runs the UI: input routing, the highlight, press capture, and the cursor (see [Input](#input)).
+- **A manager**: a private `UIManager` that handles the UI's input: which events the UI consumes, the highlight, and presses (see [Input](#input)). It has no public API of its own yet, so it is not exposed as an attribute.
 
-`UI` passes the common calls through, so a game rarely needs either part directly. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with `ui.root` as its parent.
+`UI` passes the calls through, so a game uses `ui.root` and the `UI`'s own methods. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with `ui.root` as its parent.
 
 ```python
 ui = puigame.UI(size=(640, 360))
@@ -57,6 +57,8 @@ while running:
     draw_game(screen)
     ui.draw(screen)  # UI drawn on top
 ```
+
+The game passes **every** event to `handle_event()`, not only mouse events: the UI ignores what it has no use for, but needs window events such as `WINDOWLEAVE` and `WINDOWFOCUSLOST` to keep the highlight and presses right. puigame never calls `pygame.event.get()` or `pygame.mouse.get_pos()`, so it sees only the events it is given.
 
 `UI`'s `size` is the size of the surface it draws on, and its rects and event positions are in that surface's pixels. A game that draws at a low resolution and scales up to the window, as pixel-art games do, opens its display with `pg.display.set_mode(size, pg.SCALED)`: pygame scales the display to the window and maps mouse positions back to the display's own pixels, so puigame needs no scaling setting. A game that scales by hand converts event positions before passing events in. puigame never opens or changes the display itself.
 
@@ -80,8 +82,8 @@ pause_ui.draw(screen)  # drawn last, so on top
 
 - **Input** goes to the top UI first and stops at the first one that consumes it. A modal menu is the game not passing events to the UIs below.
 - **Drawing** goes from the bottom UI to the top.
-- **Each UI has its own highlight and settings**: a HUD typically turns keyboard navigation off, while a pause menu keeps it on.
-- **Only one UI should manage the cursor** at a time, since the cursor belongs to the whole window. The others are created with `manage_cursor=False` (see [Cursor](#cursor)).
+- **Each UI has its own highlight and presses.** Once keyboard navigation arrives, each will also have its own settings: a HUD would typically turn keyboard navigation off, while a pause menu keeps it on.
+- **Only one UI should manage the cursor** at a time, once cursor management arrives, since the cursor belongs to the whole window. The others would be created with `manage_cursor=False` (see [Cursor](#cursor)).
 
 ### Timing
 
@@ -106,14 +108,14 @@ Widget                  rect, anchor, fixed parent, children, flags, skin, per-s
 ├── Container           invisible group of children (NoSkin)
 ├── Panel               group of children with a background (skin given on creation)
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
-└── InteractiveWidget   + highlightable, plus the highlight and activation behaviour interactive widgets share
+└── InteractiveWidget   + the highlight and activation behaviour interactive widgets share
     ├── Button          + press and release, on_click; optional Text
     │   └── Checkbox    + checked, can_untoggle, optional CheckboxGroup
     └── TextBox         + editable Text, editing mode (no PRESSED state)
 
 CheckboxGroup           helper: mutual exclusion between checkboxes (radio behaviour)
 UI                      composes root (a UIRoot, which holds the theme) and manager; draws the tree
-UIManager               runs one UI: routes input, tracks the highlight and presses, manages the cursor
+UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
 
 - **`InteractiveWidget` lives in `core`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing from `widgets`. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
@@ -152,9 +154,10 @@ Each widget has its **own** flags, which parents never overwrite, and a tree-awa
 | `visible` | `visible_in_tree` |
 
 - The `_in_tree` values are **calculated on demand**, never stored: a widget is visible in the tree only if it and every widget above it are visible (the same for enabled).
-- `InteractiveWidget` adds a third pair: `highlightable` (default `True`) and `highlightable_in_tree`, which is true only if the widget's own `highlightable` is true **and** it is `visible_in_tree` and `enabled_in_tree`. Setting `highlightable=False` lets an interactive widget be skipped by highlighting, for example a button that should only respond to the mouse. See [Highlight](#highlight).
+- `consumes_clicks` is a flag with no `_in_tree` version, since it is not inherited: it decides only whether hit-testing can stop on this widget. See [Hit-testing](#hit-testing).
+- With keyboard navigation, `InteractiveWidget` will add another pair: `highlightable` (default `True`) and `highlightable_in_tree`, which is true only if the widget's own `highlightable` is true **and** it is `visible_in_tree` and `enabled_in_tree`. Setting `highlightable=False` will let keyboard navigation skip an interactive widget, for example a button that should only respond to the mouse. See [Keyboard navigation](#keyboard-navigation).
 - Hiding a parent changes only its own flag; its children's `_in_tree` values change automatically. A child hidden individually stays hidden when its parent is shown again.
-- Widgets that are not `visible_in_tree` are not drawn; widgets that are not `enabled_in_tree` ignore input.
+- Widgets that are not `visible_in_tree` are not drawn, and are skipped by hit-testing; widgets that are not `enabled_in_tree` ignore input, but still block clicks to whatever is below them.
 
 ## Components
 
@@ -344,7 +347,7 @@ class State(Flag):
 |---|---|
 | `BASE` | No flags set: the widget's ordinary state |
 | `DISABLED` | The widget is not `enabled_in_tree`: it ignores input and draws its disabled look |
-| `HIGHLIGHTED` | The mouse is over the widget, or keyboard navigation has selected it (see [Highlight](#highlight)). Pressing adds `PRESSED` on top |
+| `HIGHLIGHTED` | The mouse is over the widget (see [Highlight](#highlight)), or, once keyboard navigation arrives, it has selected the widget. Pressing adds `PRESSED` on top |
 | `PRESSED` | A press, by mouse button or by Enter or Space, is in progress on the widget |
 | `CHECKED` | A `Checkbox` is checked |
 | `EDITING` | A `TextBox` is receiving typed text |
@@ -400,7 +403,8 @@ Because rendering happens at creation, widgets must be created after `pygame.ini
 
 1. **Time-based steps**, using `dt`, such as animations and the caret blink. None exist yet; when the first arrives, it becomes its own walk here, before layout, since it may change offsets or state, and a change made after layout would be drawn a frame late.
 2. **The layout pass** (see [Layout pass](#layout-pass)).
-3. **Image refresh**: each widget picks its `image` and `image_pos` for its current state.
+3. **The highlight**: the `UIManager` highlights the widget under the last known cursor position (see [Highlight](#highlight)). It runs after layout, so the highlight follows widgets that moved, were hidden, or were disabled under a still cursor.
+4. **Image refresh**: each widget picks its `image` and `image_pos` for its current state.
 
 Events are handled before `update()`, so they are hit-tested against the rects placed in the previous frame, which are where the widgets were drawn.
 
@@ -418,31 +422,55 @@ Hit-testing uses the reverse of this order, so the widget drawn on top is the fi
 
 ```
 pygame event → ui.handle_event → UIManager
-   ├─ mouse    → hit-test topmost first → the first widget that handles it stops it
-   ├─ keyboard → the editing TextBox, or highlight navigation and activation
-   └─ unused   → returns False → the game handles it
+   ├─ mouse button down → hit-test topmost first → consumed if a widget is hit
+   ├─ mouse button up   → consumed if its down was
+   ├─ motion and window → position stored for the highlight; not consumed
+   └─ anything else     → returns False → the game handles it
 ```
+
+The game passes every event to `ui.handle_event()`, which returns `True` if the UI consumed it. Only the mouse is handled so far; keyboard input comes later (see [Keyboard navigation](#keyboard-navigation)).
 
 ### Hit-testing
 
-Widgets are hit-tested against their `rect` by default. A widget can opt into a **mask** (built from its current image) so that non-rectangular widgets, such as round buttons, respond only where they are drawn.
+- Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count.
+- The walk goes in reverse drawing order (see [Tree order](#tree-order)), so the widget drawn on top is found first. Hidden subtrees are skipped. Disabled widgets still count, so a disabled panel still blocks what is below it.
+- Each widget has a `consumes_clicks` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `Label`, and `UIRoot`: a `Label` on a `Button` must not block the button, HUD text should not block clicks meant for the game, and clicks on empty space reach the game.
+- Mask hit-testing, so that non-rectangular widgets respond only where they are drawn, is not in v0.1.
+
+### Consuming
+
+- A button down is consumed when the hit-test finds a widget, whichever button it is, and the UI records that button as down.
+- A button up is consumed **exactly when its down was**, wherever it lands. A drag in the game world that is released over a panel still reaches the game, and a click on a panel never leaks its release to the game.
+- Wheel buttons are never consumed, even over a blocking widget, until a scrollable widget needs them.
+- Mouse motion and window events are never consumed.
+- A down for a button that is already recorded as down means its up was lost, for example because the game stopped passing events to this UI mid-press, so the stale record is dropped before the new down is handled.
 
 ### Highlight
 
-Mouse hover and keyboard focus are **one concept**, the highlight, shown with `HIGHLIGHTED`. A widget is highlighted when the mouse is over it or keyboard navigation has selected it, before any press. The `UIManager` tracks a single highlighted widget.
-
-- **Mouse**: moving the mouse highlights the topmost `highlightable_in_tree` widget under the cursor. Moving onto empty space clears the highlight.
-- **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and hides the cursor.
-- **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, shows the cursor, and highlights whatever is under it.
-- **Turning keyboard navigation off**: a scene that uses the keyboard for something else (typically a game screen, as opposed to a menu or options screen) creates its `UI` with `keyboard_navigation=False`. Tab, the arrow keys, Enter, and Space then pass through to the game, and only the mouse highlights and activates widgets. A `TextBox` being edited still receives typing.
+- The `UIManager` tracks a single highlighted widget, shown with `HIGHLIGHTED`. Only an enabled `InteractiveWidget` can be highlighted: non-interactive widgets have no highlight concept.
+- Events only store the cursor position: motion, down, and up events store `event.pos`, and `WINDOWLEAVE` forgets it. The highlight is recomputed from that position once per frame, in `update()` (see [Each frame](#each-frame)), not when events arrive.
+- The highlighted widget is the hit-test result, if that is an enabled `InteractiveWidget`. Otherwise nothing is highlighted, so a panel covering a button keeps it from highlighting.
 
 ### Pressing
 
-- **Clicks fire on release**, and only if the cursor is over the widget on release.
-- Pressing shows `HIGHLIGHTED | PRESSED`. Dragging off while held shows `BASE`; dragging back on while still held returns to `HIGHLIGHTED | PRESSED`. The widget remembers that the press started on it.
+- Only the left mouse button presses and activates widgets. A left down on an enabled `InteractiveWidget` starts a press, and the widget remembers that the press started on it.
+- **Clicks fire on release**, and only if the release is over the pressed widget and it is still enabled. The press is cleared before the widget is activated, since activation may change the tree.
+- During a press, no other widget is highlighted, as with native mouse capture. Dragging off the pressed widget shows `BASE`; dragging back on while still held shows `HIGHLIGHTED | PRESSED` (`PRESSED` arrives with `Button`). Releasing off it does nothing.
 - A press that starts elsewhere and is dragged onto a widget does not press or activate it.
-- **Keyboard activation** follows the same rule: Enter or Space down on the highlighted widget shows `HIGHLIGHTED | PRESSED`, and key up fires.
-- **Mouse-button enable map**: each button chooses which mouse buttons (left, middle, right, scroll) it responds to.
+- A widget killed mid-press can no longer be hit, so its release cannot activate it, and no liveness flag is needed.
+- A left down while a press is still recorded ends the old press, since its release was lost. Losing window focus (`WINDOWFOCUSLOST`) also ends any press, since another window may receive the release.
+- Widgets respond through private hooks such as `_activate()`, not by handling raw events themselves.
+
+### Keyboard navigation
+
+Not built yet. Mouse hover and keyboard focus will be **one concept**, the highlight:
+
+- **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and hides the cursor.
+- **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, shows the cursor, and highlights whatever is under it.
+- **Turning keyboard navigation off**: a scene that uses the keyboard for something else (typically a game screen, as opposed to a menu or options screen) creates its `UI` with `keyboard_navigation=False`. Tab, the arrow keys, Enter, and Space then pass through to the game, and only the mouse highlights and activates widgets. A `TextBox` being edited still receives typing.
+- **Keyboard activation** follows the same rule as clicks: Enter or Space down on the highlighted widget shows `HIGHLIGHTED | PRESSED`, and key up fires.
+
+Also later: a **mouse-button enable map**, so that each button chooses which mouse buttons it responds to, and routing wheel events to the nearest scrollable ancestor.
 
 ### Editing text
 
@@ -453,7 +481,7 @@ Mouse hover and keyboard focus are **one concept**, the highlight, shown with `H
 
 ### Cursor
 
-The `UIManager` hides and shows the mouse cursor as the input mode changes. A game that manages the cursor itself creates its `UI` with `manage_cursor=False`. When several UIs are shown at once (see [Layering](#layering)), only one should manage the cursor. Since `pygame.mouse.set_visible` affects the whole window, this is an option rather than something puigame always does.
+Not built yet, since it is only needed for keyboard navigation. The `UIManager` will hide and show the mouse cursor as the input mode changes. A game that manages the cursor itself will create its `UI` with `manage_cursor=False`. When several UIs are shown at once (see [Layering](#layering)), only one should manage the cursor. Since `pygame.mouse.set_visible` affects the whole window, this is an option rather than something puigame always does.
 
 ## Callbacks
 
@@ -556,10 +584,9 @@ Each layer imports only from the layers above it:
 - Press-and-release activation with mouse capture, and a mouse-button enable map
 - Text editing in `TextBox`
 - Cursor management, with an opt-out
-- Optional mask hit-testing
 - Bundled default art and fonts, loaded with `importlib.resources`
 
-**Later:** lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
+**Later:** mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
 
 ## Build order
 
