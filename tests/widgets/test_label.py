@@ -99,11 +99,11 @@ def test_text_setter_updates_image(ui_root: UIRoot):
 
 def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
     label = Label(ui_root, size=ANY_SIZE, text="calcium")
-    image_1 = label.image
+    image = label.image
 
     label.text = "calcium"
 
-    assert label.image is image_1
+    assert label.image is image
 
 
 # endregion

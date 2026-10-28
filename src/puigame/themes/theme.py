@@ -117,5 +117,10 @@ DEFAULT_THEME = Theme(
             halo_thickness_px=2,
             swell_px=1,
         ),
+        State.PRESSED: StyleOverride(
+            body_colour=(100, 100, 100, 255),
+            text_offset=(0, 1),
+            swell_px=-1,
+        ),
     },
 )
