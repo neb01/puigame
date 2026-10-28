@@ -109,7 +109,7 @@ Widget                  rect, anchor, fixed parent, children, flags, skin, per-s
 ├── Panel               group of children with a background (skin given on creation)
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + the highlight and activation behaviour interactive widgets share
-    ├── Button          + press and release, on_click; optional Text
+    ├── Button          + Text component, pressed look, on_click
     │   └── Checkbox    + checked, can_untoggle, optional CheckboxGroup
     └── TextBox         + editable Text, editing mode (no PRESSED state)
 
@@ -360,7 +360,7 @@ Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRES
 
 - `Widget` starts from `BASE` and adds `DISABLED` when not `enabled_in_tree`.
 - `InteractiveWidget` calls `super()._current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED`.
-- `Button` adds `PRESSED`, again only when not `DISABLED`.
+- `Button` adds `PRESSED` only on top of `HIGHLIGHTED`, while a press is held over it. It therefore inherits the suppression by `DISABLED`, and dragging off mid-press shows `BASE`.
 - `Checkbox` adds `CHECKED` when `checked` is true.
 - `TextBox` adds `EDITING`.
 
@@ -373,7 +373,7 @@ Not every combination can occur, so each class lists the combinations it can be 
 | Class | `_possible_states` |
 |---|---|
 | `Widget`, `Container`, `Panel`, `Label` | `BASE`, `DISABLED` |
-| `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
+| `Button` | `BASE`, `DISABLED`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED` |
 | `Checkbox` | Button's four, each with and without `CHECKED` (eight) |
 | `TextBox` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
 
@@ -455,7 +455,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 
 - Only the left mouse button presses and activates widgets. A left down on an enabled `InteractiveWidget` starts a press, and the widget remembers that the press started on it.
 - **Clicks fire on release**, and only if the release is over the pressed widget and it is still enabled. The press is cleared before the widget is activated, since activation may change the tree.
-- During a press, no other widget is highlighted, as with native mouse capture. Dragging off the pressed widget shows `BASE`; dragging back on while still held shows `HIGHLIGHTED | PRESSED` (`PRESSED` arrives with `Button`). Releasing off it does nothing.
+- During a press, no other widget is highlighted, as with native mouse capture. Dragging off the pressed widget shows `BASE`; dragging back on while still held shows `HIGHLIGHTED | PRESSED`. Releasing off it does nothing.
 - A press that starts elsewhere and is dragged onto a widget does not press or activate it.
 - A widget killed mid-press can no longer be hit, so its release cannot activate it, and no liveness flag is needed.
 - A left down while a press is still recorded ends the old press, since its release was lost. Losing window focus (`WINDOWFOCUSLOST`) also ends any press, since another window may receive the release.
@@ -485,7 +485,20 @@ Not built yet, since it is only needed for keyboard navigation. The `UIManager` 
 
 ## Callbacks
 
-Callbacks are plain callables passed to widgets and receive the widget as their first argument, so one handler can serve several widgets. The exact names and signatures for `Button`, `Checkbox`, `CheckboxGroup`, and `TextBox` are still open (see [Open questions](#open-questions)).
+Callbacks are plain callables passed to widgets on creation. Each receives the widget as its first argument, so one callback can serve several widgets. puigame calls callbacks rather than posting pygame events: a callback is typed and needs no custom event types, and a game that wants an event posts one from a one-line callback.
+
+### Button
+
+- **Signature:** `on_click: Callable[[Button], object] | None = None`. The return type is `object` rather than `None`, so any callable that takes the button fits, such as `list.append`; the return value is ignored. `None` does nothing on a click.
+- **Fixed on creation:** it is stored privately, with no public attribute, so it cannot be read or replaced later.
+- **Validated on creation:** a value that is neither `None` nor callable raises `TypeError` before the button is added to its parent. `on_click=handler()`, where `handler` returns `None`, still passes; Pyright catches it for typed callers.
+- **Called synchronously** from inside `ui.handle_event()`, on the release that completes a click (see [Pressing](#pressing)). Changes it makes to the widget tree, such as killing or disabling the button, show from the next `update()`. A coroutine function would never run its body, since the coroutine it returns is ignored.
+- **Exceptions propagate** to the caller of `handle_event()`. puigame does not catch them, since that would hide bugs in the game.
+
+### Later
+
+- `Checkbox` will inherit `on_click` from `Button` and add a separate `on_toggle(checkbox, checked)` callback for a change of state, following Qt's split between `clicked` and `toggled`.
+- The callbacks for `CheckboxGroup` and `TextBox` are still open (see [Open questions](#open-questions)).
 
 ## Positions and types
 
@@ -609,7 +622,7 @@ Each step is one branch and pull request, with tests:
 
 ## Open questions
 
-- **Callbacks**: names and signatures for each widget, whether programmatic changes (for example `checkbox.checked = True`) notify, and whether Escape on a `TextBox` has its own callback.
+- **Callbacks**: names and signatures for `CheckboxGroup` and `TextBox`, whether programmatic changes (for example `checkbox.checked = True`) notify, and whether Escape on a `TextBox` has its own callback.
 - **Combining style overrides**: overrides are currently absolute, so when two active states set the same field the later one in `style_overrides` wins, and combined keys such as `State.DISABLED | State.HIGHLIGHTED` are rejected. Possible next steps, decided once a real widget needs them (most likely `Checkbox`):
   - **Relative overrides**: colour fields that multiply the value underneath (a tint, or a lighten or darken factor) as well as replacing it, so effects such as hover and checked combine on the same field. Integer fields would add, and enum fields such as `halo_fade_profile` would still replace. `StyleOverride` would need a way to mark each value as absolute or relative.
   - **Two passes**: apply absolute values first, so the most specific wins, then relative values on top. Multiplication gives the same result in any order, so relative values would no longer depend on dict order.
