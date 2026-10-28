@@ -586,20 +586,18 @@ Each layer imports only from the layers above it:
 
 ## v0.1 scope
 
-**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, `Button`, `Checkbox` with `CheckboxGroup`, and `TextBox`.
+**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, and `Button`.
 
 **Features:**
 
 - The widget tree, with fixed parents, `kill()`, and the `_in_tree` flags
 - Layout every frame from anchors, margin, and offset
 - Eager per-state image caching
-- A single highlight shared by mouse and keyboard, with keyboard navigation that can be turned off
-- Press-and-release activation with mouse capture, and a mouse-button enable map
-- Text editing in `TextBox`
-- Cursor management, with an opt-out
+- A mouse highlight, designed to be shared with keyboard navigation later
+- Left-click press-and-release activation with mouse capture
 - Bundled default art and fonts, loaded with `importlib.resources`
 
-**Later:** mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
+**Later:** `Checkbox` with `CheckboxGroup`, `TextBox` with text editing, keyboard navigation, cursor management, a mouse-button enable map, mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
 
 ## Build order
 
@@ -614,11 +612,9 @@ Each step is one branch and pull request, with tests:
 7. `feat/layout`: positioning from anchors, margin, and offset
 8. `refactor/drop-sprite`: widgets stop being pygame Sprites, and `WidgetGroup` is dropped in favour of drawing the tree from `UI`
 9. `feat/panel-label`: `Panel` and `Label`
-10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: drawing, input routing, highlight, keyboard mode, and cursor management
+10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: drawing, input routing, and the mouse highlight
 11. `feat/button`: `Button`
-12. `feat/checkbox`: `Checkbox` and `CheckboxGroup`
-13. `feat/textbox`: `TextBox`
-14. `feat/image-skin`: `ImageSkin`, nine-slice scaling, pixel-art option, and default art
+12. `feat/image-skin`: `ImageSkin`, nine-slice scaling, pixel-art option, and default art
 
 ## Open questions
 
