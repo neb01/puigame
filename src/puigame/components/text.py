@@ -68,9 +68,6 @@ class Text:
     lines are left-aligned and spaced by the font's line size. A trailing
     newline, or text that is only a newline or carriage return, is drawn as a
     glyph rather than as an empty line.
-
-    Attributes:
-        content: The text to draw. An empty string draws nothing.
     """
 
     def __init__(self, content: str = "") -> None:
@@ -79,8 +76,29 @@ class Text:
         Args:
             content: The text to draw. Defaults to an empty string, which draws
                 nothing.
+
+        Raises:
+            TypeError: If ``content`` is not a string.
         """
         self.content = content
+
+    @property
+    def content(self) -> str:
+        """The text to draw.
+
+        An empty string draws nothing. Assigning a value that is not a string
+        raises ``TypeError`` and leaves the content unchanged. ``Text`` keeps
+        no reference to its owner, so assigning does not redraw anything: the
+        owner rebuilds its images after changing the content.
+        """
+        return self._content
+
+    @content.setter
+    def content(self, value: str) -> None:
+        if not isinstance(value, str):
+            raise TypeError(f"content must be a string, got {value!r}")
+
+        self._content = value
 
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Render the text and place it for a widget's size and style.
