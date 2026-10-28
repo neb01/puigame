@@ -26,6 +26,7 @@ class Container(Widget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
+        consumes_clicks: bool = False,
     ) -> None:
         """Create a container as the last child of ``parent``.
 
@@ -42,6 +43,9 @@ class Container(Widget):
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the container and its children respond to input.
             visible: Whether the container's children are drawn.
+            consumes_clicks: Whether mouse clicks over the container stop at
+                it. Defaults to ``False``, so clicks on its empty space reach
+                the widgets below it and the game.
 
         Raises:
             ValueError: If either dimension of ``size`` is negative. The
@@ -60,4 +64,5 @@ class Container(Widget):
             offset=offset,
             enabled=enabled,
             visible=visible,
+            consumes_clicks=consumes_clicks,
         )

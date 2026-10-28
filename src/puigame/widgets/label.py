@@ -44,6 +44,7 @@ class Label(Widget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
+        consumes_clicks: bool = False,
     ) -> None:
         """Create a label as the last child of ``parent``.
 
@@ -64,6 +65,10 @@ class Label(Widget):
             enabled: Whether the label is enabled. A disabled label is drawn in
                 the theme's style for the disabled state.
             visible: Whether the label is drawn.
+            consumes_clicks: Whether mouse clicks over the label stop at it.
+                Defaults to ``False``, so a label on a button does not block
+                the button, and HUD text does not block clicks meant for the
+                game.
 
         Raises:
             ValueError: If either dimension of ``size`` is negative. The label
@@ -86,6 +91,7 @@ class Label(Widget):
             offset=offset,
             enabled=enabled,
             visible=visible,
+            consumes_clicks=consumes_clicks,
             components=[self._text],
         )
 

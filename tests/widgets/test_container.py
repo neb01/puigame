@@ -33,8 +33,9 @@ def test_rect_has_given_size(ui_root: UIRoot):
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
+        ("consumes_clicks", True),
     ],
-    ids=["offset", "enabled", "visible"],
+    ids=["offset", "enabled", "visible", "consumes_clicks"],
 )
 def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
     container = Container(ui_root, size=ANY_SIZE, **{argument: value})
@@ -53,6 +54,12 @@ def test_forwards_placement_arguments():
     )
 
     assert container.rect.topleft == (-5, 21)
+
+
+def test_consumes_clicks_false_by_default(ui_root: UIRoot):
+    container = Container(ui_root, size=ANY_SIZE)
+
+    assert not container.consumes_clicks
 
 
 # endregion

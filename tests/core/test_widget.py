@@ -145,6 +145,12 @@ def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset_val
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset_value)
 
 
+def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert widget.consumes_clicks
+
+
 # endregion
 
 

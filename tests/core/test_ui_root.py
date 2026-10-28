@@ -56,6 +56,10 @@ def test_negative_size_raises():
         UIRoot(size=(-1, 0), theme=DEFAULT_THEME)
 
 
+def test_consumes_clicks_false_by_default(ui_root: UIRoot):
+    assert not ui_root.consumes_clicks
+
+
 # endregion
 
 
