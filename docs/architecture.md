@@ -509,7 +509,7 @@ Callbacks are plain callables passed to widgets on creation. Each receives the w
 
 ## Assets
 
-- Bundled assets live in `assets/images/` (default skin art, nine-slice-ready) and `assets/fonts/`, all MIT-compatible.
+- Bundled assets live in `assets/fonts/` and, once `ImageSkin` arrives, `assets/images/` (default skin art, nine-slice-ready), all MIT-compatible.
 - They are loaded with `importlib.resources`, so they are found wherever the package is installed.
 - Loaded fonts are cached by typeface and size, since loading a font file is slow. All text with the same typeface and size shares one `pg.Font`, which is never changed after it is created, including attributes such as `bold` and `align`.
 - Loading failures raise exceptions (for example `FileNotFoundError`) and never exit the program.
@@ -586,7 +586,7 @@ Each layer imports only from the layers above it:
 
 ## v0.1 scope
 
-**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `ImageSkin` with default art, `Container`, `Panel`, `Label`, and `Button`.
+**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `Container`, `Panel`, `Label`, and `Button`.
 
 **Features:**
 
@@ -595,9 +595,9 @@ Each layer imports only from the layers above it:
 - Eager per-state image caching
 - A mouse highlight, designed to be shared with keyboard navigation later
 - Left-click press-and-release activation with mouse capture
-- Bundled default art and fonts, loaded with `importlib.resources`
+- Bundled fonts, loaded with `importlib.resources`
 
-**Later:** `Checkbox` with `CheckboxGroup`, `TextBox` with text editing, keyboard navigation, cursor management, a mouse-button enable map, mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
+**Later:** `Checkbox` with `CheckboxGroup`, `TextBox` with text editing, keyboard navigation, cursor management, a mouse-button enable map, `ImageSkin` with default art, mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
 
 ## Build order
 
@@ -614,7 +614,6 @@ Each step is one branch and pull request, with tests:
 9. `feat/panel-label`: `Panel` and `Label`
 10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: drawing, input routing, and the mouse highlight
 11. `feat/button`: `Button`
-12. `feat/image-skin`: `ImageSkin`, nine-slice scaling, pixel-art option, and default art
 
 ## Open questions
 
