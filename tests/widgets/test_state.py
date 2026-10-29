@@ -1,4 +1,4 @@
-from puigame._widgets.state import State
+from puigame import State
 
 # region --- State values -----------------------------------------------------
 

@@ -2,10 +2,16 @@ from dataclasses import replace
 
 import pytest
 
-from puigame._layout.anchor import Anchor
-from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
-from puigame._styling.theme import DEFAULT_THEME, Theme
-from puigame._widgets.state import State
+from puigame import (
+    DEFAULT_THEME,
+    Anchor,
+    BundledTypeface,
+    FadeProfile,
+    State,
+    Style,
+    StyleOverride,
+    Theme,
+)
 
 # region --- Constants --------------------------------------------------------
 

@@ -5,15 +5,20 @@ import pygame as pg
 import pytest
 from pygame.typing import Point
 
+from puigame import (
+    DEFAULT_THEME,
+    UI,
+    Anchor,
+    NoSkin,
+    State,
+    Style,
+    StyleOverride,
+    Theme,
+    Widget,
+)
 from puigame._components.placed_image import PlacedImage
-from puigame._components.skin import NoSkin, Skin
-from puigame._layout.anchor import Anchor
-from puigame._styling.style import Style, StyleOverride
-from puigame._styling.theme import DEFAULT_THEME, Theme
-from puigame._ui.ui import UI
+from puigame._components.skin import Skin
 from puigame._ui.ui_root import UIRoot
-from puigame._widgets.state import State
-from puigame._widgets.widget import Widget
 from stubs import BodyColourLayer, FixedLayer
 
 # region --- Constants --------------------------------------------------------

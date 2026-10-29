@@ -4,8 +4,7 @@ from pathlib import Path
 import pygame as pg
 import pytest
 
-from puigame._layout.anchor import Anchor
-from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
+from puigame import Anchor, BundledTypeface, FadeProfile, Style, StyleOverride
 
 # region --- Constants --------------------------------------------------------
 
