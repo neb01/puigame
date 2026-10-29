@@ -24,8 +24,8 @@ from typing import assert_never
 import pygame as pg
 from pygame.typing import Point
 
+from puigame._styling.style import FadeProfile, Style
 from puigame.components.placed_image import PlacedImage
-from puigame.themes.style import FadeProfile, Style
 
 
 class Skin(ABC):

@@ -2,13 +2,13 @@ from dataclasses import replace
 
 import pygame as pg
 
+from puigame._styling.style import StyleOverride
+from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame.components.skin import DrawnSkin, NoSkin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui import UI
 from puigame.core.widget import Widget
-from puigame.themes.style import StyleOverride
-from puigame.themes.theme import DEFAULT_THEME, Theme
 from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------

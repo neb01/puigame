@@ -10,9 +10,9 @@ import math
 
 from pygame.typing import Point
 
+from puigame._styling.theme import Theme
 from puigame.components.skin import NoSkin
 from puigame.core.widget import Widget
-from puigame.themes.theme import Theme
 
 
 class UIRoot(Widget):

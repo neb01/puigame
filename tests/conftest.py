@@ -6,9 +6,9 @@ from collections.abc import Iterator
 import pygame as pg
 import pytest
 
+from puigame._styling.theme import DEFAULT_THEME
 from puigame.core.ui import UI
 from puigame.core.ui_root import UIRoot
-from puigame.themes.theme import DEFAULT_THEME
 
 # use SDL's dummy drivers so tests run without a screen or sound device (needed
 # on CI); SDL reads these when pygame is initialised, not when it is imported,

@@ -7,9 +7,9 @@ from pathlib import Path
 import pygame as pg
 from pygame.typing import Point
 
+from puigame._styling.style import BundledTypeface, Style
 from puigame.components.placed_image import PlacedImage
 from puigame.core.anchor import get_pos_from_anchor_match
-from puigame.themes.style import BundledTypeface, Style
 
 
 @cache

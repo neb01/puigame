@@ -12,9 +12,9 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, replace
 from types import MappingProxyType
 
+from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
-from puigame.themes.style import BundledTypeface, FadeProfile, Style, StyleOverride
 
 
 @dataclass(frozen=True, kw_only=True)

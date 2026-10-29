@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, ClassVar
 import pygame as pg
 from pygame.typing import Point
 
+from puigame._styling.theme import Theme
 from puigame.components.placed_image import PlacedImage, compose_layers
 from puigame.components.skin import Skin
 from puigame.core.anchor import Anchor, get_pos_from_anchor_match
 from puigame.core.state import State
-from puigame.themes.theme import Theme
 
 if TYPE_CHECKING:
     from puigame.components.component import Component

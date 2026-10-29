@@ -3,9 +3,9 @@ from dataclasses import replace
 import pygame as pg
 import pytest
 
+from puigame._styling.style import FadeProfile
+from puigame._styling.theme import DEFAULT_THEME
 from puigame.components.skin import DrawnSkin, NoSkin, Skin
-from puigame.themes.style import FadeProfile
-from puigame.themes.theme import DEFAULT_THEME
 
 # region --- Constants --------------------------------------------------------
 

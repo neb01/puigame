@@ -11,9 +11,9 @@ UI for each, with the game deciding their order.
 import pygame as pg
 from pygame.typing import Point
 
+from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame.core.ui_manager import UIManager
 from puigame.core.ui_root import UIRoot
-from puigame.themes.theme import DEFAULT_THEME, Theme
 
 # one frame at 60 fps, for games that update once per fixed-rate frame
 DEFAULT_DT = 1 / 60
