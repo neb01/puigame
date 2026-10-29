@@ -10,13 +10,13 @@ from puigame._components.skin import NoSkin, Skin
 from puigame._layout.anchor import Anchor
 from puigame._styling.style import StyleOverride
 from puigame._styling.theme import DEFAULT_THEME, Theme
+from puigame._ui.ui import UI
 from puigame._widgets.container import Container
 from puigame._widgets.interactive_widget import InteractiveWidget
 from puigame._widgets.label import Label
 from puigame._widgets.panel import Panel
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
-from puigame.core.ui import UI
 from stubs import BodyColourLayer
 
 # region --- Constants --------------------------------------------------------

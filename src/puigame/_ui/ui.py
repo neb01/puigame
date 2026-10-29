@@ -12,8 +12,8 @@ import pygame as pg
 from pygame.typing import Point
 
 from puigame._styling.theme import DEFAULT_THEME, Theme
-from puigame.core.ui_manager import UIManager
-from puigame.core.ui_root import UIRoot
+from puigame._ui.ui_manager import UIManager
+from puigame._ui.ui_root import UIRoot
 
 # one frame at 60 fps, for games that update once per fixed-rate frame
 DEFAULT_DT = 1 / 60

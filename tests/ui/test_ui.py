@@ -6,9 +6,9 @@ from puigame._components.skin import DrawnSkin, NoSkin
 from puigame._layout.anchor import Anchor
 from puigame._styling.style import StyleOverride
 from puigame._styling.theme import DEFAULT_THEME, Theme
+from puigame._ui.ui import UI
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
-from puigame.core.ui import UI
 from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------

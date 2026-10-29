@@ -8,10 +8,10 @@ from puigame._components.skin import NoSkin
 from puigame._layout.anchor import Anchor
 from puigame._styling.style import StyleOverride
 from puigame._styling.theme import DEFAULT_THEME, Theme
+from puigame._ui.ui import UI
+from puigame._ui.ui_root import UIRoot
 from puigame._widgets.button import Button
 from puigame._widgets.state import State
-from puigame.core.ui import UI
-from puigame.core.ui_root import UIRoot
 from stubs import BodyColourLayer
 
 # region --- Constants --------------------------------------------------------

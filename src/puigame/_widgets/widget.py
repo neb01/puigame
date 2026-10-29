@@ -16,7 +16,7 @@ from puigame._widgets.state import State
 
 if TYPE_CHECKING:
     from puigame._components.component import Component
-    from puigame.core.ui_root import UIRoot
+    from puigame._ui.ui_root import UIRoot
 
 
 class Widget:
