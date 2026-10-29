@@ -1,10 +1,10 @@
 """InteractiveWidget, the base class for widgets the user can interact with.
 
 InteractiveWidget extends Widget with the highlight and activation behaviour
-that interactive widgets share. Button, Checkbox, and TextBox build on it.
+that interactive widgets share. Button builds on it.
 
-It lives in ``core`` so that the UIManager can recognise interactive widgets
-with ``isinstance()`` without importing from ``widgets``.
+The UIManager recognises interactive widgets with ``isinstance()`` against this
+class, so it never imports the concrete widgets.
 """
 
 from collections.abc import Iterable
