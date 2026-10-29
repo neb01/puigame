@@ -4,7 +4,7 @@ from pygame.typing import Point
 
 from puigame._components.skin import NoSkin
 from puigame._layout.anchor import Anchor
-from puigame.core.widget import Widget
+from puigame._widgets.widget import Widget
 
 
 class Container(Widget):

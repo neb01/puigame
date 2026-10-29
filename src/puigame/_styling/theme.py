@@ -14,7 +14,7 @@ from types import MappingProxyType
 
 from puigame._layout.anchor import Anchor
 from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
-from puigame.core.state import State
+from puigame._widgets.state import State
 
 
 @dataclass(frozen=True, kw_only=True)

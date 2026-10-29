@@ -12,7 +12,7 @@ from puigame._components.placed_image import PlacedImage, compose_layers
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor, get_pos_from_anchor_match
 from puigame._styling.theme import Theme
-from puigame.core.state import State
+from puigame._widgets.state import State
 
 if TYPE_CHECKING:
     from puigame._components.component import Component

@@ -8,9 +8,9 @@ progress. Games reach it through ``UI``, which passes the calls through.
 import pygame as pg
 from pygame.typing import Point
 
-from puigame.core.interactive_widget import InteractiveWidget
+from puigame._widgets.interactive_widget import InteractiveWidget
+from puigame._widgets.widget import Widget
 from puigame.core.ui_root import UIRoot
-from puigame.core.widget import Widget
 
 
 class UIManager:
