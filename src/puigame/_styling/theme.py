@@ -89,38 +89,55 @@ class Theme:
         return result
 
 
+_TRANSPARENT = (0, 0, 0, 0)
+
+_OFF_WHITE = (220, 220, 220, 255)
+_LIGHT_GREY = (100, 100, 100, 255)
+_MID_GREY = (50, 50, 50, 255)
+_DARK_GREY = (35, 35, 35, 255)
+_OFF_BLACK = (15, 15, 15, 255)
+
+
+_MID_GREEN = (0, 200, 0, 255)
+_DARK_GREEN = (0, 100, 0, 255)
+
 DEFAULT_THEME = Theme(
     base_style=Style(
-        body_colour=(0, 0, 0, 255),
-        border_colour=(255, 255, 255, 255),
+        body_colour=_MID_GREY,
+        border_colour=_OFF_WHITE,
         border_thickness_px=2,
-        corner_radius_px=2,
-        halo_colour=(0, 0, 0, 0),
+        corner_radius_px=5,
+        halo_colour=_TRANSPARENT,
         halo_fade_profile=FadeProfile.SOLID,
         halo_thickness_px=0,
         swell_px=0,
-        text_colour=(255, 255, 255, 255),
-        text_typeface=BundledTypeface.PYGAME_DEFAULT,
-        text_font_size=12,
+        text_colour=_MID_GREEN,
+        text_typeface=BundledTypeface.NEB0FONT,
+        text_font_size=18,
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,
         text_margin=(0, 0),
-        text_offset=(0, 0),
+        # centres capitals in NEB0FONT at size 18, whose lines have 6 px of blank
+        # space below the capitals and 3 px after the last glyph: half of each,
+        # rounded down
+        text_offset=(1, 3),
     ),
     style_overrides={
         State.DISABLED: StyleOverride(
-            body_colour=(50, 50, 50, 255),
+            body_colour=_OFF_BLACK,
+            border_colour=_LIGHT_GREY,
+            text_colour=_DARK_GREEN,
         ),
         State.HIGHLIGHTED: StyleOverride(
-            halo_colour=(155, 155, 155, 50),
+            halo_colour=_MID_GREEN,
             halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
-            halo_thickness_px=2,
+            halo_thickness_px=6,
             swell_px=1,
         ),
         State.PRESSED: StyleOverride(
-            body_colour=(100, 100, 100, 255),
-            text_offset=(0, 1),
+            body_colour=_DARK_GREY,
             swell_px=-1,
+            text_offset=(1, 4),  # the base offset, 1 px lower
         ),
     },
 )
