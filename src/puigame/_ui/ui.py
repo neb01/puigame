@@ -14,6 +14,7 @@ from pygame.typing import Point
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui_manager import UIManager
 from puigame._ui.ui_root import UIRoot
+from puigame._widgets.widget import Widget
 
 # one frame at 60 fps, for games that update once per fixed-rate frame
 DEFAULT_DT = 1 / 60
@@ -45,10 +46,10 @@ class UI:
             ValueError: If either dimension of ``size`` is negative.
         """
         self._root = UIRoot(size=size, theme=theme)
-        self._manager = UIManager(root=self.root)
+        self._manager = UIManager(root=self._root)
 
     @property
-    def root(self) -> UIRoot:
+    def root(self) -> Widget:
         """The widget at the top of the UI's tree, the parent of top-level widgets.
 
         Set on creation and never changed, so it is read-only.
@@ -95,9 +96,9 @@ class UI:
                 or a variable frame rate pass the real elapsed time, for
                 example ``clock.tick(fps) / 1000``.
         """
-        self.root._place_tree()
+        self._root._place_tree()
         self._manager._update_highlight()
-        self.root._update_tree()
+        self._root._update_tree()
 
     def draw(self, surface: pg.Surface) -> None:
         """Draw the visible widgets onto ``surface``.
@@ -112,7 +113,7 @@ class UI:
             surface: Surface to draw on, usually the display surface. It should
                 be the size the UI was created with.
         """
-        for widget in self.root._iter_visible_subtree():
+        for widget in self._root._iter_visible_subtree():
             surface.blit(
                 widget.image,
                 (
