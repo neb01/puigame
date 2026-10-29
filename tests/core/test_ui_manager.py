@@ -9,14 +9,14 @@ from puigame._components.component import Component
 from puigame._components.skin import NoSkin, Skin
 from puigame._styling.style import StyleOverride
 from puigame._styling.theme import DEFAULT_THEME, Theme
+from puigame._widgets.container import Container
+from puigame._widgets.label import Label
+from puigame._widgets.panel import Panel
 from puigame.core.anchor import Anchor
 from puigame.core.interactive_widget import InteractiveWidget
 from puigame.core.state import State
 from puigame.core.ui import UI
 from puigame.core.widget import Widget
-from puigame.widgets.container import Container
-from puigame.widgets.label import Label
-from puigame.widgets.panel import Panel
 from stubs import BodyColourLayer
 
 # region --- Constants --------------------------------------------------------

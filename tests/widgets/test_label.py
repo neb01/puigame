@@ -1,9 +1,9 @@
 import pytest
 
 from puigame._styling.theme import DEFAULT_THEME
+from puigame._widgets.label import Label
 from puigame.core.anchor import Anchor
 from puigame.core.ui_root import UIRoot
-from puigame.widgets.label import Label
 
 # region --- Constants --------------------------------------------------------
 
