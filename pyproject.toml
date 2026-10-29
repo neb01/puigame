@@ -68,7 +68,7 @@ pythonVersion = "3.11"
 venv = ".venv"
 venvPath = "."
 typeCheckingMode = "standard"
-include = [ "src", "tests" ]
+include = [ "examples", "src", "tests" ]
 extraPaths = [ "tests" ]  # resolves imports of shared test helpers, as pytest's pythonpath does
 
 [tool.pytest]
