@@ -118,7 +118,7 @@ UI                      composes root (a UIRoot, which holds the theme) and mana
 UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
 
-- **`InteractiveWidget` lives in `core`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing from `widgets`. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
+- **`InteractiveWidget` is a base class beside `Widget`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing the concrete widgets. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear, and differ only in appearance: a `Container` is invisible, and a `Panel` is drawn by the skin it is given. `Panel` extends `Widget`, not `Container`, since a `Container` promises to be invisible.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
@@ -383,7 +383,7 @@ Each widget builds its image in layers:
 
 1. The skin renders the widget's background for a state, returning the image and its position as a `PlacedImage`.
 2. Content (`Text` components, check marks, and so on) renders its own `PlacedImage`, also positioned relative to the widget's `rect.topleft`.
-3. `compose_layers()` (in `components/placed_image`) combines the layers into one `PlacedImage`, in the order given, with the skin first, so the first layer is at the bottom. Layers with zero width or height are skipped. The surface covers the union of the remaining layers' rects, and its position is the union's top-left. Each layer is drawn onto it at the layer's position minus the union's top-left, so content lands on the body rather than in a halo margin. If no layer has a size, including when there are none, the result is a new 0x0 image at `(0, 0)`; if exactly one does, that layer is returned unchanged.
+3. `compose_layers()` (in `_components/placed_image`) combines the layers into one `PlacedImage`, in the order given, with the skin first, so the first layer is at the bottom. Layers with zero width or height are skipped. The surface covers the union of the remaining layers' rects, and its position is the union's top-left. Each layer is drawn onto it at the layer's position minus the union's top-left, so content lands on the body rather than in a halo margin. If no layer has a size, including when there are none, the result is a new 0x0 image at `(0, 0)`; if exactly one does, that layer is returned unchanged.
 4. The result is stored in the widget's cache, a `dict[State, PlacedImage]`. The image and its position are kept together, since they are made together and drawing needs both.
 
 Caching rules:
@@ -533,60 +533,85 @@ Callbacks are plain callables passed to widgets on creation. Each receives the w
 
 ```
 src/puigame/
-├── assets/
-│   ├── fonts/
-│   └── images/
-├── components/                objects widgets hold
+├── _components/               objects widgets hold
 │   ├── __init__.py
 │   ├── component.py           Component
-│   ├── placed_image.py        PlacedImage
+│   ├── placed_image.py        PlacedImage, compose_layers
 │   ├── skin.py                Skin, NoSkin, DrawnSkin, ImageSkin
 │   └── text.py                Text and the font cache
-├── core/
+├── _layout/                   anchors and placement
 │   ├── __init__.py
-│   ├── anchor.py              Anchor
-│   ├── interactive_widget.py  InteractiveWidget
-│   ├── state.py               State
-│   ├── ui.py                  UI
-│   ├── ui_manager.py          UIManager
-│   ├── ui_root.py             UIRoot
-│   └── widget.py              Widget, DEFAULT_DT
-├── themes/
+│   └── anchor.py              Anchor, get_pos_from_anchor_match
+├── _styling/                  styles and themes
 │   ├── __init__.py
 │   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
-│   └── theme.py               Theme and the default theme
-├── widgets/
+│   └── theme.py               Theme, DEFAULT_THEME
+├── _ui/                       running a widget tree
 │   ├── __init__.py
-│   ├── button.py
-│   ├── checkbox.py            Checkbox and CheckboxGroup
-│   ├── container.py
-│   ├── label.py
-│   ├── panel.py
-│   └── textbox.py
-├── __init__.py                public API re-exports
+│   ├── ui.py                  UI, DEFAULT_DT
+│   ├── ui_manager.py          UIManager
+│   └── ui_root.py             UIRoot
+├── _widgets/                  base classes, states, and concrete widgets
+│   ├── __init__.py
+│   ├── button.py              Button
+│   ├── container.py           Container
+│   ├── interactive_widget.py  InteractiveWidget
+│   ├── label.py               Label
+│   ├── panel.py               Panel
+│   ├── state.py               State
+│   └── widget.py              Widget
+├── assets/
+│   └── fonts/
+├── __init__.py                public API: re-exports and __all__
 └── py.typed
 ```
 
-The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicOptions` set to `unicode`: folders first, then files, sorted by character code (so `ui.py` comes before `ui_manager.py`). Tests mirror this layout under `tests/`.
+The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicOptions` set to `unicode`: folders first, then files, sorted by character code (so `_widgets/` comes before `assets/`, and `ui.py` before `ui_manager.py`). Tests mirror this layout under `tests/`, with folder names that drop the leading underscore (`tests/widgets/`).
+
+- **Subpackages are private.** The leading underscore marks everything below `puigame` as internal, so modules can move between releases without breaking games. Each subpackage's `__init__.py` holds only a docstring and imports nothing, so importing one module never pulls in the rest of its package.
+- **Base classes live with the concrete widgets.** `Widget`, `InteractiveWidget`, and `State` are in `_widgets`, as Qt and Kivy keep their base widget classes with the widgets.
+- **`_layout` is a package ahead of need**, so row, column, and grid layouts have a home when they arrive.
+- **`_styling`**, not `themes` (a plural suggests a collection of themes) or `appearance` (which this document uses for skins).
+- Unfinished widgets live on branches and are not in the tree until they are built.
+
+### Public API
+
+The public API is exactly the names in `puigame.__all__`, and every public name is imported from `puigame` itself (`from puigame import UI, Button`). Nothing inside the package imports from `puigame`, and tests import public names the same way games do.
+
+| Group | Names |
+| --- | --- |
+| Running a UI | `UI`, `DEFAULT_DT` |
+| Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button` |
+| Placement | `Anchor` |
+| States | `State` |
+| Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
+
+- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `ImageSkin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
+- **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
+- **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
+- **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.
+- Positions use `Point` from `pygame.typing`, not a puigame type.
 
 ### Dependencies
 
 Each layer imports only from the layers above it:
 
-1. `components/placed_image`, `core/anchor`, `core/state`
-2. `themes/style`
-3. `themes/theme`, `components/skin`, `components/text`
-4. `core/widget`
-5. `core/interactive_widget`, `core/ui_root`
-6. `widgets/*`
-7. `core/ui_manager`
-8. `core/ui`
+1. `_components/placed_image`, `_layout/anchor`, `_widgets/state`
+2. `_styling/style`
+3. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
+4. `_widgets/widget`
+5. `_widgets/interactive_widget`, `_ui/ui_root`
+6. `_widgets/button`, `_widgets/container`, `_widgets/label`, `_widgets/panel`
+7. `_ui/ui_manager`
+8. `_ui/ui`
 
-`UIManager` and `UI` need only `Widget`, `InteractiveWidget`, and `UIRoot`, not the concrete widgets, so nothing in `core` imports from `widgets`. This prevents circular imports and makes it clear where new code belongs.
+`_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets/widget` imports `UIRoot` from `_ui` for type checking only. `UIManager` and `UI` need only `Widget`, `InteractiveWidget`, and `UIRoot`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
 
 ## v0.1 scope
 
-**Classes:** `Anchor`, `State`, `Widget`, `InteractiveWidget`, `UIRoot`, `UIManager`, `UI`, `Theme` with a default theme, `Text`, `NoSkin`, `DrawnSkin`, `Container`, `Panel`, `Label`, and `Button`.
+**Public classes:** `UI`, `Widget`, `Container`, `Panel`, `Label`, `Button`, `Anchor`, `State`, `Theme` with a default theme, `Style`, `StyleOverride`, `NoSkin`, and `DrawnSkin` (see [Public API](#public-api) for the full list of names).
+
+**Internal classes:** `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, and `PlacedImage`.
 
 **Features:**
 

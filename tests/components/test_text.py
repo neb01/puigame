@@ -4,10 +4,8 @@ from pathlib import Path
 import pygame as pg
 import pytest
 
-from puigame.components.text import Text
-from puigame.core.anchor import Anchor
-from puigame.themes.style import BundledTypeface
-from puigame.themes.theme import DEFAULT_THEME
+from puigame import DEFAULT_THEME, Anchor, BundledTypeface
+from puigame._components.text import Text
 
 # region --- Constants --------------------------------------------------------
 

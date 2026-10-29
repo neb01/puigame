@@ -3,9 +3,10 @@
 import pygame as pg
 from pygame.typing import Point
 
-from puigame.components.placed_image import PlacedImage
-from puigame.components.skin import Skin
-from puigame.themes.style import RGBA, Style
+from puigame import Style
+from puigame._components.placed_image import PlacedImage
+from puigame._components.skin import Skin
+from puigame._styling.style import RGBA
 
 
 class FixedLayer(Skin):

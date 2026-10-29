@@ -1,9 +1,11 @@
 import pytest
 
-from puigame.core.anchor import Anchor
-from puigame.core.ui_root import UIRoot
-from puigame.themes.theme import DEFAULT_THEME
-from puigame.widgets.container import Container
+from puigame import (
+    DEFAULT_THEME,
+    Anchor,
+    Container,
+)
+from puigame._ui.ui_root import UIRoot
 
 # region --- Constants --------------------------------------------------------
 

@@ -1,10 +1,12 @@
 import pytest
 
-from puigame.components.skin import NoSkin
-from puigame.core.anchor import Anchor
-from puigame.core.ui_root import UIRoot
-from puigame.themes.theme import DEFAULT_THEME
-from puigame.widgets.panel import Panel
+from puigame import (
+    DEFAULT_THEME,
+    Anchor,
+    NoSkin,
+    Panel,
+)
+from puigame._ui.ui_root import UIRoot
 from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------
