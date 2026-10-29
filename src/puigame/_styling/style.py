@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 
-from puigame.core.anchor import Anchor
+from puigame._layout.anchor import Anchor
 
 # a colour as (red, green, blue, alpha), each from 0 to 255
 RGBA = tuple[int, int, int, int]

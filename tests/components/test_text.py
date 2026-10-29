@@ -5,9 +5,9 @@ import pygame as pg
 import pytest
 
 from puigame._components.text import Text
+from puigame._layout.anchor import Anchor
 from puigame._styling.style import BundledTypeface
 from puigame._styling.theme import DEFAULT_THEME
-from puigame.core.anchor import Anchor
 
 # region --- Constants --------------------------------------------------------
 

@@ -7,9 +7,9 @@ from pygame.typing import Point
 
 from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import NoSkin, Skin
+from puigame._layout.anchor import Anchor
 from puigame._styling.style import Style, StyleOverride
 from puigame._styling.theme import DEFAULT_THEME, Theme
-from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui import UI
 from puigame.core.ui_root import UIRoot

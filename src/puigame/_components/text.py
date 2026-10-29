@@ -8,8 +8,8 @@ import pygame as pg
 from pygame.typing import Point
 
 from puigame._components.placed_image import PlacedImage
+from puigame._layout.anchor import get_pos_from_anchor_match
 from puigame._styling.style import BundledTypeface, Style
-from puigame.core.anchor import get_pos_from_anchor_match
 
 
 @cache

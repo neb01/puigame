@@ -14,7 +14,7 @@ from pygame.typing import Point
 
 from puigame._components.component import Component
 from puigame._components.skin import Skin
-from puigame.core.anchor import Anchor
+from puigame._layout.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.widget import Widget
 

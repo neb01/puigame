@@ -1,7 +1,7 @@
 import pygame as pg
 import pytest
 
-from puigame.core.anchor import Anchor, get_pos_from_anchor_match
+from puigame._layout.anchor import Anchor, get_pos_from_anchor_match
 
 # region --- Margin sign ------------------------------------------------------
 
