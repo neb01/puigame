@@ -2,7 +2,7 @@
 
 from pygame.typing import Point
 
-from puigame.components.skin import NoSkin
+from puigame._components.skin import NoSkin
 from puigame.core.anchor import Anchor
 from puigame.core.widget import Widget
 

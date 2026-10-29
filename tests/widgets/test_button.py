@@ -4,9 +4,9 @@ from typing import NoReturn
 import pygame as pg
 import pytest
 
+from puigame._components.skin import NoSkin
 from puigame._styling.style import StyleOverride
 from puigame._styling.theme import DEFAULT_THEME, Theme
-from puigame.components.skin import NoSkin
 from puigame.core.anchor import Anchor
 from puigame.core.state import State
 from puigame.core.ui import UI

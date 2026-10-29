@@ -7,8 +7,8 @@ from typing import ClassVar
 
 from pygame.typing import Point
 
-from puigame.components.skin import Skin
-from puigame.components.text import Text
+from puigame._components.skin import Skin
+from puigame._components.text import Text
 from puigame.core.anchor import Anchor
 from puigame.core.interactive_widget import InteractiveWidget
 from puigame.core.state import State

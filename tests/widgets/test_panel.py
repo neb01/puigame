@@ -1,7 +1,7 @@
 import pytest
 
+from puigame._components.skin import NoSkin
 from puigame._styling.theme import DEFAULT_THEME
-from puigame.components.skin import NoSkin
 from puigame.core.anchor import Anchor
 from puigame.core.ui_root import UIRoot
 from puigame.widgets.panel import Panel

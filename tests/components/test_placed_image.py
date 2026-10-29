@@ -1,6 +1,6 @@
 import pygame as pg
 
-from puigame.components.placed_image import PlacedImage, compose_layers
+from puigame._components.placed_image import PlacedImage, compose_layers
 
 # region --- Constants --------------------------------------------------------
 

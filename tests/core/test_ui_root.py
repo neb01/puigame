@@ -2,8 +2,8 @@ from dataclasses import replace
 
 import pytest
 
+from puigame._components.skin import NoSkin
 from puigame._styling.theme import DEFAULT_THEME, Theme
-from puigame.components.skin import NoSkin
 from puigame.core.ui_root import UIRoot
 
 # region --- Constants --------------------------------------------------------
