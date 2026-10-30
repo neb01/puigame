@@ -117,7 +117,7 @@ DEFAULT_THEME = Theme(
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,
         text_margin=(0, 0),
-        # centres capitals in NEB0FONT at size 18, whose lines have 6 px of blank
+        # centres capitals in Neb0Font at size 18, whose lines have 6 px of blank
         # space below the capitals and 3 px after the last glyph: half of each,
         # rounded down
         text_offset=(1, 3),
