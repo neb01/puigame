@@ -200,7 +200,7 @@ Scaling behaviour is a per-skin option, not a global setting.
 - Text is drawn **without antialiasing**, which keeps pixel fonts crisp. The alpha channel of `text_colour` sets the text's transparency; pygame-ce's `Font.render()` ignores it, so `Text` applies it to the rendered surface.
 - **Multiline** text uses pygame-ce's own rendering: each newline starts a new line, and lines are left-aligned and spaced by the font's line size. A trailing newline, or text that is only a newline or carriage return, is drawn as a glyph. A fuller multiline design, such as alignment and wrapping, is deferred.
 - Bold, italic, and underline are not supported.
-- Neb0Font is a pixel font drawn on a 6-pixel grid, so it is crisp only at font sizes that are multiples of 6.
+- Neb0Font is a pixel font drawn on a 6-pixel grid, so it is crisp only at font sizes that are multiples of 6. It covers printable ASCII only; other characters, such as `£` or `é`, need `PYGAME_DEFAULT` or a font file supplied by the game.
 
 #### DrawnSkin layers
 
@@ -233,7 +233,7 @@ A `Theme` holds the shared rules skins and text read. It is made of two parts:
 - Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. A text margin or offset that is not a tuple, or a typeface that is neither a `BundledTypeface` nor a `Path`, raises `TypeError`. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
 - Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
 - The theme lives on the UI's **`UIRoot`**, and every widget reaches it through the root of its tree, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
-- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games, and uses pygame-ce's built-in font (`BundledTypeface.PYGAME_DEFAULT`).
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games. It uses Neb0Font (`BundledTypeface.NEB0FONT`) at size 18, three times its 6-pixel grid, with a `text_offset` of `(1, 3)` that centres capitals: Neb0Font's lines have 6 px of blank space below the capitals and 3 px after the last glyph. A theme that changes the font size needs a matching offset.
 - **Later:** individual widgets, or whole subtrees, could have a different theme from the UI's. An earlier attempt, with themes inherited down the tree, is kept at the tag `archive/per-widget-themes`.
 
 ## Anchors

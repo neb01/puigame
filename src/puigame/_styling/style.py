@@ -53,7 +53,9 @@ class BundledTypeface(Enum):
 
     ``NEB0FONT`` is a pixel font drawn on a 6-pixel grid, so it is crisp only at
     font sizes that are multiples of 6; other sizes distort its glyphs. Other
-    sizes are not rejected.
+    sizes are not rejected. It covers printable ASCII only, so other characters,
+    such as ``£`` or ``é``, need ``PYGAME_DEFAULT`` or a font file of the game's
+    own.
     """
 
     _value_: str | None

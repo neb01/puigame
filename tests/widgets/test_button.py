@@ -8,6 +8,7 @@ from puigame import (
     DEFAULT_THEME,
     UI,
     Anchor,
+    BundledTypeface,
     Button,
     NoSkin,
     State,
@@ -173,6 +174,7 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
         base_style=replace(
             DEFAULT_THEME.base_style,
             text_colour=BLACK,
+            text_typeface=BundledTypeface.PYGAME_DEFAULT,
             text_font_size=20,
             text_anchor=Anchor.CENTRE,
             text_parent_anchor=Anchor.CENTRE,

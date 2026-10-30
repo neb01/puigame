@@ -116,6 +116,7 @@ def test_render_honours_text_colour_alpha():
         replace(
             DEFAULT_THEME.base_style,
             text_colour=(0, 0, 0, 128),
+            text_typeface=BundledTypeface.PYGAME_DEFAULT,
             text_font_size=20,
             text_anchor=Anchor.CENTRE,
             text_parent_anchor=Anchor.CENTRE,
@@ -139,6 +140,7 @@ def test_render_does_not_antialias():
         replace(
             DEFAULT_THEME.base_style,
             text_colour=BLACK,
+            text_typeface=BundledTypeface.PYGAME_DEFAULT,
             text_font_size=24,
             text_anchor=Anchor.CENTRE,
             text_parent_anchor=Anchor.CENTRE,
