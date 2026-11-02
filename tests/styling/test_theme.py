@@ -12,6 +12,7 @@ from puigame import (
     StyleOverride,
     Theme,
 )
+from puigame._styling.theme import _STATE_PRECEDENCE
 
 # region --- Constants --------------------------------------------------------
 
@@ -173,18 +174,57 @@ def test_multiple_flags_change_separate_fields_set_in_style_override():
     assert style.border_colour == BLUE
 
 
-def test_later_override_wins_when_multiple_flags_change_same_field():
-    """Later means later in ``style_overrides``, not later in ``State``."""
-    style_overrides = {
-        State.DISABLED: StyleOverride(body_colour=RED),
-        State.HIGHLIGHTED: StyleOverride(body_colour=BLUE),
-    }
+@pytest.mark.parametrize(
+    ("combined_flag", "style_overrides"),
+    [
+        (
+            State.CHECKED | State.HIGHLIGHTED,
+            {
+                State.HIGHLIGHTED: StyleOverride(body_colour=BLUE),
+                State.CHECKED: StyleOverride(body_colour=RED),
+            },
+        ),
+        (
+            State.HIGHLIGHTED | State.PRESSED,
+            {
+                State.PRESSED: StyleOverride(body_colour=BLUE),
+                State.HIGHLIGHTED: StyleOverride(body_colour=RED),
+            },
+        ),
+        (
+            State.PRESSED | State.EDITING,
+            {
+                State.EDITING: StyleOverride(body_colour=BLUE),
+                State.PRESSED: StyleOverride(body_colour=RED),
+            },
+        ),
+        (
+            State.EDITING | State.DISABLED,
+            {
+                State.DISABLED: StyleOverride(body_colour=BLUE),
+                State.EDITING: StyleOverride(body_colour=RED),
+            },
+        ),
+    ],
+    ids=[
+        "CHECKED | HIGHLIGHTED",
+        "HIGHLIGHTED | PRESSED",
+        "PRESSED | EDITING",
+        "EDITING | DISABLED",
+    ],
+)
+def test_style_for_honours_precedence_order(combined_flag, style_overrides):
+    """The higher-precedence flag wins, whatever order ``style_overrides`` holds.
+
+    Each ``style_overrides`` lists the higher-precedence flag first, so the old
+    dict-order rule would pick the other flag's colour.
+    """
     theme = Theme(
         base_style=replace(ANY_STYLE, body_colour=WHITE),
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(State.DISABLED | State.HIGHLIGHTED)
+    style = theme.style_for(combined_flag)
 
     assert style.body_colour == BLUE
 
@@ -199,6 +239,18 @@ def test_later_override_wins_when_multiple_flags_change_same_field():
 @pytest.mark.parametrize("state", State.__members__.values())
 def test_default_theme_provides_style_for_every_state(state):
     assert isinstance(DEFAULT_THEME.style_for(state), Style)
+
+
+def test_state_precedence_lists_exactly_non_base_states():
+    expected_states = {
+        state for state in State.__members__.values() if state is not State.BASE
+    }
+
+    assert expected_states == set(_STATE_PRECEDENCE)
+
+
+def test_no_duplicates_in_state_precedence():
+    assert len(_STATE_PRECEDENCE) == len(set(_STATE_PRECEDENCE))
 
 
 # endregion

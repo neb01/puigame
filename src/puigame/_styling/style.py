@@ -196,8 +196,8 @@ class StyleOverride:
     Each field matches a field of ``Style``, and only these fields can change
     between states. A field left as ``None`` keeps the value underneath, and
     any other value replaces it. When several states are active, their
-    overrides are applied in turn, so a later override wins when two set the
-    same field.
+    overrides are applied in order of precedence, so the higher-precedence
+    state wins when two set the same field (see ``Theme``).
 
     Attributes:
         body_colour: Colour of the body as RGBA, or ``None`` to keep it.
