@@ -16,6 +16,28 @@ from puigame._layout.anchor import Anchor
 from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
 from puigame._widgets.state import State
 
+# order in which style_for() applies overrides, lowest precedence first, so the
+# later of two flags wins a field both set; this tuple decides, not the order
+# State declares its members in or the order of style_overrides
+_STATE_PRECEDENCE = (
+    State.CHECKED,
+    State.HIGHLIGHTED,
+    State.PRESSED,
+    State.EDITING,
+    State.DISABLED,
+)
+
+_TRANSPARENT = (0, 0, 0, 0)
+
+_OFF_WHITE = (220, 220, 220, 255)
+_LIGHT_GREY = (100, 100, 100, 255)
+_MID_GREY = (50, 50, 50, 255)
+_DARK_GREY = (35, 35, 35, 255)
+_OFF_BLACK = (15, 15, 15, 255)
+
+_MID_GREEN = (0, 200, 0, 255)
+_DARK_GREEN = (0, 100, 0, 255)
+
 
 @dataclass(frozen=True, kw_only=True)
 class Theme:
@@ -24,8 +46,13 @@ class Theme:
     Overrides combine best when each state changes its own fields: for
     example, highlighting changes the border, checking changes the body, and
     disabling greys out the colours. Overrides that set different fields
-    always combine; where two set the same field, the later one in
-    ``style_overrides`` wins.
+    always combine. Where two set the same field, the flag with higher
+    precedence wins, whatever order ``style_overrides`` holds them in. From
+    lowest to highest, the precedence is ``CHECKED``, ``HIGHLIGHTED``,
+    ``PRESSED``, ``EDITING``, then ``DISABLED``, so a disabled widget always
+    shows every field its override sets. If checking and disabling both change
+    the body colour, for example, a disabled checkbox looks the same whether it
+    is checked or not.
 
     Attributes:
         base_style: Appearance of a widget when no state flags are set.
@@ -64,8 +91,8 @@ class Theme:
         """Return the style for a combination of state flags.
 
         Starts from ``base_style`` and applies the override for each flag in
-        ``state``, in the order ``style_overrides`` holds them. When two
-        overrides set the same field, the later one wins.
+        ``state``, from lowest to highest precedence (see ``Theme``). When two
+        overrides set the same field, the higher-precedence one wins.
 
         Args:
             state: The widget's current state, which can combine several flags.
@@ -76,11 +103,11 @@ class Theme:
         """
         result = self.base_style
 
-        for flag, style_override in self.style_overrides.items():
-            if flag in state:
+        for flag in _STATE_PRECEDENCE:
+            if flag in state and flag in self.style_overrides:
                 changed_fields = {
                     field: value
-                    for field, value in asdict(style_override).items()
+                    for field, value in asdict(self.style_overrides[flag]).items()
                     if value is not None
                 }
 
@@ -88,18 +115,6 @@ class Theme:
 
         return result
 
-
-_TRANSPARENT = (0, 0, 0, 0)
-
-_OFF_WHITE = (220, 220, 220, 255)
-_LIGHT_GREY = (100, 100, 100, 255)
-_MID_GREY = (50, 50, 50, 255)
-_DARK_GREY = (35, 35, 35, 255)
-_OFF_BLACK = (15, 15, 15, 255)
-
-
-_MID_GREEN = (0, 200, 0, 255)
-_DARK_GREEN = (0, 100, 0, 255)
 
 DEFAULT_THEME = Theme(
     base_style=Style(

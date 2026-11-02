@@ -7,8 +7,8 @@ class State(Flag):
     """Possible widget state flags."""
 
     BASE = 0
-    DISABLED = auto()
+    CHECKED = auto()
     HIGHLIGHTED = auto()
     PRESSED = auto()
-    CHECKED = auto()
     EDITING = auto()
+    DISABLED = auto()
