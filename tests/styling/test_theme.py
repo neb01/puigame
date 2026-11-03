@@ -10,6 +10,7 @@ from puigame import (
     State,
     Style,
     StyleOverride,
+    TextHorizontalExtent,
     Theme,
 )
 from puigame._styling.theme import _STATE_PRECEDENCE
@@ -35,6 +36,7 @@ ANY_STYLE = Style(
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
     text_margin=(0, 0),
     text_offset=(0, 0),
 )

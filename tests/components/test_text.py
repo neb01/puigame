@@ -4,17 +4,55 @@ from pathlib import Path
 import pygame as pg
 import pytest
 
-from puigame import DEFAULT_THEME, Anchor, BundledTypeface
+from puigame import DEFAULT_THEME, Anchor, BundledTypeface, TextHorizontalExtent
 from puigame._components.text import Text
 
 # region --- Constants --------------------------------------------------------
 
+NEBMON0FONT_PATH = Path(__file__).parent.parent / "assets" / "fonts" / "nebmon0font.ttf"
+WIDGET_SIZE = (100, 50)
+
 ANY_STRING = "snath is the specific word for the handle of a scythe"
-ANY_FONT_PATH = Path(__file__).parent.parent / "assets" / "fonts" / "neb0font.ttf"
+ANY_TEXT_HORIZONTAL_EXTENT = TextHorizontalExtent.INK
 
 WHITE = (255, 255, 255, 255)
 BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
+
+# endregion
+
+
+# region --- Helpers ----------------------------------------------------------
+
+
+def _centred_ink_rect(
+    font_size: int,
+    content: str,
+    text_horizontal_extent: TextHorizontalExtent,
+) -> pg.Rect:
+    """Render centred text in the test font and return its ink in widget coordinates.
+
+    The text is anchored ``CENTRE`` to ``CENTRE`` in a ``WIDGET_SIZE`` widget, with
+    no margin or offset, in ``nebmon0font.ttf``. Tests that change any of these
+    build their own style.
+    """
+    style = replace(
+        DEFAULT_THEME.base_style,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=font_size,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=(0, 0),
+        text_offset=(0, 0),
+    )
+
+    text = Text(content)
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
+
+    return ink_rect
+
 
 # endregion
 
@@ -43,64 +81,223 @@ def test_render_empty_string_creates_zero_size_image():
 # endregion
 
 
-# region --- Position ---------------------------------------------------------
+# region --- Vertical placement -----------------------------------------------
 
 
-def test_render_pos_adds_style_margin_and_offset():
-    text = Text(ANY_STRING)
-    pos = text.render(
-        (30, 40),
-        replace(
-            DEFAULT_THEME.base_style,
-            text_anchor=Anchor.TOP_LEFT,
-            text_parent_anchor=Anchor.TOP_LEFT,
-            text_margin=(2, 4),
-            text_offset=(-5, 5),
-        ),
-    ).pos
+@pytest.mark.parametrize(
+    ("font_size", "expected_top", "expected_bottom"),
+    [(18, 19, 31), (24, 17, 33)],
+    ids=["font size 18", "font size 24"],
+)
+def test_render_centres_capitals_vertically(font_size, expected_top, expected_bottom):
+    ink_rect = _centred_ink_rect(font_size, "SPUD", ANY_TEXT_HORIZONTAL_EXTENT)
 
-    expected_pos = (2 - 5, 4 + 5)
-
-    assert pos == expected_pos
+    assert ink_rect.top == expected_top
+    assert ink_rect.bottom == expected_bottom
 
 
-def test_render_pos_adds_style_margin_in_negative_direction():
-    text = Text(ANY_STRING)
-    placed_image = text.render(
-        (30, 40),
-        replace(
-            DEFAULT_THEME.base_style,
-            text_anchor=Anchor.BOTTOM_RIGHT,
-            text_parent_anchor=Anchor.BOTTOM_RIGHT,
-            text_margin=(4, 6),
-            text_offset=(0, 0),
-        ),
+def test_render_centres_multiline_text_as_a_block():
+    ink_rect = _centred_ink_rect(18, "SPUD\nSPUD", ANY_TEXT_HORIZONTAL_EXTENT)
+
+    assert ink_rect.top == 10
+    assert ink_rect.bottom == 40
+
+
+@pytest.mark.parametrize(
+    ("text_horizontal_extent", "expected_topleft", "expected_bottomright"),
+    [
+        (TextHorizontalExtent.INK, (27, 19), (72, 31)),
+        (TextHorizontalExtent.LOGICAL, (26, 19), (71, 31)),
+    ],
+    ids=["ink", "logical"],
+)
+def test_render_ignores_trailing_newline(
+    text_horizontal_extent,
+    expected_topleft,
+    expected_bottomright,
+):
+    ink_rect = _centred_ink_rect(18, "SPUD\n", text_horizontal_extent)
+
+    assert ink_rect.topleft == expected_topleft
+    assert ink_rect.bottomright == expected_bottomright
+
+
+def test_render_hangs_descenders_below_baseline():
+    ink_rect = _centred_ink_rect(18, "Spuddy", ANY_TEXT_HORIZONTAL_EXTENT)
+
+    assert ink_rect.top == 19
+    assert ink_rect.bottom == 34
+
+
+# endregion
+
+
+# region --- Horizontal extent ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("font_size", "expected_left", "expected_right"),
+    [(18, 27, 72), (24, 20, 80)],
+    ids=["font size 18", "font size 24"],
+)
+def test_render_centres_ink_horizontally(font_size, expected_left, expected_right):
+    ink_rect = _centred_ink_rect(font_size, "SPUD", TextHorizontalExtent.INK)
+
+    assert ink_rect.left == expected_left
+    assert ink_rect.right == expected_right
+
+
+@pytest.mark.parametrize(
+    ("font_size", "expected_left", "expected_right"),
+    [(18, 27, 72), (24, 20, 80)],
+    ids=["font size 18", "font size 24"],
+)
+def test_render_ink_trims_whitespace_at_both_ends(
+    font_size,
+    expected_left,
+    expected_right,
+):
+    ink_rect = _centred_ink_rect(font_size, "  SPUD       ", TextHorizontalExtent.INK)
+
+    assert ink_rect.left == expected_left
+    assert ink_rect.right == expected_right
+
+
+@pytest.mark.parametrize(
+    ("font_size", "expected_left", "expected_right"),
+    [(18, 26, 71), (24, 18, 78)],
+    ids=["font size 18", "font size 24"],
+)
+def test_render_logical_honours_font_bearings(font_size, expected_left, expected_right):
+    ink_rect = _centred_ink_rect(font_size, "SPUD", TextHorizontalExtent.LOGICAL)
+
+    assert ink_rect.left == expected_left
+    assert ink_rect.right == expected_right
+
+
+@pytest.mark.parametrize(
+    ("content", "expected_left", "expected_right"),
+    [("  SPUD", 38, 83), ("SPUD   ", 26, 71)],
+    ids=["leading whitespace", "trailing whitespace"],
+)
+def test_render_logical_counts_leading_and_hangs_trailing_whitespace(
+    content,
+    expected_left,
+    expected_right,
+):
+    ink_rect = _centred_ink_rect(18, content, TextHorizontalExtent.LOGICAL)
+
+    assert ink_rect.left == expected_left
+    assert ink_rect.right == expected_right
+
+
+def test_render_logical_width_comes_from_longest_line():
+    ink_rect = _centred_ink_rect(18, "MY\nSPUD", TextHorizontalExtent.LOGICAL)
+
+    assert ink_rect.left == 26
+    assert ink_rect.right == 71
+
+
+def test_render_draws_nothing_for_spaces_only():
+    ink_rect = _centred_ink_rect(18, "       ", ANY_TEXT_HORIZONTAL_EXTENT)
+
+    assert ink_rect.size == (0, 0)
+    assert ink_rect.topleft == (50, 19)
+
+
+# endregion
+
+
+# region --- Anchors, margin, and offset --------------------------------------
+
+
+def test_render_matches_text_anchor_to_text_parent_anchor():
+    style = replace(
+        DEFAULT_THEME.base_style,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_anchor=Anchor.TOP_LEFT,
+        text_parent_anchor=Anchor.BOTTOM_RIGHT,
+        text_horizontal_extent=ANY_TEXT_HORIZONTAL_EXTENT,
+        text_margin=(0, 0),
+        text_offset=(0, 0),
     )
 
-    expected_bottom_right = (30 - 4, 40 - 6)
-    image_rect = pg.Rect(placed_image.pos, placed_image.image.get_size())
+    text = Text("SPUD")
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
 
-    assert image_rect.width != 0
-    assert image_rect.height != 0
-    assert image_rect.bottomright == expected_bottom_right
+    assert ink_rect.topleft == (100, 50)
 
 
-def test_render_pos_matches_text_anchor_to_text_parent_anchor():
-    text = Text(ANY_STRING)
-    pos = text.render(
-        (30, 40),
-        replace(
-            DEFAULT_THEME.base_style,
-            text_anchor=Anchor.TOP_LEFT,
-            text_parent_anchor=Anchor.BOTTOM_RIGHT,
-            text_margin=(0, 0),
-            text_offset=(0, 0),
-        ),
-    ).pos
+@pytest.mark.parametrize(
+    ("anchor", "text_horizontal_extent", "expected_topleft", "expected_bottomright"),
+    [
+        (Anchor.TOP_LEFT, TextHorizontalExtent.INK, (4, 6), (49, 18)),
+        (Anchor.BOTTOM_RIGHT, TextHorizontalExtent.INK, (51, 32), (96, 44)),
+        (Anchor.TOP_LEFT, TextHorizontalExtent.LOGICAL, (4, 6), (49, 18)),
+        (Anchor.BOTTOM_RIGHT, TextHorizontalExtent.LOGICAL, (48, 32), (93, 44)),
+    ],
+    ids=[
+        "top_left, ink",
+        "bottom_right, ink",
+        "top_left, logical",
+        "bottom_right, logical",
+    ],
+)
+def test_render_honours_margins_and_anchors(
+    anchor,
+    text_horizontal_extent,
+    expected_topleft,
+    expected_bottomright,
+):
+    style = replace(
+        DEFAULT_THEME.base_style,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_anchor=anchor,
+        text_parent_anchor=anchor,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=(4, 6),
+        text_offset=(0, 0),
+    )
 
-    expected_pos = (30, 40)
+    text = Text("SPUD")
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
 
-    assert pos == expected_pos
+    assert ink_rect.topleft == expected_topleft
+    assert ink_rect.bottomright == expected_bottomright
+
+
+@pytest.mark.parametrize(
+    ("text_horizontal_extent", "expected_ink_topleft"),
+    [
+        (TextHorizontalExtent.INK, (0, 0)),
+        (TextHorizontalExtent.LOGICAL, (1, 0)),
+    ],
+    ids=["ink", "logical"],
+)
+def test_render_corrects_for_space_above_capitals_left_bearing(
+    text_horizontal_extent,
+    expected_ink_topleft,
+):
+    style = replace(
+        DEFAULT_THEME.base_style,
+        text_typeface=BundledTypeface.PYGAME_DEFAULT,
+        text_font_size=18,
+        text_anchor=Anchor.TOP_LEFT,
+        text_parent_anchor=Anchor.TOP_LEFT,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=(0, 0),
+        text_offset=(0, 0),
+    )
+
+    text = Text("SPUD")
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
+
+    assert ink_rect.topleft == expected_ink_topleft
 
 
 # endregion
@@ -202,7 +399,7 @@ def test_render_can_take_typeface_path():
         (30, 40),
         replace(
             DEFAULT_THEME.base_style,
-            text_typeface=ANY_FONT_PATH,
+            text_typeface=NEBMON0FONT_PATH,
         ),
     ).image
 

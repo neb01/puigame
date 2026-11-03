@@ -7,7 +7,13 @@ layout may change in any release.
 
 from puigame._components.skin import DrawnSkin, NoSkin
 from puigame._layout.anchor import Anchor
-from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
+from puigame._styling.style import (
+    BundledTypeface,
+    FadeProfile,
+    Style,
+    StyleOverride,
+    TextHorizontalExtent,
+)
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui import DEFAULT_DT, UI
 from puigame._widgets.button import Button
@@ -33,6 +39,7 @@ __all__ = [
     "State",
     "Style",
     "StyleOverride",
+    "TextHorizontalExtent",
     "Theme",
     "Widget",
 ]

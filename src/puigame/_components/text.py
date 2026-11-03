@@ -3,13 +3,14 @@
 from functools import cache
 from importlib.resources import files
 from pathlib import Path
+from typing import assert_never
 
 import pygame as pg
 from pygame.typing import Point
 
 from puigame._components.placed_image import PlacedImage
 from puigame._layout.anchor import get_pos_from_anchor_match
-from puigame._styling.style import BundledTypeface, Style
+from puigame._styling.style import BundledTypeface, Style, TextHorizontalExtent
 
 
 @cache
@@ -51,23 +52,55 @@ def _get_font(
     return font
 
 
+@cache
+def _get_cap_height(*, font: pg.Font) -> int:
+    """Return a font's cap height, the height of ``H`` above the baseline.
+
+    Results are cached by font object, so they stay correct only while the
+    font is unchanged. Fonts from ``_get_font()`` are never changed.
+
+    Args:
+        font: Font to measure.
+
+    Returns:
+        Distance in pixels from the baseline to the top of ``H``, or the
+        font's ascent if pygame-ce cannot measure ``H``.
+    """
+    h_metrics = font.metrics("H")
+
+    # pygame-ce's types allow None for a glyph it cannot measure,
+    # but a font without H usually reports its .notdef glyph's metrics instead,
+    # so this may never run
+    if h_metrics[0] is None:
+        return font.get_ascent()
+
+    _minx, _maxx, _miny, maxy, _advance = h_metrics[0]
+
+    return maxy
+
+
 class Text:
-    """Text drawn on a widget, styled and placed by the widget's style.
+    r"""Text drawn on a widget, styled and placed by the widget's style.
 
     ``Text`` holds only its string. The typeface, font size, colour, and
     placement come from the ``Style`` passed to ``render()``, so the text
     follows the widget's theme and state. It is not a widget: it is not in the
     tree, receives no input, and is drawn into its owner's image.
 
-    The text is placed relative to the widget's rect with the style's anchors,
-    margin, and offset, and is not clipped, so it can extend past the rect. It
-    is drawn without antialiasing, and the alpha channel of the style's
-    ``text_colour`` sets its transparency.
+    The text is placed by its placement box, which is anchored to the widget's
+    rect with the style's anchors, margin, and offset. The box runs from the
+    top of the first line's capitals to the last line's baseline, so centred
+    text is centred on its capitals, and descenders hang below the box. Its
+    width depends on the style's ``text_horizontal_extent`` (see
+    ``TextHorizontalExtent``). The text is not clipped, so it can extend past
+    the rect. It is drawn without antialiasing, and the alpha channel of the
+    style's ``text_colour`` sets its transparency.
 
     Each newline starts a new line, using pygame-ce's own multiline rendering:
-    lines are left-aligned and spaced by the font's line size. A trailing
-    newline, or text that is only a newline or carriage return, is drawn as a
-    glyph rather than as an empty line.
+    lines are left-aligned and spaced by the font's line size. The last
+    newline in the text is drawn as a blank space at the end of its line
+    rather than starting an empty line, so ``"A\n"`` is one line and
+    ``"A\n\n"`` is two. Empty lines count towards the placement box.
     """
 
     def __init__(self, content: str = "") -> None:
@@ -107,7 +140,8 @@ class Text:
             size: ``(width, height)`` of the widget's rect, in pixels, which the
                 text is placed against.
             style: Style for the widget's current state. Sets the text's
-                typeface, font size, colour, anchors, margin, and offset.
+                typeface, font size, colour, anchors, horizontal extent,
+                margin, and offset.
 
         Returns:
             The rendered text and its position relative to the widget's
@@ -135,13 +169,45 @@ class Text:
 
             surface.set_alpha(style.text_colour[3])
 
-            pos = get_pos_from_anchor_match(
-                child_size=surface.get_size(),
+            # the placement box's width, and its left edge inside the surface
+            match style.text_horizontal_extent:
+                case TextHorizontalExtent.LOGICAL:
+                    text_lines = self.content.split("\n")
+                    placement_box_width = max(
+                        font.size(text_line.rstrip())[0] for text_line in text_lines
+                    )
+                    pos_x_correction = 0
+
+                case TextHorizontalExtent.INK:
+                    ink_rect = surface.get_bounding_rect()
+                    placement_box_width = ink_rect.width
+                    pos_x_correction = ink_rect.left
+
+                case _:
+                    assert_never(style.text_horizontal_extent)
+
+            # the placement box's height, from the first line's cap top to the
+            # last line's baseline; lines are counted from the surface, since
+            # pygame-ce draws a final newline as a blank glyph, not a new line
+            text_line_height = font.get_linesize()
+            num_lines = surface.get_height() // text_line_height
+            cap_height = _get_cap_height(font=font)
+            placement_box_height = cap_height + (num_lines - 1) * text_line_height
+
+            placement_box_pos = get_pos_from_anchor_match(
+                child_size=(placement_box_width, placement_box_height),
                 child_anchor=style.text_anchor,
                 parent_size=size,
                 parent_anchor=style.text_parent_anchor,
                 margin=style.text_margin,
                 offset=style.text_offset,
+            )
+
+            # move the surface so that the placement box, which starts inside
+            # it, lands where it was anchored
+            pos = (
+                placement_box_pos[0] - pos_x_correction,
+                placement_box_pos[1] - (font.get_ascent() - cap_height),
             )
 
         return PlacedImage(surface, pos)
