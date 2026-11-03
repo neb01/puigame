@@ -13,7 +13,13 @@ from dataclasses import asdict, dataclass, replace
 from types import MappingProxyType
 
 from puigame._layout.anchor import Anchor
-from puigame._styling.style import BundledTypeface, FadeProfile, Style, StyleOverride
+from puigame._styling.style import (
+    BundledTypeface,
+    FadeProfile,
+    Style,
+    StyleOverride,
+    TextHorizontalExtent,
+)
 from puigame._widgets.state import State
 
 # order in which style_for() applies overrides, lowest precedence first, so the
@@ -131,11 +137,11 @@ DEFAULT_THEME = Theme(
         text_font_size=18,
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,
+        # Neb0Font's blank space is all after each glyph, so measuring the ink
+        # centres it exactly, with no offset
+        text_horizontal_extent=TextHorizontalExtent.INK,
         text_margin=(0, 0),
-        # centres capitals in Neb0Font at size 18, whose lines have 6 px of blank
-        # space below the capitals and 3 px after the last glyph: half of each,
-        # rounded down
-        text_offset=(1, 3),
+        text_offset=(0, 0),
     ),
     style_overrides={
         State.DISABLED: StyleOverride(
@@ -152,7 +158,7 @@ DEFAULT_THEME = Theme(
         State.PRESSED: StyleOverride(
             body_colour=_DARK_GREY,
             swell_px=-1,
-            text_offset=(1, 4),  # the base offset, 1 px lower
+            text_offset=(0, 1),  # the base offset, 1 px lower
         ),
     },
 )

@@ -20,6 +20,7 @@ PUBLIC_NAMES = [
     "State",
     "Style",
     "StyleOverride",
+    "TextHorizontalExtent",
     "Theme",
     "Widget",
 ]

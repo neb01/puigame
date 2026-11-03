@@ -1,9 +1,10 @@
 """Style and StyleOverride, the values that say how a widget looks.
 
 A ``Style`` holds every value needed to draw a widget, and a ``StyleOverride``
-holds the changes one state makes to it. ``FadeProfile`` and
-``BundledTypeface`` are the choices for a style's halo fade and typeface, and
-``RGBA`` is the type of its colours.
+holds the changes one state makes to it. ``FadeProfile``,
+``TextHorizontalExtent``, and ``BundledTypeface`` are the choices for a
+style's halo fade, text placement box, and typeface, and ``RGBA`` is the type
+of its colours.
 """
 
 from dataclasses import dataclass
@@ -43,6 +44,31 @@ class FadeProfile(Enum):
     HARD_CUBIC = auto()
 
 
+class TextHorizontalExtent(Enum):
+    """How wide a text's placement box is, and where it starts.
+
+    Text is positioned by anchoring its placement box to the widget. The box is
+    always the same height: from the top of the first line's capitals to the
+    last line's baseline, measured from the font, so text lines up by its
+    capitals whatever its characters, and descenders hang below the box. This
+    setting chooses only the box's horizontal extent:
+
+    - ``INK``: from the first drawn pixel to the last, across all lines. Spaces
+      and the blank space at each end of the text are left out. Suits fonts
+      whose blank space is all on one side of each glyph, such as Neb0Font,
+      which then centre exactly.
+    - ``LOGICAL``: from the start of each line to the end of its last
+      character that is not whitespace, using the font's own spacing, as most
+      text layout does. Leading spaces count and trailing spaces do not. Text
+      in a font with uneven spacing can sit slightly off centre.
+
+    Multi-line text uses its widest line.
+    """
+
+    INK = auto()
+    LOGICAL = auto()
+
+
 class BundledTypeface(Enum):
     """Typefaces bundled with puigame.
 
@@ -74,8 +100,9 @@ class Style:
 
     A negative corner radius, border thickness, or halo thickness, or a font
     size of 0 or less, raises ``ValueError`` when the style is created. A
-    negative swell is allowed. A text margin or offset that is not a tuple, or
-    a typeface that is neither a ``BundledTypeface`` nor a ``Path``, raises
+    negative swell is allowed. A text margin or offset that is not a tuple, a
+    typeface that is neither a ``BundledTypeface`` nor a ``Path``, or a
+    horizontal extent that is not a ``TextHorizontalExtent``, raises
     ``TypeError``.
 
     Attributes:
@@ -103,14 +130,18 @@ class Style:
         text_typeface: Typeface used for text: a ``BundledTypeface``, or the
             path to a font file supplied by the game.
         text_font_size: Font size for text, in pixels.
-        text_anchor: Point on the text that is aligned to the widget.
+        text_anchor: Point on the text's placement box that is aligned to the
+            widget.
         text_parent_anchor: Point on the widget that the text is aligned to.
+        text_horizontal_extent: How wide the text's placement box is. See
+            ``TextHorizontalExtent``.
         text_margin: Distance in pixels that the text is moved from its anchor
             point towards its own centre, as an ``(x, y)`` pair.
         text_offset: Shift in pixels applied to the text after its anchors and
             margin, as an ``(x, y)`` pair, with ``+x`` to the right and ``+y``
-            down. Can change between states, for example to move the text
-            down 1 pixel when a button is pressed.
+            down. Centred text needs no offset to look centred, so this is for
+            deliberate nudges, and can change between states, for example to
+            move the text down 1 pixel when a button is pressed.
     """
 
     # general appearance options
@@ -137,6 +168,7 @@ class Style:
     text_font_size: int
     text_anchor: Anchor
     text_parent_anchor: Anchor
+    text_horizontal_extent: TextHorizontalExtent
     text_margin: tuple[int, int]
 
     def __post_init__(self) -> None:
@@ -147,9 +179,10 @@ class Style:
         is not checked, since a negative swell is valid and shrinks the widget.
 
         Raises:
-            TypeError: If ``text_margin`` or ``text_offset`` is not a tuple, or
+            TypeError: If ``text_margin`` or ``text_offset`` is not a tuple,
                 if ``text_typeface`` is neither a ``BundledTypeface`` nor a
-                ``Path``.
+                ``Path``, or if ``text_horizontal_extent`` is not a
+                ``TextHorizontalExtent``.
             ValueError: If ``corner_radius_px``, ``border_thickness_px``, or
                 ``halo_thickness_px`` is negative, or if ``text_font_size`` is
                 not positive.
@@ -186,6 +219,12 @@ class Style:
         if self.text_font_size <= 0:
             raise ValueError(
                 f"text_font_size must be positive, got {self.text_font_size} px",
+            )
+
+        if not isinstance(self.text_horizontal_extent, TextHorizontalExtent):
+            raise TypeError(
+                "text_horizontal_extent must be a TextHorizontalExtent, "
+                f"got {self.text_horizontal_extent!r}",
             )
 
 

@@ -4,7 +4,14 @@ from pathlib import Path
 import pygame as pg
 import pytest
 
-from puigame import Anchor, BundledTypeface, FadeProfile, Style, StyleOverride
+from puigame import (
+    Anchor,
+    BundledTypeface,
+    FadeProfile,
+    Style,
+    StyleOverride,
+    TextHorizontalExtent,
+)
 
 # region --- Constants --------------------------------------------------------
 
@@ -28,6 +35,7 @@ ANY_STYLE = Style(
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
     text_margin=(0, 0),
     text_offset=(0, 0),
 )
@@ -170,6 +178,19 @@ def test_style_text_typeface_can_take_bundled_font_or_path(value):
     style = replace(ANY_STYLE, text_typeface=value)
 
     assert style.text_typeface == value
+
+
+@pytest.mark.parametrize("value", [False, ANY_STRING], ids=["bool", "string"])
+def test_style_str_or_bool_text_horizontal_extent_raises(value):
+    with pytest.raises(TypeError):
+        replace(ANY_STYLE, text_horizontal_extent=value)
+
+
+@pytest.mark.parametrize("value", [*TextHorizontalExtent])
+def test_style_text_horizontal_extent_can_take_any_member(value):
+    style = replace(ANY_STYLE, text_horizontal_extent=value)
+
+    assert style.text_horizontal_extent == value
 
 
 # endregion

@@ -62,10 +62,6 @@ CUSTOM_THEME = Theme(
         corner_radius_px=20,  # over half the button height: a pill, as in CSS
         text_colour=MID_ORANGE,
         text_font_size=24,
-        # centres capitals in Neb0Font at size 24, whose lines have 8 px of blank
-        # space below the capitals and 4 px after the last glyph: half of each,
-        # rounded down
-        text_offset=(2, 4),
     ),
     style_overrides={
         State.DISABLED: StyleOverride(
@@ -80,7 +76,7 @@ CUSTOM_THEME = Theme(
         State.PRESSED: StyleOverride(
             body_colour=DARK_RED,
             swell_px=-1,
-            text_offset=(2, 5),  # the base offset, 1 px lower
+            text_offset=(0, 1),  # the base offset, 1 px lower
         ),
     },
 )
