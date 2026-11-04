@@ -433,8 +433,8 @@ def main() -> None:
             "@ABCDEFGHIJKLMNO\n"
             "PQRSTUVWXYZ[\\]^_\n"
             "`abcdefghijklmno\n"
-            # the last character is missing from Neb0Font, so it shows the glyph
-            # drawn for any character the font lacks
+            # U+FFFD isn't in Neb0Font, so it renders as .notdef, the glyph drawn
+            # in the sheet's last cell
             "pqrstuvwxyz{|}~\ufffd\n\n"
             "THE QUICK BROWN\n"
             "FOX JUMPS OVER\n"
