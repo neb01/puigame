@@ -34,7 +34,8 @@ class Container(Widget):
             parent: Widget to anchor against and to be a child of. It cannot be
                 changed later.
             size: Width and height in pixels.
-            anchor: Point on this container used for positioning.
+            anchor: Point on this container used for positioning. Defaults to
+                ``Anchor.CENTRE``.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Defaults to the same point as ``anchor``.
             margin: ``(x, y)`` space between the matched anchor points, as
@@ -42,17 +43,20 @@ class Container(Widget):
             offset: Shift in screen coordinates (``+x`` right, ``+y`` down),
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the container and its children respond to input.
-            visible: Whether the container's children are drawn.
+                Defaults to ``True``.
+            visible: Whether the container's children are drawn. Defaults to
+                ``True``.
             consumes_clicks: Whether mouse clicks over the container stop at
                 it. Defaults to ``False``, so clicks on its empty space reach
                 the widgets below it and the game.
 
         Raises:
+            TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
+                is neither an ``Anchor`` nor ``None``, or if ``margin`` or
+                ``offset`` is a single number rather than an ``(x, y)`` pair.
+                The container is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The
                 container is not added to ``parent``.
-            TypeError: If ``margin`` or ``offset`` is a single number rather
-                than an ``(x, y)`` pair. The container is not added to
-                ``parent``.
         """
         super().__init__(
             parent,

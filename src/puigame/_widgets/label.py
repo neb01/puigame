@@ -42,7 +42,8 @@ class Label(Widget):
                 rect.
             text: The text to display. Defaults to an empty string, which draws
                 nothing.
-            anchor: Point on this label used for positioning.
+            anchor: Point on this label used for positioning. Defaults to
+                ``Anchor.CENTRE``.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Defaults to the same point as ``anchor``.
             margin: ``(x, y)`` space between the matched anchor points, as
@@ -50,21 +51,23 @@ class Label(Widget):
             offset: Shift in screen coordinates (``+x`` right, ``+y`` down),
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the label is enabled. A disabled label is drawn in
-                the theme's style for the disabled state.
-            visible: Whether the label is drawn.
+                the theme's style for the disabled state. Defaults to ``True``.
+            visible: Whether the label is drawn. Defaults to ``True``.
             consumes_clicks: Whether mouse clicks over the label stop at it.
                 Defaults to ``False``, so a label on a button does not block
                 the button, and HUD text does not block clicks meant for the
                 game.
 
         Raises:
+            TypeError: If ``text`` is not a string, if ``anchor`` is not an
+                ``Anchor``, if ``parent_anchor`` is neither an ``Anchor`` nor
+                ``None``, or if ``margin`` or ``offset`` is a single number
+                rather than an ``(x, y)`` pair. The label is not added to
+                ``parent``.
             ValueError: If either dimension of ``size`` is negative. The label
                 is not added to ``parent``.
-            TypeError: If ``text`` is not a string, or if ``margin`` or
-                ``offset`` is a single number rather than an ``(x, y)`` pair.
-                The label is not added to ``parent``.
         """
-        # Widget.__init__ renders the components, so the text must exist first
+        # Widget.__init__() renders the components, so the text must exist first
         self._text = Text(text)
 
         super().__init__(

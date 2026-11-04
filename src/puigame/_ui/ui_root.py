@@ -22,7 +22,8 @@ class UIRoot(Widget):
     is 0x0. Its rect covers the surface the UI draws on, at ``(0, 0)`` moved by
     its ``offset``, so changing the offset moves the whole UI, for example to
     shake it. It ignores its anchors and margin. The UI's top-level widgets
-    anchor against it. ``UI`` creates it, so games rarely need to.
+    anchor against it. ``UI`` creates it, and games reach it through
+    ``UI.root``.
     """
 
     def __init__(

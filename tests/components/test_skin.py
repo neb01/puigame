@@ -63,7 +63,7 @@ def test_rendered_surfaces_are_unique(make_skin):
         "pg.Vector2 of floats",
     ],
 )
-def test_no_skin_always_returns_size_zero_surface(size):
+def test_no_skin_always_returns_zero_size_surface(size):
     surface = NoSkin().render(size, ANY_STYLE).image
 
     assert surface.get_size() == (0, 0)
@@ -78,7 +78,7 @@ def test_no_skin_always_returns_zero_image_pos():
 # endregion
 
 
-# region --- DrawnSkin: size and offset ---------------------------------------
+# region --- DrawnSkin: size and pos ------------------------------------------
 
 
 @pytest.mark.parametrize(

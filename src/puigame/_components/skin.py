@@ -44,7 +44,7 @@ class Skin(ABC):
         be in, passing the theme's style for that state, and cache the results.
 
         Args:
-            size: Width and height of the widget in pixels.
+            size: ``(width, height)`` of the widget's rect, in pixels.
             style: Complete style to draw with, as returned by
                 ``Theme.style_for()``.
 
@@ -90,7 +90,7 @@ def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
 
     Args:
         radius: The radius worked out for the layer, which can be out of range.
-        size: The layer's width and height in pixels.
+        size: ``(width, height)`` of the layer, in pixels.
 
     Returns:
         The radius to draw the layer with.
@@ -134,7 +134,7 @@ class DrawnSkin(Skin):
         style's ``halo_fade_profile``.
 
         Args:
-            size: Width and height of the widget in pixels.
+            size: ``(width, height)`` of the widget's rect, in pixels.
             style: Complete style to draw with, as returned by
                 ``Theme.style_for()``.
 

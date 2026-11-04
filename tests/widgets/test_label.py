@@ -111,7 +111,7 @@ def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
 # endregion
 
 
-# region --- Type checks ------------------------------------------------------
+# region --- Validation -------------------------------------------------------
 
 
 @pytest.mark.parametrize(

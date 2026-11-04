@@ -49,7 +49,7 @@ ANY_STYLE_OVERRIDES = {
 # endregion
 
 
-# region --- Theme.__post_init__ ----------------------------------------------
+# region --- Validation -------------------------------------------------------
 
 
 def test_base_state_in_style_overrides_raises():
@@ -68,6 +68,12 @@ def test_combined_state_in_style_overrides_raises():
                 State.DISABLED | State.HIGHLIGHTED: StyleOverride(body_colour=RED),
             },
         )
+
+
+# endregion
+
+
+# region --- style_overrides copy ---------------------------------------------
 
 
 def test_stored_style_overrides_copy_is_same_as_given():
@@ -95,7 +101,7 @@ def test_changing_source_style_overrides_dict_does_not_affect_theme():
 # endregion
 
 
-# region --- Theme.style_for --------------------------------------------------
+# region --- Theme.style_for() ------------------------------------------------
 
 
 def test_style_for_base_state_returns_base_style():
@@ -106,7 +112,7 @@ def test_style_for_base_state_returns_base_style():
     assert style is ANY_STYLE
 
 
-def test_single_flag_changes_field_set_in_style_override():
+def test_style_for_single_flag_changes_field_set_in_style_override():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
     theme = Theme(
         base_style=replace(ANY_STYLE, body_colour=BLUE),
@@ -118,7 +124,7 @@ def test_single_flag_changes_field_set_in_style_override():
     assert style.body_colour == RED
 
 
-def test_single_flag_does_not_change_fields_not_set_in_style_override():
+def test_style_for_single_flag_does_not_change_fields_not_set_in_style_override():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
     theme = Theme(
         base_style=replace(ANY_STYLE, border_colour=BLACK, border_thickness_px=2),
@@ -131,8 +137,8 @@ def test_single_flag_does_not_change_fields_not_set_in_style_override():
     assert style.border_thickness_px == 2
 
 
-def test_inactive_flag_does_not_affect_any_fields():
-    """HIGHLIGHTED is not in the state, so its border colour must not apply."""
+def test_style_for_inactive_flag_does_not_affect_any_fields():
+    # HIGHLIGHTED is not in the state, so its border colour must not apply
     style_overrides = {
         State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(border_colour=BLUE),
@@ -147,7 +153,7 @@ def test_inactive_flag_does_not_affect_any_fields():
     assert style.border_colour == BLACK
 
 
-def test_flag_not_in_theme_is_ignored():
+def test_style_for_flag_not_in_theme_is_ignored():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
     theme = Theme(
         base_style=replace(ANY_STYLE, body_colour=WHITE, border_colour=BLACK),
@@ -160,7 +166,7 @@ def test_flag_not_in_theme_is_ignored():
     assert style.border_colour == BLACK  # highlighted request has not changed others
 
 
-def test_multiple_flags_change_separate_fields_set_in_style_override():
+def test_style_for_multiple_flags_change_separate_fields_set_in_style_override():
     style_overrides = {
         State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(border_colour=BLUE),
@@ -216,11 +222,8 @@ def test_multiple_flags_change_separate_fields_set_in_style_override():
     ],
 )
 def test_style_for_honours_precedence_order(combined_flag, style_overrides):
-    """The higher-precedence flag wins, whatever order ``style_overrides`` holds.
-
-    Each ``style_overrides`` lists the higher-precedence flag first, so the old
-    dict-order rule would pick the other flag's colour.
-    """
+    # each style_overrides lists the higher-precedence flag first, so the test
+    # fails if dict order decides instead of precedence
     theme = Theme(
         base_style=replace(ANY_STYLE, body_colour=WHITE),
         style_overrides=style_overrides,
