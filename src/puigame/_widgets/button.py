@@ -72,7 +72,8 @@ class Button(InteractiveWidget):
                 ``handle_event()``. Its return value is ignored, so a coroutine
                 function would never run its body. Defaults to ``None``, which
                 does nothing on a click.
-            anchor: Point on this button used for positioning.
+            anchor: Point on this button used for positioning. Defaults to
+                ``Anchor.CENTRE``.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Defaults to the same point as ``anchor``.
             margin: ``(x, y)`` space between the matched anchor points, as
@@ -81,19 +82,20 @@ class Button(InteractiveWidget):
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the button responds to input. A disabled button is
                 drawn in the theme's style for the disabled state, and is never
-                highlighted, pressed, or clicked.
-            visible: Whether the button is drawn.
+                highlighted, pressed, or clicked. Defaults to ``True``.
+            visible: Whether the button is drawn. Defaults to ``True``.
             consumes_clicks: Whether mouse clicks over the button stop at it,
                 rather than passing to the widgets below it and to the game. A
                 disabled button still stops them. Defaults to ``True``.
 
         Raises:
+            TypeError: If ``text`` is not a string, if ``on_click`` is neither
+                ``None`` nor callable, if ``anchor`` is not an ``Anchor``, if
+                ``parent_anchor`` is neither an ``Anchor`` nor ``None``, or if
+                ``margin`` or ``offset`` is a single number rather than an
+                ``(x, y)`` pair. The button is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The button
                 is not added to ``parent``.
-            TypeError: If ``text`` is not a string, if ``on_click`` is neither
-                ``None`` nor callable, or if ``margin`` or ``offset`` is a
-                single number rather than an ``(x, y)`` pair. The button is not
-                added to ``parent``.
         """
         # Widget.__init__() renders the components, so the text must exist first
         self._text = Text(text)

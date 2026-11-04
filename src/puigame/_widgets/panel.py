@@ -37,7 +37,8 @@ class Panel(Widget):
             size: Width and height in pixels.
             skin: Skin that draws the panel's images. It cannot be changed
                 later. For no background, use a ``Container``.
-            anchor: Point on this panel used for positioning.
+            anchor: Point on this panel used for positioning. Defaults to
+                ``Anchor.CENTRE``.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Defaults to the same point as ``anchor``.
             margin: ``(x, y)`` space between the matched anchor points, as
@@ -46,17 +47,20 @@ class Panel(Widget):
                 applied after the anchor and margin. Defaults to no shift.
             enabled: Whether the panel and its children respond to input. A
                 disabled panel is drawn in the theme's style for the disabled
-                state.
-            visible: Whether the panel and its children are drawn.
+                state. Defaults to ``True``.
+            visible: Whether the panel and its children are drawn. Defaults to
+                ``True``.
             consumes_clicks: Whether mouse clicks over the panel stop at it.
                 Defaults to ``True``, so clicks on its background reach neither
                 the widgets below it nor the game.
 
         Raises:
+            TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
+                is neither an ``Anchor`` nor ``None``, or if ``margin`` or
+                ``offset`` is a single number rather than an ``(x, y)`` pair.
+                The panel is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The panel
                 is not added to ``parent``.
-            TypeError: If ``margin`` or ``offset`` is a single number rather
-                than an ``(x, y)`` pair. The panel is not added to ``parent``.
         """
         super().__init__(
             parent,

@@ -62,7 +62,7 @@ class InteractiveWidget(Widget):
             size: Width and height in pixels.
             skin: Skin that draws the widget's images.
             anchor: Point on this widget used for positioning. Fixed on
-                creation.
+                creation. Defaults to ``Anchor.CENTRE``.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
                 Fixed on creation. Defaults to the same point as ``anchor``.
             margin: ``(x, y)`` space between the matched anchor points.
@@ -73,8 +73,8 @@ class InteractiveWidget(Widget):
             offset: Shift in screen coordinates (``+x`` right, ``+y`` down),
                 applied after the anchor and margin. It can be changed later
                 through ``offset``. Defaults to no shift.
-            enabled: Whether the widget responds to input.
-            visible: Whether the widget is drawn.
+            enabled: Whether the widget responds to input. Defaults to ``True``.
+            visible: Whether the widget is drawn. Defaults to ``True``.
             consumes_clicks: Whether mouse clicks over the widget stop at it,
                 rather than passing to the widgets below it and to the game. A
                 hidden widget never stops clicks, but a disabled one still
@@ -87,10 +87,12 @@ class InteractiveWidget(Widget):
                 no components.
 
         Raises:
+            TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
+                is neither an ``Anchor`` nor ``None``, or if ``margin`` or
+                ``offset`` is a single number rather than an ``(x, y)`` pair.
+                The widget is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The widget
                 is not added to ``parent``.
-            TypeError: If ``margin`` or ``offset`` is a single number rather
-                than an ``(x, y)`` pair. The widget is not added to ``parent``.
         """
         # set first, since super().__init__() picks the image through _current_state
         self._highlighted = False

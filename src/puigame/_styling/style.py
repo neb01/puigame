@@ -103,10 +103,11 @@ class Style:
     A negative border thickness, corner radius, or halo thickness, or a font
     size of 0 or less, raises ``ValueError`` when the style is created. A
     negative swell is allowed. A halo fade profile that is not a
-    ``FadeProfile``, a text offset or margin that is not a tuple, a typeface
-    that is neither a ``BundledTypeface`` nor a ``Path``, a text anchor or
-    parent anchor that is not an ``Anchor``, or a horizontal extent that is not
-    a ``TextHorizontalExtent``, raises ``TypeError``.
+    ``FadeProfile``, a text offset that is not a tuple, a typeface that is
+    neither a ``BundledTypeface`` nor a ``Path``, a text anchor or parent anchor
+    that is not an ``Anchor``, a horizontal extent that is not a
+    ``TextHorizontalExtent``, or a text margin that is not a tuple, raises
+    ``TypeError``.
 
     Attributes:
         body_colour: Colour of the body, the fill inside the border, as
@@ -130,6 +131,11 @@ class Style:
         swell_px: How many pixels the widget grows by on each side. Negative
             values shrink it. 0 means no swell.
         text_colour: Text colour as RGBA.
+        text_offset: Shift in pixels applied to the text after its anchors and
+            margin, as an ``(x, y)`` pair, with ``+x`` to the right and ``+y``
+            down. Centred text needs no offset to look centred, so this is for
+            deliberate nudges, and can change between states, for example to
+            move the text down 1 pixel when a button is pressed.
         text_typeface: Typeface used for text: a ``BundledTypeface``, or the
             path to a font file supplied by the game.
         text_font_size: Font size for text, in pixels.
@@ -140,11 +146,6 @@ class Style:
             ``TextHorizontalExtent``.
         text_margin: Distance in pixels that the text is moved from its anchor
             point towards its own centre, as an ``(x, y)`` pair.
-        text_offset: Shift in pixels applied to the text after its anchors and
-            margin, as an ``(x, y)`` pair, with ``+x`` to the right and ``+y``
-            down. Centred text needs no offset to look centred, so this is for
-            deliberate nudges, and can change between states, for example to
-            move the text down 1 pixel when a button is pressed.
     """
 
     # general appearance options
@@ -182,15 +183,15 @@ class Style:
         is not checked, since a negative swell is valid and shrinks the widget.
 
         Raises:
-            TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, if
-                ``text_offset`` or ``text_margin`` is not a tuple, if
-                ``text_typeface`` is neither a ``BundledTypeface`` nor a
-                ``Path``, if ``text_anchor`` or ``text_parent_anchor`` is not
-                an ``Anchor``, or if ``text_horizontal_extent`` is not a
-                ``TextHorizontalExtent``.
             ValueError: If ``border_thickness_px``, ``corner_radius_px``, or
                 ``halo_thickness_px`` is negative, or if ``text_font_size`` is
                 not positive.
+            TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, if
+                ``text_offset`` is not a tuple, if ``text_typeface`` is neither
+                a ``BundledTypeface`` nor a ``Path``, if ``text_anchor`` or
+                ``text_parent_anchor`` is not an ``Anchor``, if
+                ``text_horizontal_extent`` is not a ``TextHorizontalExtent``, or
+                if ``text_margin`` is not a tuple.
         """
         if self.border_thickness_px < 0:
             raise ValueError(
