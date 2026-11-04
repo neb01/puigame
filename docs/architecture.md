@@ -204,7 +204,7 @@ Scaling behaviour is a per-skin option, not a global setting.
 - Text is drawn **without antialiasing**, which keeps pixel fonts crisp. The alpha channel of `text_colour` sets the text's transparency; pygame-ce's `Font.render()` ignores it, so `Text` applies it to the rendered surface.
 - **Multiline** text uses pygame-ce's own rendering: each newline starts a new line, and lines are left-aligned and spaced by the font's line size, except that the last newline is drawn as a blank space rather than starting an empty line. A fuller multiline design, such as alignment and wrapping, is deferred.
 - Bold, italic, and underline are not supported.
-- Neb0Font is a pixel font drawn on a 6-pixel grid, so it is crisp only at font sizes that are multiples of 6. It covers printable ASCII only; other characters, such as `£` or `é`, need `PYGAME_DEFAULT` or a font file supplied by the game.
+- Neb0Font (`NEB0FONT`) is a proportional pixel font with tabular digits, and NebMon0Font (`NEBMON0FONT`) is its monospace version. Both are drawn on a 6-pixel grid, so they are crisp only at font sizes that are multiples of 6. They cover printable ASCII only; other characters, such as `£` or `é`, need `PYGAME_DEFAULT` or a font file supplied by the game.
 
 #### DrawnSkin layers
 
