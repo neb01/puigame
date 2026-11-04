@@ -21,7 +21,7 @@ from puigame._layout.anchor import get_pos_from_anchor_match
         (Anchor.MID_BOTTOM, pg.Vector2(0, -1)),
     ],
 )
-def test_margin_sign_points_from_anchor_toward_centre(anchor, margin_sign):
+def test_margin_sign_points_from_anchor_towards_centre(anchor, margin_sign):
     assert anchor.margin_sign == margin_sign
 
 

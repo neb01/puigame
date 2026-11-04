@@ -226,12 +226,12 @@ def test_button_down_held_over_shows_pressed_colour(press_ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
@@ -248,12 +248,12 @@ def test_button_down_then_dragged_off_shows_base_colour(press_ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
     mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(11, 12))
@@ -274,12 +274,12 @@ def test_button_down_then_dragged_off_then_back_on_shows_pressed_colour(press_ui
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
     mouse_motion_event_1 = pg.Event(pg.MOUSEMOTION, pos=(11, 12))
@@ -304,20 +304,20 @@ def test_button_down_released_over_button_shows_highlighted_colour(press_ui: UI)
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
-    button_up_event = pg.Event(
+    mouse_button_up_event = pg.Event(
         pg.MOUSEBUTTONUP,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_up_event)
+    press_ui.handle_event(mouse_button_up_event)
     press_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -334,20 +334,20 @@ def test_button_down_released_off_button_shows_base_colour(press_ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
-    button_up_event = pg.Event(
+    mouse_button_up_event = pg.Event(
         pg.MOUSEBUTTONUP,
         pos=(11, 12),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_up_event)
+    press_ui.handle_event(mouse_button_up_event)
     press_ui.update()
 
     assert button.image.get_at((1, 2)) == BASE_COLOUR
@@ -364,12 +364,12 @@ def test_disabled_during_press_shows_disabled_colour(press_ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
     button.enabled = False
@@ -389,12 +389,12 @@ def test_focus_lost_during_press_shows_highlighted_colour(press_ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
     window_focus_lost_event = pg.Event(pg.WINDOWFOCUSLOST)
@@ -415,12 +415,12 @@ def test_right_button_down_then_held_over_shows_highlighted_colour(press_ui: UI)
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_RIGHT,
     )
-    press_ui.handle_event(button_down_event)
+    press_ui.handle_event(mouse_button_down_event)
     press_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -446,12 +446,12 @@ def test_pressed_keeps_highlighted_fields_that_it_does_not_override():
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_down_event)
+    ui.handle_event(mouse_button_down_event)
     ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -477,19 +477,19 @@ def test_on_click_is_called_once_with_button_as_argument(ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_down_event)
+    ui.handle_event(mouse_button_down_event)
 
-    button_up_event = pg.Event(
+    mouse_button_up_event = pg.Event(
         pg.MOUSEBUTTONUP,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_up_event)
+    ui.handle_event(mouse_button_up_event)
 
     assert on_click_calls == [button]
 
@@ -508,12 +508,12 @@ def test_button_down_alone_does_not_call_on_click(ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_down_event)
+    ui.handle_event(mouse_button_down_event)
 
     assert on_click_calls == []
 
@@ -530,19 +530,19 @@ def test_click_on_button_with_no_on_click_does_not_raise(ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_down_event)
+    ui.handle_event(mouse_button_down_event)
 
-    button_up_event = pg.Event(
+    mouse_button_up_event = pg.Event(
         pg.MOUSEBUTTONUP,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_up_event)
+    ui.handle_event(mouse_button_up_event)
 
 
 def test_exceptions_propagate(ui: UI):
@@ -557,27 +557,27 @@ def test_exceptions_propagate(ui: UI):
         offset=(0, 0),
     )
 
-    button_down_event = pg.Event(
+    mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(button_down_event)
+    ui.handle_event(mouse_button_down_event)
 
-    button_up_event = pg.Event(
+    mouse_button_up_event = pg.Event(
         pg.MOUSEBUTTONUP,
         pos=(1, 2),
         button=pg.BUTTON_LEFT,
     )
 
     with pytest.raises(OnClickError):
-        ui.handle_event(button_up_event)
+        ui.handle_event(mouse_button_up_event)
 
 
 # endregion
 
 
-# region --- Type checks ------------------------------------------------------
+# region --- Validation -------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -611,7 +611,7 @@ def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
     [5, "poppycock"],
     ids=["int", "str"],
 )
-def test_non_callable_on_click_raises(ui: UI, on_click):
+def test_constructor_with_non_callable_on_click_raises(ui: UI, on_click):
     with pytest.raises(TypeError):
         Button(
             ui.root,

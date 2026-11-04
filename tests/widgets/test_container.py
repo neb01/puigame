@@ -17,7 +17,7 @@ ANY_SIZE = (10, 10)
 # region --- Construction -----------------------------------------------------
 
 
-def test_image_is_size_zero(ui_root: UIRoot):
+def test_image_is_zero_size(ui_root: UIRoot):
     container = Container(ui_root, size=(5, 10))
 
     assert container.image.get_size() == (0, 0)

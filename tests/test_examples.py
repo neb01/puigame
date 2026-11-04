@@ -16,7 +16,7 @@ EXAMPLE_PATHS = sorted(EXAMPLES_DIR.glob("*.py"))
 # region --- Helpers ----------------------------------------------------------
 
 
-def single_quit_then_fail() -> Iterator[list[pg.Event]]:
+def _single_quit_then_fail() -> Iterator[list[pg.Event]]:
     """Yield one batch holding a QUIT event, then fail if asked for another.
 
     Stands in for ``pg.event.get()``, so an example sees the window close on its
@@ -48,7 +48,7 @@ def test_example_runs_one_frame_and_exits(
     monkeypatch: pytest.MonkeyPatch,
     example_path,
 ):
-    quit_batches = single_quit_then_fail()
+    quit_batches = _single_quit_then_fail()
     monkeypatch.setattr(pg.event, "get", lambda: next(quit_batches))
 
     monkeypatch.setattr(pg, "quit", lambda: None)

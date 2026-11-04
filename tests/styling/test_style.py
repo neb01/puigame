@@ -43,7 +43,7 @@ ANY_STYLE = Style(
 # endregion
 
 
-# region --- Style and StyleOverride validation -------------------------------
+# region --- Validation -------------------------------------------------------
 
 
 @pytest.mark.parametrize(

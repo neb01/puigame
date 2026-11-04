@@ -100,6 +100,18 @@ def test_rect_has_given_size(ui_root: UIRoot):
     assert widget.rect.size == (10, 20)
 
 
+def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert widget.consumes_clicks
+
+
+# endregion
+
+
+# region --- Validation -------------------------------------------------------
+
+
 def test_zero_size_gives_empty_rect(ui_root: UIRoot):
     widget = Widget(ui_root, size=(0, 0), skin=ANY_SKIN)
 
@@ -111,7 +123,7 @@ def test_zero_size_gives_empty_rect(ui_root: UIRoot):
     [(-1, 0), (0, -1), (-1, -1), (0, -0.01)],
     ids=["negative width", "negative height", "both negative", "negative float"],
 )
-def test_negative_size_raises(ui_root: UIRoot, size):
+def test_constructor_with_negative_size_raises(ui_root: UIRoot, size):
     with pytest.raises(ValueError):
         Widget(ui_root, size=size, skin=ANY_SKIN)
 
@@ -194,21 +206,10 @@ def test_constructor_parent_anchor_can_take_any_member_or_none(
     assert ui_root.children == (widget,)
 
 
-def test_consumes_clicks_true_by_default(ui_root: UIRoot):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-
-    assert widget.consumes_clicks
-
-
 # endregion
 
 
 # region --- rect -------------------------------------------------------------
-
-
-def test_assigning_to_rect_raises(widget: Widget):
-    with pytest.raises(AttributeError):
-        widget.rect = pg.Rect(1, 1, 1, 1)
 
 
 def test_rect_can_change_in_place(widget: Widget):
@@ -266,7 +267,7 @@ def test_parent_anchor_defaults_to_anchor():
 # endregion
 
 
-# region --- Tree: normal use -------------------------------------------------
+# region --- Tree -------------------------------------------------------------
 
 
 def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(
@@ -297,7 +298,22 @@ def test_child_and_grandchild_return_root_theme():
 # endregion
 
 
-# region --- Tree: read-only parent and children ------------------------------
+# region --- Read-only properties ---------------------------------------------
+
+
+def test_assigning_to_rect_raises(widget: Widget):
+    with pytest.raises(AttributeError):
+        widget.rect = pg.Rect(1, 1, 1, 1)
+
+
+def test_assigning_to_image_raises(widget: Widget):
+    with pytest.raises(AttributeError):
+        widget.image = pg.Surface(ANY_SIZE)
+
+
+def test_assigning_to_skin_raises(widget: Widget):
+    with pytest.raises(AttributeError):
+        widget.skin = ANY_SKIN
 
 
 def test_assigning_to_parent_raises(ui_root: UIRoot):
@@ -327,7 +343,7 @@ def test_assigning_to_children_raises(ui_root: UIRoot):
 # endregion
 
 
-# region --- kill -------------------------------------------------------------
+# region --- kill() -----------------------------------------------------------
 
 
 def test_killing_widget_kills_all_descendants(ui_root: UIRoot):
@@ -623,7 +639,7 @@ def test_image_shows_disabled_style_when_ancestor_is_disabled():
 # endregion
 
 
-# region --- update and image_pos ---------------------------------------------
+# region --- update() ---------------------------------------------------------
 
 
 def test_update_with_state_not_in_possible_states_raises():
@@ -640,20 +656,10 @@ def test_update_with_state_not_in_possible_states_raises():
         ui.update()
 
 
-def test_assigning_to_image_raises(widget: Widget):
-    with pytest.raises(AttributeError):
-        widget.image = pg.Surface(ANY_SIZE)
-
-
-def test_assigning_to_skin_raises(widget: Widget):
-    with pytest.raises(AttributeError):
-        widget.skin = ANY_SKIN
-
-
 # endregion
 
 
-# region --- image cache ------------------------------------------------------
+# region --- Image cache ------------------------------------------------------
 
 
 def test_image_cache_has_one_image_per_state(widget: Widget):
@@ -674,28 +680,6 @@ def test_image_cache_reuses_object():
     ui.update()
 
     assert widget.image is original_base_image
-
-
-def test_theme_receives_style_for_each_possible_state():
-    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
-    theme = Theme(
-        base_style=base_style,
-        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
-    )
-
-    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
-    skin = RecordingLayer()
-    Widget(ui_root, size=ANY_SIZE, skin=skin)
-
-    expected_base_style = base_style
-    expected_override_style = replace(base_style, body_colour=RED)
-
-    assert set(skin.received_styles) == {
-        expected_base_style,
-        expected_override_style,
-    }
-
-    assert len(skin.received_styles) == 2
 
 
 # endregion
@@ -746,6 +730,28 @@ def test_image_covers_all_layers(ui_root: UIRoot):
 
     assert widget.image.size == (27, 13)
     assert widget.image_pos == (-3, -1)
+
+
+def test_skin_receives_style_for_each_possible_state():
+    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
+    theme = Theme(
+        base_style=base_style,
+        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
+    )
+
+    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
+    skin = RecordingLayer()
+    Widget(ui_root, size=ANY_SIZE, skin=skin)
+
+    expected_base_style = base_style
+    expected_override_style = replace(base_style, body_colour=RED)
+
+    assert set(skin.received_styles) == {
+        expected_base_style,
+        expected_override_style,
+    }
+
+    assert len(skin.received_styles) == 2
 
 
 def test_components_receive_rect_size_and_style_for_each_possible_state():

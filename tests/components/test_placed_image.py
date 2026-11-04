@@ -35,17 +35,17 @@ def _filled_layer(
 # endregion
 
 
-# region --- Zero-size layers -------------------------------------------------
+# region --- 0x0 layers -------------------------------------------------------
 
 
-def test_compose_returns_0x0_at_origin_for_no_layers():
+def test_compose_returns_zero_size_at_origin_for_no_layers():
     layer = compose_layers([])
 
     assert layer.image.size == (0, 0)
     assert layer.pos == (0, 0)
 
 
-def test_compose_returns_0x0_at_origin_for_all_zero_size_layers():
+def test_compose_returns_zero_size_at_origin_for_all_zero_size_layers():
     zero_size_layer_1 = _zero_size_layer((1, 2))
     zero_size_layer_2 = _zero_size_layer((10, 20))
     zero_size_layer_3 = _zero_size_layer((-4, -6))
