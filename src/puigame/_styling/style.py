@@ -77,17 +77,19 @@ class BundledTypeface(Enum):
     ``freesansbold.ttf``. Games use their own font files by passing a ``Path``
     instead of a member.
 
-    ``NEB0FONT`` is a pixel font drawn on a 6-pixel grid, so it is crisp only at
-    font sizes that are multiples of 6; other sizes distort its glyphs. Other
-    sizes are not rejected. It covers printable ASCII only, so other characters,
-    such as ``£`` or ``é``, need ``PYGAME_DEFAULT`` or a font file of the game's
-    own.
+    ``NEB0FONT`` is a proportional pixel font with tabular digits, and
+    ``NEBMON0FONT`` is its monospace version. Both are drawn on a 6-pixel grid,
+    so they are crisp only at font sizes that are multiples of 6; other sizes
+    distort their glyphs. Other sizes are not rejected. They cover printable
+    ASCII only, so other characters, such as ``£`` or ``é``, need
+    ``PYGAME_DEFAULT`` or a font file of the game's own.
     """
 
     _value_: str | None
 
     PYGAME_DEFAULT = None
     NEB0FONT = "neb0font.ttf"
+    NEBMON0FONT = "nebmon0font.ttf"
 
 
 @dataclass(frozen=True, kw_only=True)
