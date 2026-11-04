@@ -58,8 +58,8 @@ CUSTOM_THEME = Theme(
     base_style=replace(
         DEFAULT_THEME.base_style,
         body_colour=MID_RED,
-        border_thickness_px=0,
-        corner_radius_px=20,  # over half the button height: a pill, as in CSS
+        border_thickness=0,
+        corner_radius=20,  # over half the button height: a pill, as in CSS
         text_colour=MID_ORANGE,
         text_font_size=24,
     ),
@@ -71,11 +71,11 @@ CUSTOM_THEME = Theme(
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=ORANGE,
             halo_fade_profile=FadeProfile.HARD_QUADRATIC,
-            halo_thickness_px=10,
+            halo_thickness=10,
         ),
         State.PRESSED: StyleOverride(
             body_colour=DARK_RED,
-            swell_px=-1,
+            swell=-1,
             text_offset=(0, 1),  # the base offset, 1 px lower
         ),
     },

@@ -129,7 +129,7 @@ theme = Theme(
     style_overrides={
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=(255, 165, 0, 255),
-            halo_thickness_px=6,
+            halo_thickness=6,
         ),
         State.PRESSED: StyleOverride(
             body_colour=(50, 0, 0, 255),

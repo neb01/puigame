@@ -113,9 +113,9 @@ class Style:
         body_colour: Colour of the body, the fill inside the border, as
             RGBA. The alpha channel controls transparency.
         border_colour: Border colour as RGBA.
-        border_thickness_px: Border thickness in pixels, drawn inside the
+        border_thickness: Border thickness in pixels, drawn inside the
             widget's edge. 0 means no border.
-        corner_radius_px: Corner radius in pixels of the widget's outer edge
+        corner_radius: Corner radius in pixels of the widget's outer edge
             (the border's outer edge) at its normal size. Skins derive every
             layer's radius from it: larger for the halo, smaller for the body,
             and grown or shrunk with the swell, so every layer stays
@@ -126,9 +126,9 @@ class Style:
         halo_fade_profile: How the halo's alpha falls from ``halo_colour``'s
             alpha at its inner edge to transparent just past its outer edge.
             See ``FadeProfile``.
-        halo_thickness_px: Halo thickness in pixels, drawn outside the
+        halo_thickness: Halo thickness in pixels, drawn outside the
             widget's edge. 0 means no halo.
-        swell_px: How many pixels the widget grows by on each side. Negative
+        swell: How many pixels the widget grows by on each side. Negative
             values shrink it. 0 means no swell.
         text_colour: Text colour as RGBA.
         text_offset: Shift in pixels applied to the text after its anchors and
@@ -153,14 +153,14 @@ class Style:
     border_colour: RGBA
 
     # general appearance options (state-agnostic)
-    border_thickness_px: int  # 0 for no border
-    corner_radius_px: int  # outer edge; halo, border, and body radii derive from it
+    border_thickness: int  # 0 for no border
+    corner_radius: int  # outer edge; halo, border, and body radii derive from it
 
     # effect options
     halo_colour: RGBA
     halo_fade_profile: FadeProfile
-    halo_thickness_px: int  # 0 for no halo
-    swell_px: int  # 0 for no swell
+    halo_thickness: int  # 0 for no halo
+    swell: int  # 0 for no swell
 
     # text options
     text_colour: RGBA
@@ -183,8 +183,8 @@ class Style:
         is not checked, since a negative swell is valid and shrinks the widget.
 
         Raises:
-            ValueError: If ``border_thickness_px``, ``corner_radius_px``, or
-                ``halo_thickness_px`` is negative, or if ``text_font_size`` is
+            ValueError: If ``border_thickness``, ``corner_radius``, or
+                ``halo_thickness`` is negative, or if ``text_font_size`` is
                 not positive.
             TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, if
                 ``text_offset`` is not a tuple, if ``text_typeface`` is neither
@@ -193,15 +193,14 @@ class Style:
                 ``text_horizontal_extent`` is not a ``TextHorizontalExtent``, or
                 if ``text_margin`` is not a tuple.
         """
-        if self.border_thickness_px < 0:
+        if self.border_thickness < 0:
             raise ValueError(
-                "border_thickness_px cannot be negative, "
-                f"got {self.border_thickness_px} px",
+                f"border_thickness cannot be negative, got {self.border_thickness} px",
             )
 
-        if self.corner_radius_px < 0:
+        if self.corner_radius < 0:
             raise ValueError(
-                f"corner_radius_px cannot be negative, got {self.corner_radius_px} px",
+                f"corner_radius cannot be negative, got {self.corner_radius} px",
             )
 
         if not isinstance(self.halo_fade_profile, FadeProfile):
@@ -210,10 +209,9 @@ class Style:
                 f"got {self.halo_fade_profile!r}",
             )
 
-        if self.halo_thickness_px < 0:
+        if self.halo_thickness < 0:
             raise ValueError(
-                "halo_thickness_px cannot be negative, "
-                f"got {self.halo_thickness_px} px",
+                f"halo_thickness cannot be negative, got {self.halo_thickness} px",
             )
 
         if not isinstance(self.text_offset, tuple):
@@ -270,9 +268,9 @@ class StyleOverride:
         halo_colour: Halo colour as RGBA, or ``None`` to keep it.
         halo_fade_profile: How the halo fades towards its outer edge, or
             ``None`` to keep it.
-        halo_thickness_px: Halo thickness in pixels, or ``None`` to keep
+        halo_thickness: Halo thickness in pixels, or ``None`` to keep
             it. 0 turns the halo off.
-        swell_px: How many pixels the widget grows by on each side, or
+        swell: How many pixels the widget grows by on each side, or
             ``None`` to keep it. Negative values shrink it, and 0 turns the
             swell off.
         text_colour: Text colour as RGBA, or ``None`` to keep it.
@@ -287,8 +285,8 @@ class StyleOverride:
     # effect options
     halo_colour: RGBA | None = None
     halo_fade_profile: FadeProfile | None = None
-    halo_thickness_px: int | None = None  # 0 for no halo
-    swell_px: int | None = None  # 0 for no swell
+    halo_thickness: int | None = None  # 0 for no halo
+    swell: int | None = None  # 0 for no swell
 
     # text options
     text_colour: RGBA | None = None
@@ -303,7 +301,7 @@ class StyleOverride:
         Raises:
             TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, or
                 if ``text_offset`` is not a tuple.
-            ValueError: If ``halo_thickness_px`` is negative.
+            ValueError: If ``halo_thickness`` is negative.
         """
         if self.halo_fade_profile is not None and not isinstance(
             self.halo_fade_profile,
@@ -314,10 +312,9 @@ class StyleOverride:
                 f"got {self.halo_fade_profile!r}",
             )
 
-        if self.halo_thickness_px is not None and self.halo_thickness_px < 0:
+        if self.halo_thickness is not None and self.halo_thickness < 0:
             raise ValueError(
-                "halo_thickness_px cannot be negative, "
-                f"got {self.halo_thickness_px} px",
+                f"halo_thickness cannot be negative, got {self.halo_thickness} px",
             )
         if self.text_offset is not None and not isinstance(self.text_offset, tuple):
             raise TypeError(

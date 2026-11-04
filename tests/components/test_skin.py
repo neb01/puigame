@@ -95,9 +95,9 @@ def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
     # no halo, swell, or border, so DrawnSkin's surface is exactly the given size
     style = replace(
         ANY_STYLE,
-        border_thickness_px=0,
-        halo_thickness_px=0,
-        swell_px=0,
+        border_thickness=0,
+        halo_thickness=0,
+        swell=0,
     )
 
     surface = DrawnSkin().render(point, style).image
@@ -105,16 +105,16 @@ def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
     assert surface.get_size() == expected_size
 
 
-@pytest.mark.parametrize("swell_px", [-2, 0, 2])
-@pytest.mark.parametrize("halo_thickness_px", [0, 2])
+@pytest.mark.parametrize("swell", [-2, 0, 2])
+@pytest.mark.parametrize("halo_thickness", [0, 2])
 def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
-    swell_px,
-    halo_thickness_px,
+    swell,
+    halo_thickness,
 ):
     style = replace(
         ANY_STYLE,
-        swell_px=swell_px,
-        halo_thickness_px=halo_thickness_px,
+        swell=swell,
+        halo_thickness=halo_thickness,
     )
 
     placed_image = DrawnSkin().render((10, 10), style)
@@ -122,11 +122,11 @@ def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
     surface_width, surface_height = placed_image.image.get_size()
 
     assert image_pos == (
-        -swell_px - halo_thickness_px,
-        -swell_px - halo_thickness_px,
+        -swell - halo_thickness,
+        -swell - halo_thickness,
     )
-    assert surface_width == 10 + (swell_px + halo_thickness_px) * 2
-    assert surface_height == 10 + (swell_px + halo_thickness_px) * 2
+    assert surface_width == 10 + (swell + halo_thickness) * 2
+    assert surface_height == 10 + (swell + halo_thickness) * 2
 
 
 @pytest.mark.parametrize(
@@ -137,15 +137,15 @@ def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
 def test_drawn_skin_body_size_can_be_zero(size):
     style = replace(
         ANY_STYLE,
-        border_thickness_px=2,
-        swell_px=0,
+        border_thickness=2,
+        swell=0,
     )
 
     DrawnSkin().render(size, style)  # body is 0 px on at least one axis: all border
 
 
 @pytest.mark.parametrize(
-    ("size", "border_thickness_px", "swell_px"),
+    ("size", "border_thickness", "swell"),
     [
         ((2, 2), 3, 0),
         ((2, 2), 0, -3),
@@ -169,11 +169,11 @@ def test_drawn_skin_body_size_can_be_zero(size):
         "combined border swell low height",
     ],
 )
-def test_drawn_skin_negative_body_size_raises(size, border_thickness_px, swell_px):
+def test_drawn_skin_negative_body_size_raises(size, border_thickness, swell):
     style = replace(
         ANY_STYLE,
-        border_thickness_px=border_thickness_px,
-        swell_px=swell_px,
+        border_thickness=border_thickness,
+        swell=swell,
     )
 
     with pytest.raises(ValueError):
@@ -191,12 +191,12 @@ def test_drawn_skin_pixel_colours():
         ANY_STYLE,
         body_colour=WHITE,
         border_colour=BLACK,
-        border_thickness_px=2,
-        corner_radius_px=3,
+        border_thickness=2,
+        corner_radius=3,
         halo_colour=BLUE,
         halo_fade_profile=FadeProfile.SOLID,
-        halo_thickness_px=2,
-        swell_px=1,
+        halo_thickness=2,
+        swell=1,
     )
 
     surface = DrawnSkin().render((10, 10), style).image
@@ -208,26 +208,26 @@ def test_drawn_skin_pixel_colours():
 
 
 @pytest.mark.parametrize("halo_fade_profile", FadeProfile)
-@pytest.mark.parametrize("halo_thickness_px", [0, 1, 2, 5])
+@pytest.mark.parametrize("halo_thickness", [0, 1, 2, 5])
 def test_drawn_skin_halo_fade_does_not_overlap_border(
     halo_fade_profile,
-    halo_thickness_px,
+    halo_thickness,
 ):
     style = replace(
         ANY_STYLE,
         border_colour=BLACK,
-        border_thickness_px=1,
-        corner_radius_px=0,
+        border_thickness=1,
+        corner_radius=0,
         halo_colour=BLUE,
         halo_fade_profile=halo_fade_profile,
-        halo_thickness_px=halo_thickness_px,
-        swell_px=0,
+        halo_thickness=halo_thickness,
+        swell=0,
     )
 
     surface = DrawnSkin().render((10, 10), style).image
 
     # the first row inside the halo is border, whatever the fade profile
-    assert surface.get_at((5, halo_thickness_px)) == BLACK
+    assert surface.get_at((5, halo_thickness)) == BLACK
 
 
 # endregion
@@ -267,11 +267,11 @@ def test_drawn_skin_halo_fade_profiles_give_correct_colour_and_transparency(
 ):
     style = replace(
         ANY_STYLE,
-        corner_radius_px=0,
+        corner_radius=0,
         halo_colour=halo_colour,
         halo_fade_profile=halo_fade_profile,
-        halo_thickness_px=3,
-        swell_px=0,
+        halo_thickness=3,
+        swell=0,
     )
 
     surface = DrawnSkin().render((10, 10), style).image
@@ -305,19 +305,19 @@ def test_drawn_skin_halo_fade_profiles_give_correct_colour_and_transparency(
         "hard cubic",
     ],
 )
-@pytest.mark.parametrize("swell_px", [-2, 0, 5])
-def test_drawn_skin_halo_fade_profile_is_not_affected_by_swell_px(
+@pytest.mark.parametrize("swell", [-2, 0, 5])
+def test_drawn_skin_halo_fade_profile_is_not_affected_by_swell(
     halo_fade_profile,
     alpha_values,
-    swell_px,
+    swell,
 ):
     style = replace(
         ANY_STYLE,
-        corner_radius_px=0,
+        corner_radius=0,
         halo_colour=BLUE,
         halo_fade_profile=halo_fade_profile,
-        halo_thickness_px=3,
-        swell_px=swell_px,
+        halo_thickness=3,
+        swell=swell,
     )
 
     surface = DrawnSkin().render((10, 10), style).image
@@ -331,20 +331,20 @@ def test_drawn_skin_halo_fade_profile_is_not_affected_by_swell_px(
 def test_drawn_skin_different_fade_profiles_give_same_shape():
     style_1 = replace(
         ANY_STYLE,
-        corner_radius_px=0,
-        swell_px=-2,
+        corner_radius=0,
+        swell=-2,
         halo_colour=BLUE,
         halo_fade_profile=FadeProfile.SOLID,
-        halo_thickness_px=3,
+        halo_thickness=3,
     )
 
     style_2 = replace(
         ANY_STYLE,
-        corner_radius_px=0,
-        swell_px=-2,
+        corner_radius=0,
+        swell=-2,
         halo_colour=BLUE,
         halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
-        halo_thickness_px=3,
+        halo_thickness=3,
     )
 
     surface_1 = DrawnSkin().render((10, 10), style_1).image
@@ -369,18 +369,18 @@ def test_drawn_skin_oversize_radius_returns_pill_shape():
     style_1 = replace(
         ANY_STYLE,
         body_colour=WHITE,
-        border_thickness_px=0,
-        corner_radius_px=5,
-        swell_px=0,
-        halo_thickness_px=0,
+        border_thickness=0,
+        corner_radius=5,
+        swell=0,
+        halo_thickness=0,
     )
     style_2 = replace(
         ANY_STYLE,
         body_colour=WHITE,
-        border_thickness_px=0,
-        corner_radius_px=1000,
-        swell_px=0,
-        halo_thickness_px=0,
+        border_thickness=0,
+        corner_radius=1000,
+        swell=0,
+        halo_thickness=0,
     )
 
     surface_1 = DrawnSkin().render((20, 10), style_1).image
@@ -404,10 +404,10 @@ def test_drawn_skin_negative_derived_corner_radius_gives_square_corner():
     style = replace(
         ANY_STYLE,
         body_colour=WHITE,
-        corner_radius_px=0,
-        border_thickness_px=0,
-        swell_px=-2,
-        halo_thickness_px=0,
+        corner_radius=0,
+        border_thickness=0,
+        swell=-2,
+        halo_thickness=0,
     )
 
     surface = DrawnSkin().render((10, 10), style).image

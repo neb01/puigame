@@ -24,12 +24,12 @@ WHITE = (255, 255, 255, 255)
 ANY_STYLE = Style(
     body_colour=WHITE,
     border_colour=BLACK,
-    border_thickness_px=2,
-    corner_radius_px=2,
+    border_thickness=2,
+    corner_radius=2,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
-    halo_thickness_px=0,
-    swell_px=0,
+    halo_thickness=0,
+    swell=0,
     text_colour=BLACK,
     text_typeface=BundledTypeface.PYGAME_DEFAULT,
     text_font_size=12,
@@ -48,21 +48,21 @@ ANY_STYLE = Style(
 
 @pytest.mark.parametrize(
     "field_name",
-    ["border_thickness_px", "corner_radius_px", "halo_thickness_px"],
+    ["border_thickness", "corner_radius", "halo_thickness"],
 )
 def test_style_negative_thickness_or_radius_raises(field_name):
     with pytest.raises(ValueError):
         replace(ANY_STYLE, **{field_name: -5})
 
 
-def test_style_override_negative_halo_thickness_px_raises():
+def test_style_override_negative_halo_thickness_raises():
     with pytest.raises(ValueError):
-        StyleOverride(halo_thickness_px=-5)
+        StyleOverride(halo_thickness=-5)
 
 
 @pytest.mark.parametrize(
     "field_name",
-    ["border_thickness_px", "corner_radius_px", "halo_thickness_px"],
+    ["border_thickness", "corner_radius", "halo_thickness"],
 )
 def test_style_thickness_or_radius_can_be_zero(field_name):
     style = replace(ANY_STYLE, **{field_name: 0})
@@ -70,10 +70,10 @@ def test_style_thickness_or_radius_can_be_zero(field_name):
     assert getattr(style, field_name) == 0
 
 
-def test_style_override_halo_thickness_px_can_be_zero():
-    style_override = StyleOverride(halo_thickness_px=0)
+def test_style_override_halo_thickness_can_be_zero():
+    style_override = StyleOverride(halo_thickness=0)
 
-    assert style_override.halo_thickness_px == 0
+    assert style_override.halo_thickness == 0
 
 
 @pytest.mark.parametrize(
@@ -115,18 +115,18 @@ def test_style_override_halo_fade_profile_can_take_any_member_or_none(
     assert style_override.halo_fade_profile == halo_fade_profile
 
 
-@pytest.mark.parametrize("swell_px", [-5, 0, 5])
-def test_style_swell_px_can_take_any_int(swell_px):
-    style = replace(ANY_STYLE, swell_px=swell_px)
+@pytest.mark.parametrize("swell", [-5, 0, 5])
+def test_style_swell_can_take_any_int(swell):
+    style = replace(ANY_STYLE, swell=swell)
 
-    assert style.swell_px == swell_px
+    assert style.swell == swell
 
 
-@pytest.mark.parametrize("swell_px", [-5, 0, 5])
-def test_style_override_swell_px_can_take_any_int(swell_px):
-    style_override = StyleOverride(swell_px=swell_px)
+@pytest.mark.parametrize("swell", [-5, 0, 5])
+def test_style_override_swell_can_take_any_int(swell):
+    style_override = StyleOverride(swell=swell)
 
-    assert style_override.swell_px == swell_px
+    assert style_override.swell == swell
 
 
 @pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])

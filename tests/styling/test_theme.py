@@ -25,12 +25,12 @@ WHITE = (255, 255, 255, 255)
 ANY_STYLE = Style(
     body_colour=WHITE,
     border_colour=BLACK,
-    border_thickness_px=2,
-    corner_radius_px=2,
+    border_thickness=2,
+    corner_radius=2,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
-    halo_thickness_px=0,
-    swell_px=0,
+    halo_thickness=0,
+    swell=0,
     text_colour=BLACK,
     text_typeface=BundledTypeface.PYGAME_DEFAULT,
     text_font_size=12,
@@ -127,14 +127,14 @@ def test_style_for_single_flag_changes_field_set_in_style_override():
 def test_style_for_single_flag_does_not_change_fields_not_set_in_style_override():
     style_overrides = {State.DISABLED: StyleOverride(body_colour=RED)}
     theme = Theme(
-        base_style=replace(ANY_STYLE, border_colour=BLACK, border_thickness_px=2),
+        base_style=replace(ANY_STYLE, border_colour=BLACK, border_thickness=2),
         style_overrides=style_overrides,
     )
 
     style = theme.style_for(State.DISABLED)
 
     assert style.border_colour == BLACK
-    assert style.border_thickness_px == 2
+    assert style.border_thickness == 2
 
 
 def test_style_for_inactive_flag_does_not_affect_any_fields():

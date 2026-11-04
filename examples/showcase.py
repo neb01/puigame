@@ -390,9 +390,7 @@ def main() -> None:
         anchor=Anchor.MID_BOTTOM,
     )
 
-    floor_y = (
-        bounce_panel.rect.bottom - bounce_panel.theme.base_style.border_thickness_px
-    )
+    floor_y = bounce_panel.rect.bottom - bounce_panel.theme.base_style.border_thickness
 
     red_surface = pg.Surface(SQUARE_SIZE)
     red_surface.fill("red")
