@@ -209,10 +209,10 @@ def test_multiple_flags_change_separate_fields_set_in_style_override():
         ),
     ],
     ids=[
-        "CHECKED | HIGHLIGHTED",
-        "HIGHLIGHTED | PRESSED",
-        "PRESSED | EDITING",
-        "EDITING | DISABLED",
+        "checked | highlighted",
+        "highlighted | pressed",
+        "pressed | editing",
+        "editing | disabled",
     ],
 )
 def test_style_for_honours_precedence_order(combined_flag, style_overrides):

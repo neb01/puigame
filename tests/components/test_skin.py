@@ -49,18 +49,18 @@ def test_rendered_surfaces_are_unique(make_skin):
         (4, 10),
         (8, 4),
         (0.4, 0.5),
+        [10, 4],
         pg.Vector2(2, 4),
         pg.Vector2(2.2, 4.9),
-        [10, 4],
     ],
     ids=[
         "same height and width",
         "larger height",
         "larger width",
         "tuple of floats",
-        "vec2 of ints",
-        "vec2 of floats",
         "list",
+        "pg.Vector2 of ints",
+        "pg.Vector2 of floats",
     ],
 )
 def test_no_skin_always_returns_size_zero_surface(size):
@@ -89,7 +89,7 @@ def test_no_skin_always_returns_zero_image_pos():
         (pg.Vector2(4, 10), (4, 10)),
         (pg.Vector2(5.2, 7.9), (5, 7)),
     ],
-    ids=["tuple", "list", "pg.Vector2", "pg.Vector2 float"],
+    ids=["tuple", "list", "pg.Vector2 of ints", "pg.Vector2 of floats"],
 )
 def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
     # no halo, swell, or border, so DrawnSkin's surface is exactly the given size

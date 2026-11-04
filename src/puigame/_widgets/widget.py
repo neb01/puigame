@@ -92,9 +92,19 @@ class Widget:
         Raises:
             ValueError: If either dimension of ``size`` is negative. The widget
                 is not added to ``parent``.
-            TypeError: If ``margin`` or ``offset`` is a single number rather
-                than an ``(x, y)`` pair. The widget is not added to ``parent``.
+            TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
+                is neither an ``Anchor`` nor ``None``, or if ``margin`` or
+                ``offset`` is a single number rather than an ``(x, y)`` pair.
+                The widget is not added to ``parent``.
         """
+        if not isinstance(anchor, Anchor):
+            raise TypeError(f"anchor must be an Anchor, got {anchor!r}")
+
+        if parent_anchor is not None and not isinstance(parent_anchor, Anchor):
+            raise TypeError(
+                f"parent_anchor must be an Anchor or None, got {parent_anchor!r}",
+            )
+
         self._parent: Widget | None = parent
         # parents are fixed, so a widget's root never changes
         self._root: UIRoot = self._parent._root

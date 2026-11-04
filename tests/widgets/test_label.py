@@ -116,8 +116,8 @@ def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
 
 @pytest.mark.parametrize(
     "text",
-    [5, 6.7, None, b"bytes object"],
-    ids=["int", "float", "None", "bytes"],
+    [5, 6.7, b"bytes object", None],
+    ids=["int", "float", "bytes", "None"],
 )
 def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
     with pytest.raises(TypeError):
@@ -128,8 +128,8 @@ def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
 
 @pytest.mark.parametrize(
     "text",
-    [5, 6.7, None, b"bytes object"],
-    ids=["int", "float", "None", "bytes"],
+    [5, 6.7, b"bytes object", None],
+    ids=["int", "float", "bytes", "None"],
 )
 def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
     label = Label(ui_root, size=ANY_SIZE, text="vociferous")

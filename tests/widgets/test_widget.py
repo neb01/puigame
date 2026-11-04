@@ -118,14 +118,14 @@ def test_negative_size_raises(ui_root: UIRoot, size):
     assert ui_root.children == ()
 
 
-@pytest.mark.parametrize("margin_value", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_margin_raises(ui_root: UIRoot, margin_value):
+@pytest.mark.parametrize("margin", [1, 2.0], ids=["int", "float"])
+def test_constructor_with_single_value_margin_raises(ui_root: UIRoot, margin):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, margin=margin_value)
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, margin=margin)
 
 
 @pytest.mark.parametrize(
-    ("offset_values", "expected_vector"),
+    ("offset", "expected_offset"),
     [
         ((1.0, 2.0), pg.Vector2(1.0, 2.0)),
         ([2.0, 3.0], pg.Vector2(2.0, 3.0)),
@@ -133,21 +133,65 @@ def test_constructor_with_single_value_margin_raises(ui_root: UIRoot, margin_val
     ],
     ids=["tuple", "list", "pg.Vector2"],
 )
-def test_offset_converts_to_vec2_on_correct_axes(
+def test_offset_converts_to_vector2_on_correct_axes(
     ui_root: UIRoot,
-    offset_values,
-    expected_vector,
+    offset,
+    expected_offset,
 ):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset_values)
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
 
     assert isinstance(widget.offset, pg.Vector2)
-    assert widget.offset == expected_vector
+    assert widget.offset == expected_offset
 
 
-@pytest.mark.parametrize("offset_value", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset_value):
+@pytest.mark.parametrize("offset", [1, 2.0], ids=["int", "float"])
+def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset_value)
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
+
+
+@pytest.mark.parametrize(
+    "anchor",
+    ["centre", (0.5, 0.5), None],
+    ids=["str", "tuple", "None"],
+)
+def test_constructor_with_str_tuple_or_none_anchor_raises(ui_root: UIRoot, anchor):
+    with pytest.raises(TypeError):
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize(
+    "parent_anchor",
+    ["centre", (0.5, 0.5)],
+    ids=["str", "tuple"],
+)
+def test_constructor_with_str_or_tuple_parent_anchor_raises(
+    ui_root: UIRoot,
+    parent_anchor,
+):
+    with pytest.raises(TypeError):
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("anchor", [*Anchor])
+def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+
+    assert ui_root.children == (widget,)
+
+
+@pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
+def test_constructor_parent_anchor_can_take_any_member_or_none(
+    ui_root: UIRoot,
+    parent_anchor,
+):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui_root.children == (widget,)
 
 
 def test_consumes_clicks_true_by_default(ui_root: UIRoot):

@@ -582,8 +582,8 @@ def test_exceptions_propagate(ui: UI):
 
 @pytest.mark.parametrize(
     "text",
-    [5, 6.7, None, b"bytes object"],
-    ids=["int", "float", "None", "bytes"],
+    [5, 6.7, b"bytes object", None],
+    ids=["int", "float", "bytes", "None"],
 )
 def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
     with pytest.raises(TypeError):
@@ -594,8 +594,8 @@ def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
 
 @pytest.mark.parametrize(
     "text",
-    [5, 6.7, None, b"bytes object"],
-    ids=["int", "float", "None", "bytes"],
+    [5, 6.7, b"bytes object", None],
+    ids=["int", "float", "bytes", "None"],
 )
 def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
     button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN, text="corndog")
@@ -609,7 +609,7 @@ def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
 @pytest.mark.parametrize(
     "on_click",
     [5, "poppycock"],
-    ids=["int", "string"],
+    ids=["int", "str"],
 )
 def test_non_callable_on_click_raises(ui: UI, on_click):
     with pytest.raises(TypeError):
