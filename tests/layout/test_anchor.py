@@ -65,11 +65,11 @@ def test_get_pos_from_anchor_match_defaults_parent_anchor_to_child_anchor():
 @pytest.mark.parametrize(
     ("anchor", "expected_child_pos"),
     [
+        (Anchor.CENTRE, (45, 90)),
         (Anchor.TOP_LEFT, (0, 0)),
         (Anchor.TOP_RIGHT, (90, 0)),
         (Anchor.BOTTOM_LEFT, (0, 180)),
         (Anchor.BOTTOM_RIGHT, (90, 180)),
-        (Anchor.CENTRE, (45, 90)),
         (Anchor.MID_LEFT, (0, 90)),
         (Anchor.MID_RIGHT, (90, 90)),
         (Anchor.MID_TOP, (45, 0)),
