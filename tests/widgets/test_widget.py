@@ -150,6 +150,50 @@ def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset):
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
 
 
+@pytest.mark.parametrize(
+    "anchor",
+    ["centre", (0.5, 0.5), None],
+    ids=["str", "tuple", "None"],
+)
+def test_constructor_with_str_tuple_or_none_anchor_raises(ui_root: UIRoot, anchor):
+    with pytest.raises(TypeError):
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize(
+    "parent_anchor",
+    ["centre", (0.5, 0.5)],
+    ids=["str", "tuple"],
+)
+def test_constructor_with_str_or_tuple_parent_anchor_raises(
+    ui_root: UIRoot,
+    parent_anchor,
+):
+    with pytest.raises(TypeError):
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("anchor", [*Anchor])
+def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+
+    assert ui_root.children == (widget,)
+
+
+@pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
+def test_constructor_parent_anchor_can_take_any_member_or_none(
+    ui_root: UIRoot,
+    parent_anchor,
+):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui_root.children == (widget,)
+
+
 def test_consumes_clicks_true_by_default(ui_root: UIRoot):
     widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
 
