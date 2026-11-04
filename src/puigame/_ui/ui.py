@@ -26,6 +26,9 @@ class UI:
     The UI lays out and draws on a surface of the ``size`` given on creation,
     and its rects are in that surface's pixels. Each frame, the game passes
     each event to ``handle_event()``, then calls ``update()``, then ``draw()``.
+
+    The root covers the whole surface, so a group of widgets is placed under a
+    top-level ``Container`` or ``Panel`` rather than a ``UI`` of its own.
     """
 
     def __init__(
