@@ -55,8 +55,8 @@ class TextHorizontalExtent(Enum):
 
     - ``INK``: from the first drawn pixel to the last, across all lines. Spaces
       and the blank space at each end of the text are left out. Suits fonts
-      whose blank space is all on one side of each glyph, such as Neb0Font,
-      which then centre exactly.
+      whose blank space is all on one side of each glyph, which then centre
+      exactly.
     - ``LOGICAL``: from the start of each line to the end of its last
       character that is not whitespace, using the font's own spacing, as most
       text layout does. Leading spaces count and trailing spaces do not. Text
