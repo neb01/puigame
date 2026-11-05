@@ -3,18 +3,44 @@ from dataclasses import replace
 import pygame as pg
 import pytest
 
-from puigame import DEFAULT_THEME, DrawnSkin, FadeProfile, NoSkin
+from puigame import (
+    Anchor,
+    BundledTypeface,
+    DrawnSkin,
+    FadeProfile,
+    NoSkin,
+    Style,
+    TextHorizontalExtent,
+)
 from puigame._components.skin import Skin
 
 # region --- Constants --------------------------------------------------------
 
 ANY_SIZE = (9, 10)
-ANY_STYLE = DEFAULT_THEME.base_style
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
+
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
 
 # endregion
 
@@ -105,28 +131,42 @@ def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
     assert surface.size == expected_size
 
 
-@pytest.mark.parametrize("swell", [-2, 0, 2])
-@pytest.mark.parametrize("halo_thickness", [0, 2])
-def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
-    swell,
+@pytest.mark.parametrize(
+    ("halo_thickness", "swell", "expected_pos", "expected_size"),
+    [
+        (0, -2, (2, 2), (5, 6)),
+        (0, 0, (0, 0), (9, 10)),
+        (0, 2, (-2, -2), (13, 14)),
+        (2, -2, (0, 0), (9, 10)),
+        (2, 0, (-2, -2), (13, 14)),
+        (2, 2, (-4, -4), (17, 18)),
+    ],
+    ids=[
+        "no halo, negative swell",
+        "no halo, no swell",
+        "no halo, positive swell",
+        "halo, negative swell",
+        "halo, no swell",
+        "halo, positive swell",
+    ],
+)
+def test_drawn_skin_size_and_pos_for_swell_and_halo(
     halo_thickness,
+    swell,
+    expected_pos,
+    expected_size,
 ):
     style = replace(
         ANY_STYLE,
-        swell=swell,
+        border_thickness=2,
         halo_thickness=halo_thickness,
+        swell=swell,
     )
 
-    placed_image = DrawnSkin().render((10, 10), style)
-    image_pos = placed_image.pos
-    surface_width, surface_height = placed_image.image.size
+    placed_image = DrawnSkin().render((9, 10), style)
 
-    assert image_pos == (
-        -swell - halo_thickness,
-        -swell - halo_thickness,
-    )
-    assert surface_width == 10 + (swell + halo_thickness) * 2
-    assert surface_height == 10 + (swell + halo_thickness) * 2
+    assert placed_image.pos == expected_pos
+    assert placed_image.image.size == expected_size
 
 
 @pytest.mark.parametrize(
@@ -331,20 +371,22 @@ def test_drawn_skin_halo_fade_profile_is_not_affected_by_swell(
 def test_drawn_skin_different_fade_profiles_give_same_shape():
     style_1 = replace(
         ANY_STYLE,
+        border_thickness=0,
         corner_radius=0,
-        swell=-2,
         halo_colour=BLUE,
         halo_fade_profile=FadeProfile.SOLID,
         halo_thickness=3,
+        swell=-2,
     )
 
     style_2 = replace(
         ANY_STYLE,
+        border_thickness=0,
         corner_radius=0,
-        swell=-2,
         halo_colour=BLUE,
         halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
         halo_thickness=3,
+        swell=-2,
     )
 
     surface_1 = DrawnSkin().render((10, 10), style_1).image

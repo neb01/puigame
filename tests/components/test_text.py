@@ -4,7 +4,13 @@ from pathlib import Path
 import pygame as pg
 import pytest
 
-from puigame import DEFAULT_THEME, Anchor, BundledTypeface, TextHorizontalExtent
+from puigame import (
+    Anchor,
+    BundledTypeface,
+    FadeProfile,
+    Style,
+    TextHorizontalExtent,
+)
 from puigame._components.text import Text
 
 # region --- Constants --------------------------------------------------------
@@ -19,6 +25,24 @@ WHITE = (255, 255, 255, 255)
 BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
 
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
 # endregion
 
 
@@ -37,7 +61,7 @@ def _centred_ink_rect(
     build their own style.
     """
     style = replace(
-        DEFAULT_THEME.base_style,
+        ANY_STYLE,
         text_typeface=NEBMON0FONT_PATH,
         text_font_size=font_size,
         text_anchor=Anchor.CENTRE,
@@ -63,7 +87,7 @@ def test_render_empty_string_creates_zero_size_image():
     placed_image = text.render(
         (1, 3),
         replace(
-            DEFAULT_THEME.base_style,
+            ANY_STYLE,
             text_font_size=24,
             text_anchor=Anchor.TOP_LEFT,
             text_parent_anchor=Anchor.BOTTOM_LEFT,
@@ -211,7 +235,7 @@ def test_render_draws_nothing_for_spaces_only():
 
 def test_render_matches_text_anchor_to_text_parent_anchor():
     style = replace(
-        DEFAULT_THEME.base_style,
+        ANY_STYLE,
         text_typeface=NEBMON0FONT_PATH,
         text_font_size=18,
         text_anchor=Anchor.TOP_LEFT,
@@ -250,7 +274,7 @@ def test_render_honours_margins_and_anchors(
     expected_bottomright,
 ):
     style = replace(
-        DEFAULT_THEME.base_style,
+        ANY_STYLE,
         text_typeface=NEBMON0FONT_PATH,
         text_font_size=18,
         text_anchor=anchor,
@@ -281,7 +305,7 @@ def test_render_corrects_for_space_above_capitals_left_bearing(
     expected_ink_topleft,
 ):
     style = replace(
-        DEFAULT_THEME.base_style,
+        ANY_STYLE,
         text_typeface=BundledTypeface.PYGAME_DEFAULT,
         text_font_size=18,
         text_anchor=Anchor.TOP_LEFT,
@@ -309,12 +333,13 @@ def test_render_honours_text_colour_alpha():
     placed_image = text.render(
         (30, 30),
         replace(
-            DEFAULT_THEME.base_style,
+            ANY_STYLE,
             text_colour=(0, 0, 0, 128),
             text_typeface=BundledTypeface.PYGAME_DEFAULT,
             text_font_size=20,
             text_anchor=Anchor.CENTRE,
             text_parent_anchor=Anchor.CENTRE,
+            text_horizontal_extent=TextHorizontalExtent.INK,
             text_offset=(0, 0),
         ),
     )
@@ -333,7 +358,7 @@ def test_render_does_not_antialias():
     placed_image = text.render(
         (30, 30),
         replace(
-            DEFAULT_THEME.base_style,
+            ANY_STYLE,
             text_colour=BLACK,
             text_typeface=BundledTypeface.PYGAME_DEFAULT,
             text_font_size=24,
@@ -369,7 +394,7 @@ def test_render_all_bundled_fonts_create_non_zero_images(bundled_typeface):
     image = text.render(
         (30, 40),
         replace(
-            DEFAULT_THEME.base_style,
+            ANY_STYLE,
             text_typeface=bundled_typeface,
             text_font_size=12,
         ),
@@ -385,7 +410,7 @@ def test_render_can_take_typeface_path():
     image = text.render(
         (30, 40),
         replace(
-            DEFAULT_THEME.base_style,
+            ANY_STYLE,
             text_typeface=NEBMON0FONT_PATH,
         ),
     ).image
@@ -397,7 +422,7 @@ def test_render_can_take_typeface_path():
 def test_render_missing_path_raises(tmp_path):
     text = Text(ANY_STRING)
     style = replace(
-        DEFAULT_THEME.base_style,
+        ANY_STYLE,
         text_typeface=tmp_path / "missing.ttf",
     )
 
