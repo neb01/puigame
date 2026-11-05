@@ -9,7 +9,7 @@ from puigame._ui.ui_root import UIRoot
 
 # region --- Constants --------------------------------------------------------
 
-ANY_SIZE = (10, 10)
+ANY_SIZE = (9, 10)
 
 # endregion
 

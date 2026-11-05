@@ -17,7 +17,7 @@ from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------
 
-ANY_SIZE = (10, 10)
+ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
 ANY_THEME = DEFAULT_THEME
 

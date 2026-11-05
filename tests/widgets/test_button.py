@@ -20,7 +20,7 @@ from stubs import BodyColourLayer
 
 # region --- Constants --------------------------------------------------------
 
-ANY_SIZE = (10, 11)
+ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
 ANY_STRING = "beans beans on toast"
 

@@ -27,7 +27,7 @@ RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
 WHITE = (255, 255, 255, 255)
 
-ANY_SIZE = (10, 10)
+ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
 
 # endregion

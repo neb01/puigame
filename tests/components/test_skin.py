@@ -8,7 +8,7 @@ from puigame._components.skin import Skin
 
 # region --- Constants --------------------------------------------------------
 
-ANY_SIZE = (10, 10)
+ANY_SIZE = (9, 10)
 ANY_STYLE = DEFAULT_THEME.base_style
 
 RED = (255, 0, 0, 255)
