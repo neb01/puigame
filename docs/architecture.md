@@ -177,7 +177,7 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 
 - **`NoSkin`**: a 0x0 surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw, and for widgets with content but no background, such as a bare label, whose image is then the size of its content. It is public, so any widget can go without a background, such as a clear button; its hitbox is still its `rect`. A widget with `NoSkin` shows changes of state only through its components' styles, such as text colour and text offset. `Label` always uses it: for text on a background, place a `Label` in a `Panel`. A 0x0 surface is the one exception to the size rules above.
 - **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
-- **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
+- **`ImageSkin`** (planned, not yet built): one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option would switch to nearest-neighbour scaling to keep hard pixel edges. It would accept a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
 
 Scaling behaviour is a per-skin option, not a global setting.
@@ -534,7 +534,7 @@ src/puigame/
 │   ├── __init__.py
 │   ├── component.py           Component
 │   ├── placed_image.py        PlacedImage, compose_layers
-│   ├── skin.py                Skin, NoSkin, DrawnSkin, ImageSkin
+│   ├── skin.py                Skin, NoSkin, DrawnSkin
 │   └── text.py                Text and the font cache
 ├── _layout/                   anchors and placement
 │   ├── __init__.py
@@ -583,7 +583,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
-- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `ImageSkin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
+- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
 - **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
 - **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.

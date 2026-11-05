@@ -12,7 +12,6 @@ drawing centred on the rect.
 
 NoSkin renders a 0x0 surface, for widgets with no background.
 DrawnSkin draws surfaces in code from the style it is given.
-ImageSkin loads an image file and scales it with nine-slice scaling.
 
 Widgets cache what their skin renders as one image per state, and swap
 between those images as their state changes.
@@ -290,9 +289,3 @@ class DrawnSkin(Skin):
         )
 
         return PlacedImage(surface, pos)
-
-
-class ImageSkin(Skin):
-    """Skin that uses an image file, scaled with nine-slice scaling."""
-
-    pass
