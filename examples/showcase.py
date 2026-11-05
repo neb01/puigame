@@ -255,7 +255,7 @@ def main() -> None:
     screen = pg.display.set_mode(SCREEN_SIZE, pg.SCALED)
     pg.display.set_caption("puigame showcase demo")
 
-    ui = UI(size=screen.get_size())
+    ui = UI(size=screen.size)
 
     # title
     Label(

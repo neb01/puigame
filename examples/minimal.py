@@ -14,7 +14,7 @@ def main() -> None:
     screen = pg.display.set_mode((640, 360), pg.SCALED)
     pg.display.set_caption("puigame minimal demo")
 
-    ui = UI(size=screen.get_size())
+    ui = UI(size=screen.size)
 
     Button(
         ui.root,

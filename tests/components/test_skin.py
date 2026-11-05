@@ -66,7 +66,7 @@ def test_rendered_surfaces_are_unique(make_skin):
 def test_no_skin_always_returns_zero_size_surface(size):
     surface = NoSkin().render(size, ANY_STYLE).image
 
-    assert surface.get_size() == (0, 0)
+    assert surface.size == (0, 0)
 
 
 def test_no_skin_always_returns_zero_image_pos():
@@ -102,7 +102,7 @@ def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
 
     surface = DrawnSkin().render(point, style).image
 
-    assert surface.get_size() == expected_size
+    assert surface.size == expected_size
 
 
 @pytest.mark.parametrize("swell", [-2, 0, 2])
@@ -119,7 +119,7 @@ def test_drawn_skin_correct_size_surface_for_all_swell_and_halo(
 
     placed_image = DrawnSkin().render((10, 10), style)
     image_pos = placed_image.pos
-    surface_width, surface_height = placed_image.image.get_size()
+    surface_width, surface_height = placed_image.image.size
 
     assert image_pos == (
         -swell - halo_thickness,

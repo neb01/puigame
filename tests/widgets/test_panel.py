@@ -30,7 +30,7 @@ def test_image_comes_from_skin(ui_root: UIRoot):
         skin=FixedLayer(size=(2, 3), colour=BLUE, pos=(10, 12)),
     )
 
-    assert panel.image.get_size() == (2, 3)
+    assert panel.image.size == (2, 3)
     assert panel.image_pos == (10, 12)
 
 

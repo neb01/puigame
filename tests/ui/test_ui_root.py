@@ -47,7 +47,7 @@ def test_theme_is_given_theme():
 def test_image_is_zero_size():
     ui_root = UIRoot(size=(10, 20), theme=DEFAULT_THEME)
 
-    assert ui_root.image.get_size() == (0, 0)
+    assert ui_root.image.size == (0, 0)
 
 
 def test_constructor_with_negative_size_raises():

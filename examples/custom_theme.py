@@ -87,7 +87,7 @@ def main() -> None:
     screen = pg.display.set_mode(SCREEN_SIZE, pg.SCALED)
     pg.display.set_caption("puigame custom theme demo")
 
-    ui = UI(size=screen.get_size(), theme=CUSTOM_THEME)
+    ui = UI(size=screen.size, theme=CUSTOM_THEME)
 
     # containers
     left_half_container = Container(

@@ -20,7 +20,7 @@ ANY_SIZE = (10, 10)
 def test_image_is_zero_size(ui_root: UIRoot):
     container = Container(ui_root, size=(5, 10))
 
-    assert container.image.get_size() == (0, 0)
+    assert container.image.size == (0, 0)
 
 
 def test_rect_has_given_size(ui_root: UIRoot):

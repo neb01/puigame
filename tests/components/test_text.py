@@ -72,7 +72,7 @@ def test_render_empty_string_creates_zero_size_image():
         ),
     )
 
-    assert placed_image.image.get_size() == (0, 0)
+    assert placed_image.image.size == (0, 0)
     assert placed_image.pos == (0, 0)
 
 
