@@ -101,13 +101,13 @@ def test_changing_source_style_overrides_dict_does_not_affect_theme():
 # endregion
 
 
-# region --- Theme.style_for() ------------------------------------------------
+# region --- Theme._style_for() -----------------------------------------------
 
 
 def test_style_for_base_state_returns_base_style():
     theme = Theme(base_style=ANY_STYLE, style_overrides=ANY_STYLE_OVERRIDES)
 
-    style = theme.style_for(State.BASE)
+    style = theme._style_for(State.BASE)
 
     assert style is ANY_STYLE
 
@@ -119,7 +119,7 @@ def test_style_for_single_flag_changes_field_set_in_style_override():
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(State.DISABLED)
+    style = theme._style_for(State.DISABLED)
 
     assert style.body_colour == RED
 
@@ -131,7 +131,7 @@ def test_style_for_single_flag_does_not_change_fields_not_set_in_style_override(
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(State.DISABLED)
+    style = theme._style_for(State.DISABLED)
 
     assert style.border_colour == BLACK
     assert style.border_thickness == 2
@@ -148,7 +148,7 @@ def test_style_for_inactive_flag_does_not_affect_any_fields():
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(State.DISABLED)
+    style = theme._style_for(State.DISABLED)
 
     assert style.border_colour == BLACK
 
@@ -160,7 +160,7 @@ def test_style_for_flag_not_in_theme_is_ignored():
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(State.DISABLED | State.HIGHLIGHTED)
+    style = theme._style_for(State.DISABLED | State.HIGHLIGHTED)
 
     assert style.body_colour == RED  # disabled still applies
     assert style.border_colour == BLACK  # highlighted request has not changed others
@@ -176,7 +176,7 @@ def test_style_for_multiple_flags_change_separate_fields_set_in_style_override()
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(State.DISABLED | State.HIGHLIGHTED)
+    style = theme._style_for(State.DISABLED | State.HIGHLIGHTED)
 
     assert style.body_colour == RED
     assert style.border_colour == BLUE
@@ -229,7 +229,7 @@ def test_style_for_honours_precedence_order(combined_flag, style_overrides):
         style_overrides=style_overrides,
     )
 
-    style = theme.style_for(combined_flag)
+    style = theme._style_for(combined_flag)
 
     assert style.body_colour == BLUE
 
@@ -243,7 +243,7 @@ def test_style_for_honours_precedence_order(combined_flag, style_overrides):
 # iterating State itself skips BASE, which has no bits set
 @pytest.mark.parametrize("state", State.__members__.values())
 def test_default_theme_provides_style_for_every_state(state):
-    assert isinstance(DEFAULT_THEME.style_for(state), Style)
+    assert isinstance(DEFAULT_THEME._style_for(state), Style)
 
 
 def test_state_precedence_lists_exactly_non_base_states():

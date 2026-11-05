@@ -385,7 +385,7 @@ class Widget:
         with ``compose_layers()``, so the skin is at the bottom and the result
         covers every layer. With no components, the result is the skin's.
         """
-        style = self.theme.style_for(state)
+        style = self.theme._style_for(state)
 
         skin_layer = self.skin.render(self.rect.size, style)
         component_layers = [

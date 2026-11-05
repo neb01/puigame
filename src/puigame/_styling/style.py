@@ -97,8 +97,8 @@ class BundledTypeface(Enum):
 class Style:
     """Complete appearance of a widget: every value needed to draw it.
 
-    A theme's base style is a ``Style``, and ``Theme.style_for()`` returns a
-    ``Style`` for any combination of state flags. Only the fields that
+    A theme's base style is a ``Style``, and the theme resolves a ``Style``
+    for any combination of state flags from it. Only the fields that
     ``StyleOverride`` also has can change between states.
 
     A negative border thickness, corner radius, or halo thickness, or a font
@@ -179,8 +179,8 @@ class Style:
     def __post_init__(self) -> None:
         """Reject values that cannot be drawn.
 
-        Runs whenever a ``Style`` is created, including each one that
-        ``Theme.style_for()`` builds with ``dataclasses.replace()``. The swell
+        Runs whenever a ``Style`` is created, including each one that a theme
+        builds for a state with ``dataclasses.replace()``. The swell
         is not checked, since a negative swell is valid and shrinks the widget.
 
         Raises:
