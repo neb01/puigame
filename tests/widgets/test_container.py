@@ -58,19 +58,18 @@ def test_rect_has_given_size(ui_root: UIRoot):
 
 
 @pytest.mark.parametrize(
-    ("argument", "value"),
+    ("field_name", "value"),
     [
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
         ("consumes_clicks", True),
     ],
-    ids=["offset", "enabled", "visible", "consumes_clicks"],
 )
-def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
-    container = Container(ui_root, size=ANY_SIZE, **{argument: value})
+def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
+    container = Container(ui_root, size=ANY_SIZE, **{field_name: value})
 
-    assert getattr(container, argument) == value
+    assert getattr(container, field_name) == value
 
 
 def test_forwards_placement_arguments():

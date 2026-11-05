@@ -72,22 +72,21 @@ def test_rect_has_given_size(ui_root: UIRoot):
 
 
 @pytest.mark.parametrize(
-    ("argument", "value"),
+    ("field_name", "value"),
     [
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
         ("consumes_clicks", False),
     ],
-    ids=["offset", "enabled", "visible", "consumes_clicks"],
 )
-def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
-    panel = Panel(ui_root, size=ANY_SIZE, skin=ANY_SKIN, **{argument: value})
+def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
+    panel = Panel(ui_root, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
 
-    assert getattr(panel, argument) == value
+    assert getattr(panel, field_name) == value
 
 
-def test_forwards_placement_arguments():
+def test_forwards_placement_field_names():
     ui_root = UIRoot(size=(20, 30), theme=ANY_THEME)
     panel = Panel(
         ui_root,

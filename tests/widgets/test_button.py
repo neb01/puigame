@@ -106,24 +106,23 @@ def press_ui() -> UI:
 
 
 @pytest.mark.parametrize(
-    ("argument", "value"),
+    ("field_name", "value"),
     [
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
         ("consumes_clicks", False),
     ],
-    ids=["offset", "enabled", "visible", "consumes_clicks"],
 )
-def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
+def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
     button = Button(
         ui_root,
         size=ANY_SIZE,
         skin=ANY_SKIN,
-        **{argument: value},
+        **{field_name: value},
     )
 
-    assert getattr(button, argument) == value
+    assert getattr(button, field_name) == value
 
 
 def test_forwards_placement_arguments():

@@ -47,19 +47,18 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 
 @pytest.mark.parametrize(
-    ("argument", "value"),
+    ("field_name", "value"),
     [
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
         ("consumes_clicks", True),
     ],
-    ids=["offset", "enabled", "visible", "consumes_clicks"],
 )
-def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
-    label = Label(ui_root, size=ANY_SIZE, **{argument: value})
+def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
+    label = Label(ui_root, size=ANY_SIZE, **{field_name: value})
 
-    assert getattr(label, argument) == value
+    assert getattr(label, field_name) == value
 
 
 def test_forwards_placement_arguments():
