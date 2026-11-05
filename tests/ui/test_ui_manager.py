@@ -28,14 +28,14 @@ from stubs import BodyColourLayer
 ANY_SKIN = NoSkin()
 
 BASE_COLOUR = (0, 0, 0, 255)
-DISABLED_COLOUR = (255, 0, 0, 255)
 HIGHLIGHTED_COLOUR = (0, 255, 0, 255)
+DISABLED_COLOUR = (255, 0, 0, 255)
 
 HIGHLIGHT_THEME = Theme(
     base_style=replace(DEFAULT_THEME.base_style, body_colour=BASE_COLOUR),
     style_overrides={
-        State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
         State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
+        State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
     },
 )
 

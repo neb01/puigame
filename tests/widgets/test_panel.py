@@ -11,11 +11,11 @@ from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------
 
-BLUE = (0, 0, 255, 255)
-
 ANY_SIZE = (9, 10)
 ANY_POS = (3, 5)
 ANY_SKIN = NoSkin()
+
+BLUE = (0, 0, 255, 255)
 
 # endregion
 

@@ -15,7 +15,7 @@ from puigame import (
 
 # region --- Constants --------------------------------------------------------
 
-ANY_STRING = "snath is the specific word for the handle of a scythe"
+ANY_STRING = "correct horses and staple batteries"
 ANY_PATH = Path("fonts/any_font.ttf")
 
 BLACK = (0, 0, 0, 255)

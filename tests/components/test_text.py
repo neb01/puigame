@@ -21,9 +21,9 @@ WIDGET_SIZE = (100, 50)
 ANY_STRING = "snath is the specific word for the handle of a scythe"
 ANY_TEXT_HORIZONTAL_EXTENT = TextHorizontalExtent.INK
 
-WHITE = (255, 255, 255, 255)
 BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
+WHITE = (255, 255, 255, 255)
 
 ANY_STYLE = Style(
     body_colour=WHITE,
@@ -43,6 +43,7 @@ ANY_STYLE = Style(
     text_margin=(0, 0),
     text_offset=(0, 0),
 )
+
 # endregion
 
 
