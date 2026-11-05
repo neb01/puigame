@@ -5,14 +5,16 @@ import pygame as pg
 import pytest
 
 from puigame import (
-    DEFAULT_THEME,
     UI,
     Anchor,
     BundledTypeface,
     Button,
+    FadeProfile,
     NoSkin,
     State,
+    Style,
     StyleOverride,
+    TextHorizontalExtent,
     Theme,
 )
 from puigame._ui.ui_root import UIRoot
@@ -24,23 +26,44 @@ ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
 ANY_STRING = "beans beans on toast"
 
-WHITE = (255, 255, 255, 255)
 RED = (255, 0, 0, 255)
 BLACK = (0, 0, 0, 255)
+WHITE = (255, 255, 255, 255)
 
 BASE_COLOUR = (0, 0, 0, 255)
-DISABLED_COLOUR = (255, 0, 0, 255)
 HIGHLIGHTED_COLOUR = (0, 255, 0, 255)
 PRESSED_COLOUR = (0, 0, 255, 255)
+DISABLED_COLOUR = (255, 0, 0, 255)
+
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
 
 PRESS_THEME = Theme(
-    base_style=replace(DEFAULT_THEME.base_style, body_colour=BASE_COLOUR),
+    base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
     style_overrides={
-        State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
         State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
         State.PRESSED: StyleOverride(body_colour=PRESSED_COLOUR),
+        State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
     },
 )
+
+ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 # endregion
 
@@ -104,7 +127,7 @@ def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
 
 
 def test_forwards_placement_arguments():
-    ui_root = UIRoot(size=(20, 30), theme=DEFAULT_THEME)
+    ui_root = UIRoot(size=(20, 30), theme=ANY_THEME)
     button = Button(
         ui_root,
         size=(3, 5),
@@ -172,12 +195,13 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
 
     theme = Theme(
         base_style=replace(
-            DEFAULT_THEME.base_style,
+            ANY_STYLE,
             text_colour=BLACK,
             text_typeface=BundledTypeface.PYGAME_DEFAULT,
             text_font_size=20,
             text_anchor=Anchor.CENTRE,
             text_parent_anchor=Anchor.CENTRE,
+            text_horizontal_extent=TextHorizontalExtent.INK,
             text_offset=(0, 0),
         ),
         style_overrides={State.HIGHLIGHTED: StyleOverride(text_colour=RED)},
@@ -428,7 +452,7 @@ def test_right_button_down_held_over_shows_highlighted_colour(press_ui: UI):
 
 def test_pressed_keeps_highlighted_fields_that_it_does_not_override():
     theme = Theme(
-        base_style=replace(DEFAULT_THEME.base_style, body_colour=BASE_COLOUR),
+        base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
         style_overrides={
             State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
             State.PRESSED: StyleOverride(),
