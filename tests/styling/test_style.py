@@ -208,9 +208,14 @@ def test_style_text_typeface_can_take_bundled_typeface_or_path(text_typeface):
     assert style.text_typeface == text_typeface
 
 
-def test_style_str_text_typeface_raises():
+@pytest.mark.parametrize(
+    "text_typeface",
+    [ANY_STRING, None],
+    ids=["str", "None"],
+)
+def test_style_str_or_none_text_typeface_raises(text_typeface):
     with pytest.raises(TypeError):
-        replace(ANY_STYLE, text_typeface=ANY_STRING)
+        replace(ANY_STYLE, text_typeface=text_typeface)
 
 
 def test_style_text_font_size_can_take_any_positive_int():
@@ -256,10 +261,12 @@ def test_style_text_horizontal_extent_can_take_any_member(text_horizontal_extent
 
 @pytest.mark.parametrize(
     "text_horizontal_extent",
-    [False, ANY_STRING],
-    ids=["bool", "str"],
+    [False, ANY_STRING, None],
+    ids=["bool", "str", "None"],
 )
-def test_style_bool_or_str_text_horizontal_extent_raises(text_horizontal_extent):
+def test_style_bool_str_or_none_text_horizontal_extent_raises(
+    text_horizontal_extent,
+):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, text_horizontal_extent=text_horizontal_extent)
 
