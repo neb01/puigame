@@ -6,15 +6,18 @@ import pytest
 from pygame.typing import Point
 
 from puigame import (
-    DEFAULT_THEME,
     UI,
     Anchor,
+    BundledTypeface,
     Container,
+    FadeProfile,
     Label,
     NoSkin,
     Panel,
     State,
+    Style,
     StyleOverride,
+    TextHorizontalExtent,
     Theme,
     Widget,
 )
@@ -27,12 +30,34 @@ from stubs import BodyColourLayer
 
 ANY_SKIN = NoSkin()
 
+BLACK = (0, 0, 0, 255)
+WHITE = (255, 255, 255, 255)
+
 BASE_COLOUR = (0, 0, 0, 255)
 HIGHLIGHTED_COLOUR = (0, 255, 0, 255)
 DISABLED_COLOUR = (255, 0, 0, 255)
 
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
+
 HIGHLIGHT_THEME = Theme(
-    base_style=replace(DEFAULT_THEME.base_style, body_colour=BASE_COLOUR),
+    base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
     style_overrides={
         State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
         State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
