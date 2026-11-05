@@ -89,9 +89,12 @@ class Theme:
                     f"style_overrides cannot use combined flags as a key, got {flag}",
                 )
 
-        dict_copy = dict(self.style_overrides)
-        read_only_view = MappingProxyType(dict_copy)
-        object.__setattr__(self, "style_overrides", read_only_view)
+        # copy, so later changes to the caller's dict don't reach the theme
+        object.__setattr__(
+            self,
+            "style_overrides",
+            MappingProxyType(dict(self.style_overrides)),
+        )
 
     def style_for(self, state: State) -> Style:
         """Return the style for a combination of state flags.

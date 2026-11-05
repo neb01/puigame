@@ -49,9 +49,7 @@ def _centred_ink_rect(
 
     text = Text(content)
     placed_image = text.render(WIDGET_SIZE, style)
-    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
-
-    return ink_rect
+    return placed_image.image.get_bounding_rect().move(placed_image.pos)
 
 
 # endregion

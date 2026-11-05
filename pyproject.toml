@@ -53,6 +53,8 @@ lint.select = [
   "E",      # pycodestyle errors (style basics)
   "F",      # pyflakes (unused imports, undefined names)
   "I",      # isort (import sorting)
+  "N",      # pep8-naming (naming conventions)
+  "RET",    # flake8-return (return statement style)
   "RUF",    # Ruff-specific rules
   "SIM",    # flake8-simplify (simpler equivalent code)
   "TID",    # flake8-tidy-imports (banned relative imports)

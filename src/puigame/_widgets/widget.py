@@ -300,16 +300,16 @@ class Widget:
         """Whether this widget and all of its ancestors are enabled."""
         if self.parent is None:
             return self.enabled
-        else:
-            return self.enabled and self.parent.enabled_in_tree
+
+        return self.enabled and self.parent.enabled_in_tree
 
     @property
     def visible_in_tree(self) -> bool:
         """Whether this widget and all of its ancestors are visible."""
         if self.parent is None:
             return self.visible
-        else:
-            return self.visible and self.parent.visible_in_tree
+
+        return self.visible and self.parent.visible_in_tree
 
     def _update(self) -> None:
         """Refresh ``image`` and ``image_pos`` from the current state.
