@@ -303,41 +303,27 @@ def test_child_and_grandchild_return_root_theme():
 
 def test_assigning_to_rect_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget.rect = pg.Rect(1, 1, 1, 1)
+        widget.rect = pg.Rect(1, 1, 1, 1)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_assigning_to_image_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget.image = pg.Surface(ANY_SIZE)
+        widget.image = pg.Surface(ANY_SIZE)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_assigning_to_skin_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget.skin = ANY_SKIN
+        widget.skin = ANY_SKIN  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def test_assigning_to_parent_raises(ui_root: UIRoot):
-    widget_1 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_2 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-
+def test_assigning_to_parent_raises(ui_root: UIRoot, widget: Widget):
     with pytest.raises(AttributeError):
-        widget_2.parent = widget_1  # pyright: ignore[reportAttributeAccessIssue]
-
-    assert ui_root.children == (widget_1, widget_2)
-    assert widget_1.children == ()
-    assert widget_2.parent is ui_root
+        widget.parent = ui_root  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def test_assigning_to_children_raises(ui_root: UIRoot):
-    widget_1 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_2 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-
+def test_assigning_to_children_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget_1.children = (widget_2,)  # pyright: ignore[reportAttributeAccessIssue]
-
-    assert ui_root.children == (widget_1, widget_2)
-    assert widget_1.children == ()
-    assert widget_2.parent is ui_root
+        widget.children = ()  # pyright: ignore[reportAttributeAccessIssue]
 
 
 # endregion

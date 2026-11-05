@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Never, NoReturn
 
 import pygame as pg
 from pygame.typing import Point
@@ -199,13 +199,14 @@ class Widget:
         """The widget's rect, in the coordinates of the UI's draw surface.
 
         It is placed against the parent's rect when the widget is created, and
-        updated in place by layout each frame. Replacing it raises an error,
-        since position comes from the anchors, margin, and offset.
+        updated in place by layout each frame. Assigning to it raises
+        ``AttributeError``, since position comes from the anchors, margin, and
+        offset.
         """
         return self._rect
 
     @rect.setter
-    def rect(self, value: pg.Rect | pg.FRect | None) -> None:
+    def rect(self, value: Never) -> NoReturn:
         raise AttributeError(
             "rect cannot be set directly; "
             "position the widget via anchor, parent_anchor, margin, and offset",
@@ -216,13 +217,13 @@ class Widget:
         """The widget's current image, drawn at ``image_pos``.
 
         The image comes from the skin, using the theme's style for the current
-        state. Replacing it raises an error, since it is rendered from the
-        widget's skin, theme, and state.
+        state. Assigning to it raises ``AttributeError``, since it is rendered
+        from the widget's skin, theme, and state.
         """
         return self._placed_image.image
 
     @image.setter
-    def image(self, value: pg.Surface) -> None:
+    def image(self, value: Never) -> NoReturn:
         raise AttributeError(
             "image cannot be set directly; "
             "it is derived from the widget's skin, theme, and state",
@@ -245,12 +246,6 @@ class Widget:
         Set on creation and never changed, so it is read-only.
         """
         return self._skin
-
-    @skin.setter
-    def skin(self, value: Skin) -> None:
-        raise AttributeError(
-            "skin cannot be set directly; it is set only in the constructor",
-        )
 
     @property
     def parent(self) -> Widget | None:
