@@ -404,7 +404,7 @@ def test_focus_lost_during_press_shows_highlighted_colour(press_ui: UI):
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_right_button_down_then_held_over_shows_highlighted_colour(press_ui: UI):
+def test_right_button_down_held_over_shows_highlighted_colour(press_ui: UI):
     button = Button(
         press_ui.root,
         size=(5, 6),

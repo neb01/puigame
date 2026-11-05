@@ -138,7 +138,12 @@ def highlight_ui() -> UI:
 # region --- Consuming --------------------------------------------------------
 
 
-def test_consuming_widget_consumes_mouse_button_down(ui: UI):
+@pytest.mark.parametrize(
+    "button",
+    [pg.BUTTON_LEFT, pg.BUTTON_RIGHT],
+    ids=["left button", "right button"],
+)
+def test_consuming_widget_consumes_mouse_button_down(ui: UI, button):
     Panel(
         ui.root,
         size=(4, 5),
@@ -152,8 +157,9 @@ def test_consuming_widget_consumes_mouse_button_down(ui: UI):
     mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
-        button=pg.BUTTON_LEFT,
+        button=button,
     )
+
     assert ui.handle_event(mouse_button_down_event)
 
 
@@ -197,37 +203,17 @@ def test_non_consuming_widget_does_not_consume_mouse_button_down(ui: UI, widget_
     assert not ui.handle_event(mouse_button_down_event)
 
 
-def test_consuming_widget_consumes_right_mouse_button_down(ui: UI):
-    Panel(
-        ui.root,
-        size=(4, 5),
-        skin=ANY_SKIN,
-        anchor=Anchor.TOP_LEFT,
-        parent_anchor=Anchor.TOP_LEFT,
-        margin=(0, 0),
-        offset=(0, 0),
-    )
-
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_RIGHT,
-    )
-
-    assert ui.handle_event(mouse_button_down_event)
-
-
 @pytest.mark.parametrize(
     "event_type",
-    [pg.MOUSEBUTTONUP, pg.MOUSEBUTTONDOWN],
-    ids=["button up", "button down"],
+    [pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP],
+    ids=["button down", "button up"],
 )
 @pytest.mark.parametrize(
-    "event_button",
+    "button",
     [pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN],
     ids=["wheel up", "wheel down"],
 )
-def test_wheel_button_events_are_not_consumed(ui: UI, event_type, event_button):
+def test_wheel_button_events_are_not_consumed(ui: UI, event_type, button):
     Panel(
         ui.root,
         size=(4, 5),
@@ -241,7 +227,7 @@ def test_wheel_button_events_are_not_consumed(ui: UI, event_type, event_button):
     mouse_button_event = pg.Event(
         event_type,
         pos=(1, 2),
-        button=event_button,
+        button=button,
     )
 
     assert not ui.handle_event(mouse_button_event)
