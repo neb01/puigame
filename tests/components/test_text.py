@@ -379,17 +379,6 @@ def test_render_all_bundled_fonts_create_non_zero_images(bundled_typeface):
     assert image.height != 0
 
 
-def test_render_missing_path_raises(tmp_path):
-    text = Text(ANY_STRING)
-    style = replace(
-        DEFAULT_THEME.base_style,
-        text_typeface=tmp_path / "missing.ttf",
-    )
-
-    with pytest.raises(FileNotFoundError):
-        text.render((30, 40), style)
-
-
 def test_render_can_take_typeface_path():
     text = Text(ANY_STRING)
 
@@ -403,6 +392,17 @@ def test_render_can_take_typeface_path():
 
     assert image.width != 0
     assert image.height != 0
+
+
+def test_render_missing_path_raises(tmp_path):
+    text = Text(ANY_STRING)
+    style = replace(
+        DEFAULT_THEME.base_style,
+        text_typeface=tmp_path / "missing.ttf",
+    )
+
+    with pytest.raises(FileNotFoundError):
+        text.render((30, 40), style)
 
 
 # endregion

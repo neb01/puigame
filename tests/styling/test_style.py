@@ -50,24 +50,19 @@ ANY_STYLE = Style(
     "field_name",
     ["border_thickness", "corner_radius", "halo_thickness"],
 )
-def test_style_negative_thickness_or_radius_raises(field_name):
-    with pytest.raises(ValueError):
-        replace(ANY_STYLE, **{field_name: -5})
+def test_style_thickness_or_radius_can_be_zero(field_name):
+    style = replace(ANY_STYLE, **{field_name: 0})
 
-
-def test_style_override_negative_halo_thickness_raises():
-    with pytest.raises(ValueError):
-        StyleOverride(halo_thickness=-5)
+    assert getattr(style, field_name) == 0
 
 
 @pytest.mark.parametrize(
     "field_name",
     ["border_thickness", "corner_radius", "halo_thickness"],
 )
-def test_style_thickness_or_radius_can_be_zero(field_name):
-    style = replace(ANY_STYLE, **{field_name: 0})
-
-    assert getattr(style, field_name) == 0
+def test_style_negative_thickness_or_radius_raises(field_name):
+    with pytest.raises(ValueError):
+        replace(ANY_STYLE, **{field_name: -5})
 
 
 def test_style_override_halo_thickness_can_be_zero():
@@ -76,14 +71,9 @@ def test_style_override_halo_thickness_can_be_zero():
     assert style_override.halo_thickness == 0
 
 
-@pytest.mark.parametrize(
-    "halo_fade_profile",
-    [1, "linear", None],
-    ids=["int", "str", "None"],
-)
-def test_style_int_str_or_none_halo_fade_profile_raises(halo_fade_profile):
-    with pytest.raises(TypeError):
-        replace(ANY_STYLE, halo_fade_profile=halo_fade_profile)
+def test_style_override_negative_halo_thickness_raises():
+    with pytest.raises(ValueError):
+        StyleOverride(halo_thickness=-5)
 
 
 @pytest.mark.parametrize("halo_fade_profile", [*FadeProfile])
@@ -95,12 +85,12 @@ def test_style_halo_fade_profile_can_take_any_member(halo_fade_profile):
 
 @pytest.mark.parametrize(
     "halo_fade_profile",
-    [1, "linear"],
-    ids=["int", "str"],
+    [1, "linear", None],
+    ids=["int", "str", "None"],
 )
-def test_style_override_int_or_str_halo_fade_profile_raises(halo_fade_profile):
+def test_style_int_str_or_none_halo_fade_profile_raises(halo_fade_profile):
     with pytest.raises(TypeError):
-        StyleOverride(halo_fade_profile=halo_fade_profile)
+        replace(ANY_STYLE, halo_fade_profile=halo_fade_profile)
 
 
 @pytest.mark.parametrize(
@@ -115,6 +105,16 @@ def test_style_override_halo_fade_profile_can_take_any_member_or_none(
     assert style_override.halo_fade_profile == halo_fade_profile
 
 
+@pytest.mark.parametrize(
+    "halo_fade_profile",
+    [1, "linear"],
+    ids=["int", "str"],
+)
+def test_style_override_int_or_str_halo_fade_profile_raises(halo_fade_profile):
+    with pytest.raises(TypeError):
+        StyleOverride(halo_fade_profile=halo_fade_profile)
+
+
 @pytest.mark.parametrize("swell", [-5, 0, 5])
 def test_style_swell_can_take_any_int(swell):
     style = replace(ANY_STYLE, swell=swell)
@@ -127,17 +127,6 @@ def test_style_override_swell_can_take_any_int(swell):
     style_override = StyleOverride(swell=swell)
 
     assert style_override.swell == swell
-
-
-@pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
-@pytest.mark.parametrize(
-    "value",
-    [1, 3.5, [2, 3], pg.Vector2(4, 5)],
-    ids=["int", "float", "list", "pg.Vector2"],
-)
-def test_style_non_tuple_text_margin_or_text_offset_raises(field_name, value):
-    with pytest.raises(TypeError):
-        replace(ANY_STYLE, **{field_name: value})
 
 
 @pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
@@ -162,14 +151,15 @@ def test_style_text_margin_or_text_offset_can_take_tuple_of_int(field_name, valu
     assert getattr(style, field_name) == value
 
 
+@pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
 @pytest.mark.parametrize(
-    "text_offset",
+    "value",
     [1, 3.5, [2, 3], pg.Vector2(4, 5)],
     ids=["int", "float", "list", "pg.Vector2"],
 )
-def test_style_override_non_tuple_text_offset_raises(text_offset):
+def test_style_non_tuple_text_margin_or_text_offset_raises(field_name, value):
     with pytest.raises(TypeError):
-        StyleOverride(text_offset=text_offset)
+        replace(ANY_STYLE, **{field_name: value})
 
 
 @pytest.mark.parametrize(
@@ -195,9 +185,14 @@ def test_style_override_text_offset_can_take_tuple_of_int_or_none(text_offset):
     assert style_override.text_offset == text_offset
 
 
-def test_style_str_text_typeface_raises():
+@pytest.mark.parametrize(
+    "text_offset",
+    [1, 3.5, [2, 3], pg.Vector2(4, 5)],
+    ids=["int", "float", "list", "pg.Vector2"],
+)
+def test_style_override_non_tuple_text_offset_raises(text_offset):
     with pytest.raises(TypeError):
-        replace(ANY_STYLE, text_typeface=ANY_STRING)
+        StyleOverride(text_offset=text_offset)
 
 
 @pytest.mark.parametrize(
@@ -213,16 +208,29 @@ def test_style_text_typeface_can_take_bundled_typeface_or_path(text_typeface):
     assert style.text_typeface == text_typeface
 
 
-@pytest.mark.parametrize("text_font_size", [-5, 0])
-def test_style_non_positive_text_font_size_raises(text_font_size):
-    with pytest.raises(ValueError):
-        replace(ANY_STYLE, text_font_size=text_font_size)
+def test_style_str_text_typeface_raises():
+    with pytest.raises(TypeError):
+        replace(ANY_STYLE, text_typeface=ANY_STRING)
 
 
 def test_style_text_font_size_can_take_any_positive_int():
     style = replace(ANY_STYLE, text_font_size=24)
 
     assert style.text_font_size == 24
+
+
+@pytest.mark.parametrize("text_font_size", [-5, 0])
+def test_style_non_positive_text_font_size_raises(text_font_size):
+    with pytest.raises(ValueError):
+        replace(ANY_STYLE, text_font_size=text_font_size)
+
+
+@pytest.mark.parametrize("field_name", ["text_anchor", "text_parent_anchor"])
+@pytest.mark.parametrize("value", [*Anchor])
+def test_style_text_anchor_or_text_parent_anchor_can_take_any_member(field_name, value):
+    style = replace(ANY_STYLE, **{field_name: value})
+
+    assert getattr(style, field_name) == value
 
 
 @pytest.mark.parametrize("field_name", ["text_anchor", "text_parent_anchor"])
@@ -239,12 +247,11 @@ def test_style_str_tuple_or_none_text_anchor_or_text_parent_anchor_raises(
         replace(ANY_STYLE, **{field_name: value})
 
 
-@pytest.mark.parametrize("field_name", ["text_anchor", "text_parent_anchor"])
-@pytest.mark.parametrize("value", [*Anchor])
-def test_style_text_anchor_or_text_parent_anchor_can_take_any_member(field_name, value):
-    style = replace(ANY_STYLE, **{field_name: value})
+@pytest.mark.parametrize("text_horizontal_extent", [*TextHorizontalExtent])
+def test_style_text_horizontal_extent_can_take_any_member(text_horizontal_extent):
+    style = replace(ANY_STYLE, text_horizontal_extent=text_horizontal_extent)
 
-    assert getattr(style, field_name) == value
+    assert style.text_horizontal_extent == text_horizontal_extent
 
 
 @pytest.mark.parametrize(
@@ -255,13 +262,6 @@ def test_style_text_anchor_or_text_parent_anchor_can_take_any_member(field_name,
 def test_style_bool_or_str_text_horizontal_extent_raises(text_horizontal_extent):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, text_horizontal_extent=text_horizontal_extent)
-
-
-@pytest.mark.parametrize("text_horizontal_extent", [*TextHorizontalExtent])
-def test_style_text_horizontal_extent_can_take_any_member(text_horizontal_extent):
-    style = replace(ANY_STYLE, text_horizontal_extent=text_horizontal_extent)
-
-    assert style.text_horizontal_extent == text_horizontal_extent
 
 
 # endregion
