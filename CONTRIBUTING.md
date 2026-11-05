@@ -43,6 +43,10 @@ uv run python examples/showcase.py
 
 Commits and pull request titles follow [Conventional Commits](https://www.conventionalcommits.org/), for example `feat(button): add disabled state` or `fix: correct hover offset`.
 
+## Conventions
+
+[`docs/conventions.md`](docs/conventions.md) lists the naming, code, docstring, and test rules, with the reason for each.
+
 ## Design notes
 
 [`docs/architecture.md`](docs/architecture.md) describes how puigame is built and why.
