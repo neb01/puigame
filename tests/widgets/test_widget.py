@@ -130,18 +130,39 @@ def test_constructor_with_negative_size_raises(ui_root: UIRoot, size):
     assert ui_root.children == ()
 
 
-@pytest.mark.parametrize("margin", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_margin_raises(ui_root: UIRoot, margin):
-    with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, margin=margin)
+@pytest.mark.parametrize(
+    ("margin", "expected_topleft"),
+    [
+        ((1, 2), (1, 2)),
+        ([2, 3], (2, 3)),
+        (pg.Vector2(4, 2), (4, 2)),
+    ],
+    ids=["tuple", "list", "pg.Vector2"],
+)
+def test_margin_places_rect_on_correct_axes(
+    ui_root: UIRoot,
+    margin,
+    expected_topleft,
+):
+    widget = Widget(
+        ui_root,
+        size=ANY_SIZE,
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=margin,
+        offset=(0, 0),
+    )
+
+    assert widget.rect.topleft == expected_topleft
 
 
 @pytest.mark.parametrize(
     ("offset", "expected_offset"),
     [
-        ((1.0, 2.0), pg.Vector2(1.0, 2.0)),
-        ([2.0, 3.0], pg.Vector2(2.0, 3.0)),
-        (pg.Vector2(4.0, 2.0), pg.Vector2(4.0, 2.0)),
+        ((1, 2), pg.Vector2(1, 2)),
+        ([2, 3], pg.Vector2(2, 3)),
+        (pg.Vector2(4, 2), pg.Vector2(4, 2)),
     ],
     ids=["tuple", "list", "pg.Vector2"],
 )
@@ -156,10 +177,24 @@ def test_offset_converts_to_vector2_on_correct_axes(
     assert widget.offset == expected_offset
 
 
-@pytest.mark.parametrize("offset", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset):
+@pytest.mark.parametrize("field_name", ["margin", "offset"])
+@pytest.mark.parametrize("value", [1, 2.0], ids=["int", "float"])
+def test_constructor_with_single_value_margin_or_offset_raises(
+    ui_root: UIRoot,
+    field_name,
+    value,
+):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("anchor", [*Anchor])
+def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+
+    assert ui_root.children == (widget,)
 
 
 @pytest.mark.parametrize(
@@ -172,6 +207,16 @@ def test_constructor_with_str_tuple_or_none_anchor_raises(ui_root: UIRoot, ancho
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
 
     assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
+def test_constructor_parent_anchor_can_take_any_member_or_none(
+    ui_root: UIRoot,
+    parent_anchor,
+):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui_root.children == (widget,)
 
 
 @pytest.mark.parametrize(
@@ -187,23 +232,6 @@ def test_constructor_with_str_or_tuple_parent_anchor_raises(
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
 
     assert ui_root.children == ()
-
-
-@pytest.mark.parametrize("anchor", [*Anchor])
-def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
-
-    assert ui_root.children == (widget,)
-
-
-@pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
-def test_constructor_parent_anchor_can_take_any_member_or_none(
-    ui_root: UIRoot,
-    parent_anchor,
-):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
-
-    assert ui_root.children == (widget,)
 
 
 # endregion
