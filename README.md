@@ -44,7 +44,7 @@ def main() -> None:
     running = True
 
     while running:
-        dt = clock.tick(60) / 1000  # seconds since the last frame
+        clock.tick(60)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -52,7 +52,7 @@ def main() -> None:
 
             ui.handle_event(event)
 
-        ui.update(dt)
+        ui.update()
 
         screen.fill("black")
         ui.draw(screen)
@@ -69,7 +69,7 @@ For more, see [`examples/custom_theme.py`](examples/custom_theme.py) and [`examp
 
 ## Running a UI
 
-Each frame, the game passes every event to `ui.handle_event()`, then calls `ui.update(dt)`, then `ui.draw(surface)`, in that order. Pass every event, not only mouse events: the UI needs window events such as `WINDOWLEAVE` to keep highlights and presses right, and it never polls pygame itself.
+Each frame, the game passes every event to `ui.handle_event()`, then calls `ui.update()`, then `ui.draw(surface)`, in that order. Pass every event, not only mouse events: the UI needs window events such as `WINDOWLEAVE` to keep highlights and presses right, and it never polls pygame itself.
 
 `handle_event()` returns whether the UI consumed the event. A click on a button or panel is consumed, so the game can ignore it:
 

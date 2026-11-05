@@ -484,7 +484,7 @@ def main() -> None:
 
         jostle_animation.update(dt)
 
-        ui.update(dt)
+        ui.update()
 
         # drawing
         screen.fill("black")

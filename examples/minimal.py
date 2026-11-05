@@ -28,7 +28,7 @@ def main() -> None:
     running = True
 
     while running:
-        dt = clock.tick(60) / 1000  # seconds since the last frame
+        clock.tick(60)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -36,7 +36,7 @@ def main() -> None:
 
             ui.handle_event(event)
 
-        ui.update(dt)
+        ui.update()
 
         screen.fill("black")
         ui.draw(screen)

@@ -28,7 +28,6 @@ from puigame import (
 )
 
 FPS_CAP = 60
-DT_CAP = 0.1  # seconds; a longer frame is treated as lag, not one big step
 
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 360
@@ -140,7 +139,7 @@ def main() -> None:
     running = True
 
     while running:
-        dt = min(clock.tick(FPS_CAP) / 1000, DT_CAP)  # dt in seconds
+        clock.tick(FPS_CAP)
 
         # handle events
         for event in pg.event.get():
@@ -154,7 +153,7 @@ def main() -> None:
                     case pg.K_ESCAPE:
                         pg.event.post(pg.Event(pg.QUIT))
 
-        ui.update(dt)
+        ui.update()
 
         # drawing
         screen.fill(MID_ORANGE)

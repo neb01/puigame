@@ -5,7 +5,6 @@ import puigame
 # region --- Constants --------------------------------------------------------
 
 PUBLIC_NAMES = [
-    "DEFAULT_DT",
     "DEFAULT_THEME",
     "UI",
     "Anchor",

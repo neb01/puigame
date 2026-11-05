@@ -52,7 +52,7 @@ while running:
         if ui.handle_event(event):  # True = consumed by the UI
             continue
         ...  # the game handles everything else
-    ui.update(dt)
+    ui.update()
     screen.fill(BACKGROUND)
     draw_game(screen)
     ui.draw(screen)  # UI drawn on top
@@ -87,16 +87,9 @@ pause_ui.draw(screen)  # drawn last, so on top
 
 ### Timing
 
-`update(dt)` takes the time since the last frame in **seconds**, as a `float`. puigame measures all durations in seconds (for example a text caret blinking every `0.5` seconds), so the UI runs at the same real-world speed at any frame rate.
+`update()` takes no time argument yet, since nothing in the UI changes with time. The first time-based feature, such as an animation or a caret blink, will add an optional `dt: float | None = None`, which is an additive change. With `None`, puigame measures the time since the last update itself; a value overrides it, for pausing, slow motion, a fixed timestep, or tests. Its unit, seconds as a `float` or milliseconds as `Clock.tick()` returns them, is decided then.
 
-`dt` defaults to `DEFAULT_DT = 1 / 60`, which suits games running at a fixed 60 fps. Games running at other or variable frame rates pass the real elapsed time:
-
-```python
-dt = clock.tick(fps) / 1000  # Clock.tick() returns milliseconds
-ui.update(dt)
-```
-
-The default is stated in the `update()` docstring, so it appears in editor tooltips, and in the user documentation.
+A game times its own objects itself, as `examples/showcase.py` does for its bouncing squares.
 
 ## Class hierarchy
 
@@ -403,9 +396,9 @@ Because rendering happens at creation, widgets must be created after `pygame.ini
 
 ### Each frame
 
-`ui.update(dt)` changes state and `ui.draw(surface)` only renders it, so drawing can run any number of times, or be skipped, without changing anything. `update()` runs:
+`ui.update()` changes state and `ui.draw(surface)` only renders it, so drawing can run any number of times, or be skipped, without changing anything. `update()` runs:
 
-1. **Time-based steps**, using `dt`, such as animations and the caret blink. None exist yet; when the first arrives, it becomes its own walk here, before layout, since it may change offsets or state, and a change made after layout would be drawn a frame late.
+1. **Time-based steps**, such as animations and the caret blink. None exist yet; when the first arrives, `update()` gains its optional `dt` (see [Timing](#timing)), and the steps become their own walk here, before layout, since they may change offsets or state, and a change made after layout would be drawn a frame late.
 2. **The layout pass** (see [Layout pass](#layout-pass)).
 3. **The highlight**: the `UIManager` highlights the widget under the last known cursor position (see [Highlight](#highlight)). It runs after layout, so the highlight follows widgets that moved, were hidden, or were disabled under a still cursor.
 4. **Image refresh**: each widget picks its `image` and `image_pos` for its current state.
@@ -552,7 +545,7 @@ src/puigame/
 │   └── theme.py               Theme, DEFAULT_THEME
 ├── _ui/                       running a widget tree
 │   ├── __init__.py
-│   ├── ui.py                  UI, DEFAULT_DT
+│   ├── ui.py                  UI
 │   ├── ui_manager.py          UIManager
 │   └── ui_root.py             UIRoot
 ├── _widgets/                  base classes, states, and concrete widgets
@@ -584,7 +577,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 | Group | Names |
 | --- | --- |
-| Running a UI | `UI`, `DEFAULT_DT` |
+| Running a UI | `UI` |
 | Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button` |
 | Placement | `Anchor` |
 | States | `State` |
