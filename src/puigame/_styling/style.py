@@ -8,7 +8,7 @@ of its colours.
 """
 
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum, auto, unique
 from pathlib import Path
 
 from puigame._layout.anchor import Anchor
@@ -69,6 +69,7 @@ class TextHorizontalExtent(Enum):
     LOGICAL = auto()
 
 
+@unique
 class BundledTypeface(Enum):
     """Typefaces bundled with puigame.
 
@@ -316,6 +317,7 @@ class StyleOverride:
             raise ValueError(
                 f"halo_thickness cannot be negative, got {self.halo_thickness} px",
             )
+
         if self.text_offset is not None and not isinstance(self.text_offset, tuple):
             raise TypeError(
                 f"text_offset must be a tuple or None, got {self.text_offset!r}",

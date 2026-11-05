@@ -133,4 +133,3 @@ class InteractiveWidget(Widget):
         widget is released over it while it is enabled. It does nothing here,
         and subclasses override it.
         """
-        pass

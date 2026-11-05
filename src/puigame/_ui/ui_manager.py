@@ -12,6 +12,8 @@ from puigame._ui.ui_root import UIRoot
 from puigame._widgets.interactive_widget import InteractiveWidget
 from puigame._widgets.widget import Widget
 
+_WHEEL_BUTTONS = frozenset({pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN})
+
 
 class UIManager:
     """Input handler for one UI: consuming events, the highlight, and presses.
@@ -86,7 +88,7 @@ class UIManager:
         self._mouse_pos = event.pos
 
         # wheel buttons pass through until a scrollable widget needs them
-        if event.button in (pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN):
+        if event.button in _WHEEL_BUTTONS:
             return False
 
         # a down for a button already recorded as down means its up was lost
@@ -129,7 +131,7 @@ class UIManager:
         self._mouse_pos = event.pos
 
         # wheel buttons pass through until a scrollable widget needs them
-        if event.button in (pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN):
+        if event.button in _WHEEL_BUTTONS:
             return False
 
         # the down went to the game, so the up does too, such as a drag's release
@@ -147,17 +149,14 @@ class UIManager:
             return True
 
         # clear the press before calling out, since activation may change the tree
-        erstwhile_pressed_widget = self._pressed_widget
+        pressed_widget = self._pressed_widget
         self._clear_pressed_widget()
 
         hit_widget = self._hit_test(event.pos)
 
         # releasing anywhere but on the pressed widget cancels the click
-        if (
-            hit_widget is erstwhile_pressed_widget
-            and erstwhile_pressed_widget.enabled_in_tree
-        ):
-            erstwhile_pressed_widget._activate()
+        if hit_widget is pressed_widget and pressed_widget.enabled_in_tree:
+            pressed_widget._activate()
 
         return True
 

@@ -86,7 +86,7 @@ class Theme:
         for flag in self.style_overrides:
             if len(flag) > 1:
                 raise ValueError(
-                    f"style_overrides cannot use combined flags as a key, got {flag}",
+                    f"style_overrides cannot use combined flags as a key, got {flag!r}",
                 )
 
         # copy, so later changes to the caller's dict don't reach the theme

@@ -92,7 +92,6 @@ def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
         The radius to draw the layer with.
     """
     max_radius = min(size[0], size[1]) // 2
-
     return max(0, min(radius, max_radius))
 
 
