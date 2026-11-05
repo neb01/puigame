@@ -152,62 +152,60 @@ class Text:
                 exist.
         """
         if self.content == "":
-            surface = pg.Surface((0, 0), pg.SRCALPHA)
-            pos = (0, 0)
+            return PlacedImage.zero_size()
 
-        else:
-            font = _get_font(
-                typeface=style.text_typeface,
-                size=style.text_font_size,
-            )
+        font = _get_font(
+            typeface=style.text_typeface,
+            size=style.text_font_size,
+        )
 
-            surface = font.render(
-                self.content,
-                antialias=False,
-                color=style.text_colour,
-            )
+        surface = font.render(
+            self.content,
+            antialias=False,
+            color=style.text_colour,
+        )
 
-            surface.set_alpha(style.text_colour[3])
+        surface.set_alpha(style.text_colour[3])
 
-            # the placement box's width, and its left edge inside the surface
-            match style.text_horizontal_extent:
-                case TextHorizontalExtent.LOGICAL:
-                    text_lines = self.content.split("\n")
-                    placement_box_width = max(
-                        font.size(text_line.rstrip())[0] for text_line in text_lines
-                    )
-                    pos_x_correction = 0
+        # the placement box's width, and its left edge inside the surface
+        match style.text_horizontal_extent:
+            case TextHorizontalExtent.LOGICAL:
+                text_lines = self.content.split("\n")
+                placement_box_width = max(
+                    font.size(text_line.rstrip())[0] for text_line in text_lines
+                )
+                pos_x_correction = 0
 
-                case TextHorizontalExtent.INK:
-                    ink_rect = surface.get_bounding_rect()
-                    placement_box_width = ink_rect.width
-                    pos_x_correction = ink_rect.left
+            case TextHorizontalExtent.INK:
+                ink_rect = surface.get_bounding_rect()
+                placement_box_width = ink_rect.width
+                pos_x_correction = ink_rect.left
 
-                case _:
-                    assert_never(style.text_horizontal_extent)
+            case _:
+                assert_never(style.text_horizontal_extent)
 
-            # the placement box's height, from the first line's cap top to the
-            # last line's baseline; lines are counted from the surface, since
-            # pygame-ce draws a final newline as a blank glyph, not a new line
-            text_line_height = font.get_linesize()
-            num_lines = surface.get_height() // text_line_height
-            cap_height = _get_cap_height(font=font)
-            placement_box_height = cap_height + (num_lines - 1) * text_line_height
+        # the placement box's height, from the first line's cap top to the
+        # last line's baseline; lines are counted from the surface, since
+        # pygame-ce draws a final newline as a blank glyph, not a new line
+        text_line_height = font.get_linesize()
+        num_lines = surface.get_height() // text_line_height
+        cap_height = _get_cap_height(font=font)
+        placement_box_height = cap_height + (num_lines - 1) * text_line_height
 
-            placement_box_pos = get_pos_from_anchor_match(
-                child_size=(placement_box_width, placement_box_height),
-                child_anchor=style.text_anchor,
-                parent_size=size,
-                parent_anchor=style.text_parent_anchor,
-                margin=style.text_margin,
-                offset=style.text_offset,
-            )
+        placement_box_pos = get_pos_from_anchor_match(
+            child_size=(placement_box_width, placement_box_height),
+            child_anchor=style.text_anchor,
+            parent_size=size,
+            parent_anchor=style.text_parent_anchor,
+            margin=style.text_margin,
+            offset=style.text_offset,
+        )
 
-            # move the surface so that the placement box, which starts inside
-            # it, lands where it was anchored
-            pos = (
-                placement_box_pos[0] - pos_x_correction,
-                placement_box_pos[1] - (font.get_ascent() - cap_height),
-            )
+        # move the surface so that the placement box, which starts inside
+        # it, lands where it was anchored
+        pos = (
+            placement_box_pos[0] - pos_x_correction,
+            placement_box_pos[1] - (font.get_ascent() - cap_height),
+        )
 
         return PlacedImage(surface, pos)

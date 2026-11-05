@@ -1,16 +1,44 @@
 import pytest
 
 from puigame import (
-    DEFAULT_THEME,
     Anchor,
+    BundledTypeface,
+    FadeProfile,
     Label,
+    Style,
+    TextHorizontalExtent,
+    Theme,
 )
 from puigame._ui.ui_root import UIRoot
 
 # region --- Constants --------------------------------------------------------
 
-ANY_SIZE = (10, 10)
+ANY_SIZE = (9, 10)
 ANY_STRING = "ordinary northumbrian spokeshaver's coracle"
+
+BLACK = (0, 0, 0, 255)
+WHITE = (255, 255, 255, 255)
+
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
+
+ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 # endregion
 
@@ -19,23 +47,22 @@ ANY_STRING = "ordinary northumbrian spokeshaver's coracle"
 
 
 @pytest.mark.parametrize(
-    ("argument", "value"),
+    ("field_name", "value"),
     [
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
         ("consumes_clicks", True),
     ],
-    ids=["offset", "enabled", "visible", "consumes_clicks"],
 )
-def test_forwards_public_arguments(ui_root: UIRoot, argument, value):
-    label = Label(ui_root, size=ANY_SIZE, **{argument: value})
+def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
+    label = Label(ui_root, size=ANY_SIZE, **{field_name: value})
 
-    assert getattr(label, argument) == value
+    assert getattr(label, field_name) == value
 
 
 def test_forwards_placement_arguments():
-    ui_root = UIRoot(size=(20, 30), theme=DEFAULT_THEME)
+    ui_root = UIRoot(size=(20, 30), theme=ANY_THEME)
     label = Label(
         ui_root,
         size=(3, 5),

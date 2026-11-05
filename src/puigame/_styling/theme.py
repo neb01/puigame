@@ -86,12 +86,15 @@ class Theme:
         for flag in self.style_overrides:
             if len(flag) > 1:
                 raise ValueError(
-                    f"style_overrides cannot use combined flags as a key, got {flag}",
+                    f"style_overrides cannot use combined flags as a key, got {flag!r}",
                 )
 
-        dict_copy = dict(self.style_overrides)
-        read_only_view = MappingProxyType(dict_copy)
-        object.__setattr__(self, "style_overrides", read_only_view)
+        # copy, so later changes to the caller's dict don't reach the theme
+        object.__setattr__(
+            self,
+            "style_overrides",
+            MappingProxyType(dict(self.style_overrides)),
+        )
 
     def style_for(self, state: State) -> Style:
         """Return the style for a combination of state flags.
@@ -126,12 +129,12 @@ DEFAULT_THEME = Theme(
     base_style=Style(
         body_colour=_MID_GREY,
         border_colour=_OFF_WHITE,
-        border_thickness_px=2,
-        corner_radius_px=5,
+        border_thickness=2,
+        corner_radius=5,
         halo_colour=_TRANSPARENT,
         halo_fade_profile=FadeProfile.SOLID,
-        halo_thickness_px=0,
-        swell_px=0,
+        halo_thickness=0,
+        swell=0,
         text_colour=_MID_GREEN,
         text_typeface=BundledTypeface.NEB0FONT,
         text_font_size=18,
@@ -152,12 +155,12 @@ DEFAULT_THEME = Theme(
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=_MID_GREEN,
             halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
-            halo_thickness_px=6,
-            swell_px=1,
+            halo_thickness=6,
+            swell=1,
         ),
         State.PRESSED: StyleOverride(
             body_colour=_DARK_GREY,
-            swell_px=-1,
+            swell=-1,
             text_offset=(0, 1),  # the base offset, 1 px lower
         ),
     },

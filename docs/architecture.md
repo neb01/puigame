@@ -52,7 +52,7 @@ while running:
         if ui.handle_event(event):  # True = consumed by the UI
             continue
         ...  # the game handles everything else
-    ui.update(dt)
+    ui.update()
     screen.fill(BACKGROUND)
     draw_game(screen)
     ui.draw(screen)  # UI drawn on top
@@ -87,16 +87,9 @@ pause_ui.draw(screen)  # drawn last, so on top
 
 ### Timing
 
-`update(dt)` takes the time since the last frame in **seconds**, as a `float`. puigame measures all durations in seconds (for example a text caret blinking every `0.5` seconds), so the UI runs at the same real-world speed at any frame rate.
+`update()` takes no time argument yet, since nothing in the UI changes with time. The first time-based feature, such as an animation or a caret blink, will add an optional `dt: float | None = None`, which is an additive change. With `None`, puigame measures the time since the last update itself; a value overrides it, for pausing, slow motion, a fixed timestep, or tests. Its unit, seconds as a `float` or milliseconds as `Clock.tick()` returns them, is decided then.
 
-`dt` defaults to `DEFAULT_DT = 1 / 60`, which suits games running at a fixed 60 fps. Games running at other or variable frame rates pass the real elapsed time:
-
-```python
-dt = clock.tick(fps) / 1000  # Clock.tick() returns milliseconds
-ui.update(dt)
-```
-
-The default is stated in the `update()` docstring, so it appears in editor tooltips, and in the user documentation.
+A game times its own objects itself, as `examples/showcase.py` does for its bouncing squares.
 
 ## Class hierarchy
 
@@ -184,7 +177,7 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 
 - **`NoSkin`**: a 0x0 surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw, and for widgets with content but no background, such as a bare label, whose image is then the size of its content. It is public, so any widget can go without a background, such as a clear button; its hitbox is still its `rect`. A widget with `NoSkin` shows changes of state only through its components' styles, such as text colour and text offset. `Label` always uses it: for text on a background, place a `Label` in a `Panel`. A 0x0 surface is the one exception to the size rules above.
 - **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
-- **`ImageSkin`**: one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option switches to nearest-neighbour scaling to keep hard pixel edges. Accepts a `pygame.Surface` or a path.
+- **`ImageSkin`** (planned, not yet built): one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option would switch to nearest-neighbour scaling to keep hard pixel edges. It would accept a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
 
 Scaling behaviour is a per-skin option, not a global setting.
@@ -215,7 +208,7 @@ Scaling behaviour is a per-skin option, not a global setting.
 - **Body rect**: the fill inside the border. It is the border rect shrunk by the border thickness on every side.
 - **Surface rect**: the whole rendered surface. It is the border rect grown by the halo thickness on every side.
 
-It draws three filled, rounded rectangles from largest to smallest: the halo (filling the surface rect), the border (filling the border rect), and the body (filling the body rect). Each layer covers the middle of the one before, so no gaps appear at rounded corners. The style's `corner_radius_px` is the radius of the border rect at the widget's normal size. The halo's radius is larger by the halo thickness and the body's smaller by the border thickness, and all three grow or shrink with the swell, so the layers stay concentric. Each layer's radius is kept between 0 and half that layer's shorter side, as in CSS: a radius that would be larger gives a pill shape, and one that would be negative, such as the body's inside a border thicker than the corner radius, gives square corners.
+It draws three filled, rounded rectangles from largest to smallest: the halo (filling the surface rect), the border (filling the border rect), and the body (filling the body rect). Each layer covers the middle of the one before, so no gaps appear at rounded corners. The style's `corner_radius` is the radius of the border rect at the widget's normal size. The halo's radius is larger by the halo thickness and the body's smaller by the border thickness, and all three grow or shrink with the swell, so the layers stay concentric. Each layer's radius is kept between 0 and half that layer's shorter side, as in CSS: a radius that would be larger gives a pill shape, and one that would be negative, such as the body's inside a border thicker than the corner radius, gives square corners.
 
 ![DrawnSkin layers for each combination of border and swell](images/skin_layers.svg)
 
@@ -403,9 +396,9 @@ Because rendering happens at creation, widgets must be created after `pygame.ini
 
 ### Each frame
 
-`ui.update(dt)` changes state and `ui.draw(surface)` only renders it, so drawing can run any number of times, or be skipped, without changing anything. `update()` runs:
+`ui.update()` changes state and `ui.draw(surface)` only renders it, so drawing can run any number of times, or be skipped, without changing anything. `update()` runs:
 
-1. **Time-based steps**, using `dt`, such as animations and the caret blink. None exist yet; when the first arrives, it becomes its own walk here, before layout, since it may change offsets or state, and a change made after layout would be drawn a frame late.
+1. **Time-based steps**, such as animations and the caret blink. None exist yet; when the first arrives, `update()` gains its optional `dt` (see [Timing](#timing)), and the steps become their own walk here, before layout, since they may change offsets or state, and a change made after layout would be drawn a frame late.
 2. **The layout pass** (see [Layout pass](#layout-pass)).
 3. **The highlight**: the `UIManager` highlights the widget under the last known cursor position (see [Highlight](#highlight)). It runs after layout, so the highlight follows widgets that moved, were hidden, or were disabled under a still cursor.
 4. **Image refresh**: each widget picks its `image` and `image_pos` for its current state.
@@ -521,17 +514,7 @@ Callbacks are plain callables passed to widgets on creation. Each receives the w
 
 ## Naming and code conventions
 
-- **State flags** are adjectives: `enabled`, `visible`, `highlightable`, `checked`; `State` members likewise (`HIGHLIGHTED`, `PRESSED`, `EDITING`).
-- **Tree-aware values** end in `_in_tree`: `enabled_in_tree`, `visible_in_tree`, `highlightable_in_tree`. They are calculated on demand, never stored.
-- **Permissions** start with `can_`: `can_untoggle`.
-- **Possession** starts with `has_`: `has_text`, `has_children`.
-- **Methods** are verbs: `show()`, `hide()`, `toggle()`. Values that read and write like attributes, such as `Label.text`, are properties instead.
-- **Classes** use `CapWords` with capitalised acronyms (`UIManager`); public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos` and `mouse.get_pos()`); English spelling is used (`CENTRE`, `colour`).
-- **Docstrings and documentation** use English spelling and the Oxford comma in lists of three or more.
-- **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`, `UIRoot` in `ui_root.py`.
-- **Error messages** start lowercase, name the exact parameter or field, and have no final full stop. Requirements use "must" and prohibitions use "cannot" (never "must not", which is easy to misread). The bad value follows ", got": `"border_thickness_px cannot be negative, got -2 px"`. Several values are written `name=value` with no spaces around `=`, units are separated by a space (`2 px`), and a second clause follows a semicolon. When a message is split across several string literals, each break comes after a space, so the space ends one line and the next line starts with a word.
-- **Exhaustive `match` statements** over an enum end with `case _: assert_never(value)`, so Pyright reports any member that is not handled.
-- **`None` checks** use `is None` and `is not None`, never truthiness (`x or default`), so valid falsy values such as `0` or `""` are never replaced by a default. Optional arguments default to `None`, never to a mutable object such as a list, and the real default is created inside the function.
+Naming, code, error message, docstring, and test conventions are in [conventions.md](conventions.md).
 
 ## Package layout
 
@@ -541,7 +524,7 @@ src/puigame/
 │   ├── __init__.py
 │   ├── component.py           Component
 │   ├── placed_image.py        PlacedImage, compose_layers
-│   ├── skin.py                Skin, NoSkin, DrawnSkin, ImageSkin
+│   ├── skin.py                Skin, NoSkin, DrawnSkin
 │   └── text.py                Text and the font cache
 ├── _layout/                   anchors and placement
 │   ├── __init__.py
@@ -552,7 +535,7 @@ src/puigame/
 │   └── theme.py               Theme, DEFAULT_THEME
 ├── _ui/                       running a widget tree
 │   ├── __init__.py
-│   ├── ui.py                  UI, DEFAULT_DT
+│   ├── ui.py                  UI
 │   ├── ui_manager.py          UIManager
 │   └── ui_root.py             UIRoot
 ├── _widgets/                  base classes, states, and concrete widgets
@@ -584,13 +567,13 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 | Group | Names |
 | --- | --- |
-| Running a UI | `UI`, `DEFAULT_DT` |
+| Running a UI | `UI` |
 | Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button` |
 | Placement | `Anchor` |
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
-- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `ImageSkin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
+- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
 - **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
 - **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.

@@ -16,9 +16,6 @@ from puigame._ui.ui_manager import UIManager
 from puigame._ui.ui_root import UIRoot
 from puigame._widgets.widget import Widget
 
-# one frame at 60 fps, for games that update once per fixed-rate frame
-DEFAULT_DT = 1 / 60
-
 
 class UI:
     """A widget tree, with its layout and drawing, run by the game each frame.
@@ -84,7 +81,7 @@ class UI:
         """
         return self._manager.handle_event(event)
 
-    def update(self, dt: float = DEFAULT_DT) -> None:
+    def update(self) -> None:
         """Lay out the widgets and refresh their images for this frame.
 
         Call once per frame, after handling events and before ``draw()``.
@@ -92,12 +89,6 @@ class UI:
         flag, take effect here: the layout pass places every widget against its
         parent, the highlight moves to the widget under the cursor, then each
         widget shows its image for its current state.
-
-        Args:
-            dt: Time since the last frame, in seconds. Defaults to
-                ``DEFAULT_DT``, one frame at 60 fps. Games running at another
-                or a variable frame rate pass the real elapsed time, for
-                example ``clock.tick(fps) / 1000``.
         """
         self._root._place_tree()
         self._manager._update_highlight()

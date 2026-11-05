@@ -3,13 +3,16 @@ from dataclasses import replace
 import pygame as pg
 
 from puigame import (
-    DEFAULT_THEME,
     UI,
     Anchor,
+    BundledTypeface,
     DrawnSkin,
+    FadeProfile,
     NoSkin,
     State,
+    Style,
     StyleOverride,
+    TextHorizontalExtent,
     Theme,
     Widget,
 )
@@ -17,13 +20,34 @@ from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------
 
-ANY_SIZE = (10, 10)
+ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
-ANY_THEME = DEFAULT_THEME
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
+BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
+
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
+
+ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 # endregion
 
@@ -70,12 +94,12 @@ def test_update_refreshes_widget_image():
         size=(10, 20),
         theme=Theme(
             base_style=replace(
-                DEFAULT_THEME.base_style,
+                ANY_STYLE,
                 body_colour=BLUE,
-                border_thickness_px=0,
-                corner_radius_px=0,
-                halo_thickness_px=0,
-                swell_px=0,
+                border_thickness=0,
+                corner_radius=0,
+                halo_thickness=0,
+                swell=0,
             ),
             style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
         ),

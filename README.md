@@ -30,7 +30,7 @@ def main() -> None:
     screen = pg.display.set_mode((640, 360), pg.SCALED)
     pg.display.set_caption("puigame minimal demo")
 
-    ui = UI(size=screen.get_size())
+    ui = UI(size=screen.size)
 
     Button(
         ui.root,
@@ -44,7 +44,7 @@ def main() -> None:
     running = True
 
     while running:
-        dt = clock.tick(60) / 1000  # seconds since the last frame
+        clock.tick(60)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -52,7 +52,7 @@ def main() -> None:
 
             ui.handle_event(event)
 
-        ui.update(dt)
+        ui.update()
 
         screen.fill("black")
         ui.draw(screen)
@@ -69,7 +69,7 @@ For more, see [`examples/custom_theme.py`](examples/custom_theme.py) and [`examp
 
 ## Running a UI
 
-Each frame, the game passes every event to `ui.handle_event()`, then calls `ui.update(dt)`, then `ui.draw(surface)`, in that order. Pass every event, not only mouse events: the UI needs window events such as `WINDOWLEAVE` to keep highlights and presses right, and it never polls pygame itself.
+Each frame, the game passes every event to `ui.handle_event()`, then calls `ui.update()`, then `ui.draw(surface)`, in that order. Pass every event, not only mouse events: the UI needs window events such as `WINDOWLEAVE` to keep highlights and presses right, and it never polls pygame itself.
 
 `handle_event()` returns whether the UI consumed the event. A click on a button or panel is consumed, so the game can ignore it:
 
@@ -86,7 +86,7 @@ for event in pg.event.get():
 
 Mouse motion, wheel, and window events are never consumed.
 
-For a display opened with `pg.SCALED`, create the UI with the display's own size, `screen.get_size()`, not the window's.
+For a display opened with `pg.SCALED`, create the UI with the display's own size, `screen.size`, not the window's.
 
 ## Widgets
 
@@ -129,7 +129,7 @@ theme = Theme(
     style_overrides={
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=(255, 165, 0, 255),
-            halo_thickness_px=6,
+            halo_thickness=6,
         ),
         State.PRESSED: StyleOverride(
             body_colour=(50, 0, 0, 255),
@@ -138,7 +138,7 @@ theme = Theme(
     },
 )
 
-ui = UI(size=screen.get_size(), theme=theme)
+ui = UI(size=screen.size, theme=theme)
 ```
 
 An override lists only the fields that differ, and the rest come from the base style. `style_overrides` replaces the default theme's overrides rather than adding to them, so a state left out, such as `DISABLED` above, looks the same as the base style. [`examples/custom_theme.py`](examples/custom_theme.py) restyles the default theme this way, with overrides for the disabled, highlighted, and pressed states.

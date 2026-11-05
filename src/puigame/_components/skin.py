@@ -12,7 +12,6 @@ drawing centred on the rect.
 
 NoSkin renders a 0x0 surface, for widgets with no background.
 DrawnSkin draws surfaces in code from the style it is given.
-ImageSkin loads an image file and scales it with nine-slice scaling.
 
 Widgets cache what their skin renders as one image per state, and swap
 between those images as their state changes.
@@ -75,10 +74,7 @@ class NoSkin(Skin):
         Returns:
             A new 0x0 surface at position ``(0, 0)``.
         """
-        surface = pg.Surface((0, 0), pg.SRCALPHA)
-        pos = (0, 0)
-
-        return PlacedImage(surface, pos)
+        return PlacedImage.zero_size()
 
 
 def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
@@ -96,7 +92,6 @@ def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
         The radius to draw the layer with.
     """
     max_radius = min(size[0], size[1]) // 2
-
     return max(0, min(radius, max_radius))
 
 
@@ -139,7 +134,7 @@ class DrawnSkin(Skin):
                 ``Theme.style_for()``.
 
         Returns:
-            The drawn surface, at ``-(swell_px + halo_thickness_px)`` on each
+            The drawn surface, at ``-(swell + halo_thickness)`` on each
             axis, so that the body lines up with the widget's rect.
 
         Raises:
@@ -152,44 +147,44 @@ class DrawnSkin(Skin):
 
         # main inner body size and radius, and check for negative size
         body_size = (
-            given_width + (style.swell_px - style.border_thickness_px) * 2,
-            given_height + (style.swell_px - style.border_thickness_px) * 2,
+            given_width + (style.swell - style.border_thickness) * 2,
+            given_height + (style.swell - style.border_thickness) * 2,
         )
 
         body_corner_radius = _clamp_radius(
-            style.corner_radius_px + style.swell_px - style.border_thickness_px,
+            style.corner_radius + style.swell - style.border_thickness,
             body_size,
         )
 
         if min(body_size) < 0:
             raise ValueError(
-                "border_thickness_px and swell_px cannot combine to make the "
+                "border_thickness and swell cannot combine to make the "
                 f"body size negative, got body_size={body_size} px, size={size} px, "
-                f"border_thickness_px={style.border_thickness_px} px, "
-                f"swell_px={style.swell_px} px",
+                f"border_thickness={style.border_thickness} px, "
+                f"swell={style.swell} px",
             )
 
         # border size and radius
         border_size = (
-            given_width + style.swell_px * 2,
-            given_height + style.swell_px * 2,
+            given_width + style.swell * 2,
+            given_height + style.swell * 2,
         )
 
         border_corner_radius = _clamp_radius(
-            style.corner_radius_px + style.swell_px,
+            style.corner_radius + style.swell,
             border_size,
         )
 
         # outer surface size, sized for the outer edge of the halo
         surface_size = (
-            given_width + (style.swell_px + style.halo_thickness_px) * 2,
-            given_height + (style.swell_px + style.halo_thickness_px) * 2,
+            given_width + (style.swell + style.halo_thickness) * 2,
+            given_height + (style.swell + style.halo_thickness) * 2,
         )
 
-        # calculated from border_corner_radius so that negative swell_px
+        # calculated from border_corner_radius so that negative swell
         # does not carry over into halo radius
         surface_corner_radius = _clamp_radius(
-            border_corner_radius + style.halo_thickness_px,
+            border_corner_radius + style.halo_thickness,
             surface_size,
         )
 
@@ -209,14 +204,14 @@ class DrawnSkin(Skin):
             inner_halo_ring_rect = border_centred_rect.inflate(2, 2)
             inner_halo_ring_corner_radius = border_corner_radius + 1
 
-            for i in reversed(range(style.halo_thickness_px)):
+            for i in reversed(range(style.halo_thickness)):
                 # draws the outermost ring first, then inwards, so each ring
                 # overlaps the one drawn before it; a thickness of 1 gives a
                 # single ring at the halo's alpha
 
                 # t runs from 0 at the innermost ring to 1 just past the outer
                 # edge; each profile's multiplier is defined in FadeProfile
-                t = i / style.halo_thickness_px
+                t = i / style.halo_thickness
 
                 match style.halo_fade_profile:
                     case FadeProfile.LINEAR:
@@ -285,14 +280,8 @@ class DrawnSkin(Skin):
         )
 
         pos = (
-            -style.swell_px - style.halo_thickness_px,
-            -style.swell_px - style.halo_thickness_px,
+            -style.swell - style.halo_thickness,
+            -style.swell - style.halo_thickness,
         )
 
         return PlacedImage(surface, pos)
-
-
-class ImageSkin(Skin):
-    """Skin that uses an image file, scaled with nine-slice scaling."""
-
-    pass

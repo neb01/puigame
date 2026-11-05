@@ -6,13 +6,15 @@ import pytest
 from pygame.typing import Point
 
 from puigame import (
-    DEFAULT_THEME,
     UI,
     Anchor,
+    BundledTypeface,
+    FadeProfile,
     NoSkin,
     State,
     Style,
     StyleOverride,
+    TextHorizontalExtent,
     Theme,
     Widget,
 )
@@ -23,12 +25,34 @@ from stubs import BodyColourLayer, FixedLayer
 
 # region --- Constants --------------------------------------------------------
 
+ANY_SIZE = (9, 10)
+ANY_SKIN = NoSkin()
+
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
+BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 
-ANY_SIZE = (10, 10)
-ANY_SKIN = NoSkin()
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
+
+ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 # endregion
 
@@ -130,18 +154,39 @@ def test_constructor_with_negative_size_raises(ui_root: UIRoot, size):
     assert ui_root.children == ()
 
 
-@pytest.mark.parametrize("margin", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_margin_raises(ui_root: UIRoot, margin):
-    with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, margin=margin)
+@pytest.mark.parametrize(
+    ("margin", "expected_topleft"),
+    [
+        ((1, 2), (1, 2)),
+        ([2, 3], (2, 3)),
+        (pg.Vector2(4, 2), (4, 2)),
+    ],
+    ids=["tuple", "list", "pg.Vector2"],
+)
+def test_margin_places_rect_on_correct_axes(
+    ui_root: UIRoot,
+    margin,
+    expected_topleft,
+):
+    widget = Widget(
+        ui_root,
+        size=ANY_SIZE,
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=margin,
+        offset=(0, 0),
+    )
+
+    assert widget.rect.topleft == expected_topleft
 
 
 @pytest.mark.parametrize(
     ("offset", "expected_offset"),
     [
-        ((1.0, 2.0), pg.Vector2(1.0, 2.0)),
-        ([2.0, 3.0], pg.Vector2(2.0, 3.0)),
-        (pg.Vector2(4.0, 2.0), pg.Vector2(4.0, 2.0)),
+        ((1, 2), pg.Vector2(1, 2)),
+        ([2, 3], pg.Vector2(2, 3)),
+        (pg.Vector2(4, 2), pg.Vector2(4, 2)),
     ],
     ids=["tuple", "list", "pg.Vector2"],
 )
@@ -156,10 +201,24 @@ def test_offset_converts_to_vector2_on_correct_axes(
     assert widget.offset == expected_offset
 
 
-@pytest.mark.parametrize("offset", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_offset_raises(ui_root: UIRoot, offset):
+@pytest.mark.parametrize("field_name", ["margin", "offset"])
+@pytest.mark.parametrize("value", [1, 2.0], ids=["int", "float"])
+def test_constructor_with_single_value_margin_or_offset_raises(
+    ui_root: UIRoot,
+    field_name,
+    value,
+):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
+        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("anchor", [*Anchor])
+def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+
+    assert ui_root.children == (widget,)
 
 
 @pytest.mark.parametrize(
@@ -172,6 +231,16 @@ def test_constructor_with_str_tuple_or_none_anchor_raises(ui_root: UIRoot, ancho
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
 
     assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
+def test_constructor_parent_anchor_can_take_any_member_or_none(
+    ui_root: UIRoot,
+    parent_anchor,
+):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui_root.children == (widget,)
 
 
 @pytest.mark.parametrize(
@@ -187,23 +256,6 @@ def test_constructor_with_str_or_tuple_parent_anchor_raises(
         Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
 
     assert ui_root.children == ()
-
-
-@pytest.mark.parametrize("anchor", [*Anchor])
-def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
-
-    assert ui_root.children == (widget,)
-
-
-@pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
-def test_constructor_parent_anchor_can_take_any_member_or_none(
-    ui_root: UIRoot,
-    parent_anchor,
-):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
-
-    assert ui_root.children == (widget,)
 
 
 # endregion
@@ -233,7 +285,7 @@ def test_rect_can_change_in_place(widget: Widget):
 
 
 def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
-    ui_root = UIRoot(size=ANY_SIZE, theme=DEFAULT_THEME)
+    ui_root = UIRoot(size=ANY_SIZE, theme=ANY_THEME)
 
     parent = Widget(
         ui_root,
@@ -258,7 +310,7 @@ def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
 
 
 def test_parent_anchor_defaults_to_anchor():
-    ui_root = UIRoot(size=(10, 12), theme=DEFAULT_THEME)
+    ui_root = UIRoot(size=(10, 12), theme=ANY_THEME)
     widget = Widget(ui_root, size=(5, 10), skin=ANY_SKIN, anchor=Anchor.BOTTOM_RIGHT)
 
     assert widget.rect.topleft == (5, 2)
@@ -283,7 +335,7 @@ def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(
 
 def test_child_and_grandchild_return_root_theme():
     theme = Theme(
-        base_style=replace(DEFAULT_THEME.base_style, body_colour=BLUE),
+        base_style=replace(ANY_STYLE, body_colour=BLUE),
         style_overrides={},
     )
     ui_root = UIRoot(size=ANY_SIZE, theme=theme)
@@ -303,41 +355,27 @@ def test_child_and_grandchild_return_root_theme():
 
 def test_assigning_to_rect_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget.rect = pg.Rect(1, 1, 1, 1)
+        widget.rect = pg.Rect(1, 1, 1, 1)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_assigning_to_image_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget.image = pg.Surface(ANY_SIZE)
+        widget.image = pg.Surface(ANY_SIZE)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_assigning_to_skin_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget.skin = ANY_SKIN
+        widget.skin = ANY_SKIN  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def test_assigning_to_parent_raises(ui_root: UIRoot):
-    widget_1 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_2 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-
+def test_assigning_to_parent_raises(ui_root: UIRoot, widget: Widget):
     with pytest.raises(AttributeError):
-        widget_2.parent = widget_1  # pyright: ignore[reportAttributeAccessIssue]
-
-    assert ui_root.children == (widget_1, widget_2)
-    assert widget_1.children == ()
-    assert widget_2.parent is ui_root
+        widget.parent = ui_root  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def test_assigning_to_children_raises(ui_root: UIRoot):
-    widget_1 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_2 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-
+def test_assigning_to_children_raises(widget: Widget):
     with pytest.raises(AttributeError):
-        widget_1.children = (widget_2,)  # pyright: ignore[reportAttributeAccessIssue]
-
-    assert ui_root.children == (widget_1, widget_2)
-    assert widget_1.children == ()
-    assert widget_2.parent is ui_root
+        widget.children = ()  # pyright: ignore[reportAttributeAccessIssue]
 
 
 # endregion
@@ -606,7 +644,7 @@ def test_showing_parent_does_not_override_hidden_grandparent(
 
 
 def test_image_shows_base_style_by_default():
-    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
+    base_style = replace(ANY_STYLE, body_colour=BLUE)
     theme = Theme(
         base_style=base_style,
         style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
@@ -620,7 +658,7 @@ def test_image_shows_base_style_by_default():
 
 
 def test_image_shows_disabled_style_when_ancestor_is_disabled():
-    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
+    base_style = replace(ANY_STYLE, body_colour=BLUE)
     theme = Theme(
         base_style=base_style,
         style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
@@ -648,7 +686,7 @@ def test_update_with_state_not_in_possible_states_raises():
         # so disabling the widget gives a state with no cached image
         _possible_states: ClassVar[tuple[State, ...]] = (State.BASE,)
 
-    ui = UI(size=ANY_SIZE, theme=DEFAULT_THEME)
+    ui = UI(size=ANY_SIZE, theme=ANY_THEME)
     widget = WidgetWithoutDisabledState(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
     widget.enabled = False
 
@@ -670,7 +708,7 @@ def test_image_cache_has_one_image_per_state(widget: Widget):
 
 
 def test_image_cache_reuses_object():
-    ui = UI(size=ANY_SIZE, theme=DEFAULT_THEME)
+    ui = UI(size=ANY_SIZE, theme=ANY_THEME)
     widget = Widget(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
     original_base_image = widget.image
 
@@ -733,7 +771,7 @@ def test_image_covers_all_layers(ui_root: UIRoot):
 
 
 def test_skin_receives_style_for_each_possible_state():
-    base_style = replace(DEFAULT_THEME.base_style, body_colour=BLUE)
+    base_style = replace(ANY_STYLE, body_colour=BLUE)
     theme = Theme(
         base_style=base_style,
         style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
@@ -755,28 +793,31 @@ def test_skin_receives_style_for_each_possible_state():
 
 
 def test_components_receive_rect_size_and_style_for_each_possible_state():
-    ui_root = UIRoot(
-        size=ANY_SIZE,
-        theme=Theme(
-            base_style=DEFAULT_THEME.base_style,
-            style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
-        ),
+    base_style = replace(ANY_STYLE, body_colour=BLUE)
+    theme = Theme(
+        base_style=base_style,
+        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
     )
-    recording_layer = RecordingLayer()
+
+    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
+    component = RecordingLayer()
 
     Widget(
         ui_root,
         size=(10, 12),
         skin=ANY_SKIN,
-        components=[recording_layer],
+        components=[component],
     )
 
-    assert set(recording_layer.received_styles) == {
-        DEFAULT_THEME.base_style,
-        replace(DEFAULT_THEME.base_style, body_colour=RED),
+    expected_base_style = base_style
+    expected_override_style = replace(base_style, body_colour=RED)
+
+    assert set(component.received_styles) == {
+        expected_base_style,
+        expected_override_style,
     }
-    assert len(recording_layer.received_styles) == 2
-    assert recording_layer.received_sizes == [(10, 12), (10, 12)]
+    assert len(component.received_styles) == 2
+    assert component.received_sizes == [(10, 12), (10, 12)]
 
 
 def test_image_keeps_components_given_as_generator(ui_root: UIRoot):

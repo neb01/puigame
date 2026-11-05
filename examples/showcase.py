@@ -255,7 +255,7 @@ def main() -> None:
     screen = pg.display.set_mode(SCREEN_SIZE, pg.SCALED)
     pg.display.set_caption("puigame showcase demo")
 
-    ui = UI(size=screen.get_size())
+    ui = UI(size=screen.size)
 
     # title
     Label(
@@ -390,9 +390,7 @@ def main() -> None:
         anchor=Anchor.MID_BOTTOM,
     )
 
-    floor_y = (
-        bounce_panel.rect.bottom - bounce_panel.theme.base_style.border_thickness_px
-    )
+    floor_y = bounce_panel.rect.bottom - bounce_panel.theme.base_style.border_thickness
 
     red_surface = pg.Surface(SQUARE_SIZE)
     red_surface.fill("red")
@@ -486,7 +484,7 @@ def main() -> None:
 
         jostle_animation.update(dt)
 
-        ui.update(dt)
+        ui.update()
 
         # drawing
         screen.fill("black")

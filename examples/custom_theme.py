@@ -28,7 +28,6 @@ from puigame import (
 )
 
 FPS_CAP = 60
-DT_CAP = 0.1  # seconds; a longer frame is treated as lag, not one big step
 
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 360
@@ -58,8 +57,8 @@ CUSTOM_THEME = Theme(
     base_style=replace(
         DEFAULT_THEME.base_style,
         body_colour=MID_RED,
-        border_thickness_px=0,
-        corner_radius_px=20,  # over half the button height: a pill, as in CSS
+        border_thickness=0,
+        corner_radius=20,  # over half the button height: a pill, as in CSS
         text_colour=MID_ORANGE,
         text_font_size=24,
     ),
@@ -71,11 +70,11 @@ CUSTOM_THEME = Theme(
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=ORANGE,
             halo_fade_profile=FadeProfile.HARD_QUADRATIC,
-            halo_thickness_px=10,
+            halo_thickness=10,
         ),
         State.PRESSED: StyleOverride(
             body_colour=DARK_RED,
-            swell_px=-1,
+            swell=-1,
             text_offset=(0, 1),  # the base offset, 1 px lower
         ),
     },
@@ -88,7 +87,7 @@ def main() -> None:
     screen = pg.display.set_mode(SCREEN_SIZE, pg.SCALED)
     pg.display.set_caption("puigame custom theme demo")
 
-    ui = UI(size=screen.get_size(), theme=CUSTOM_THEME)
+    ui = UI(size=screen.size, theme=CUSTOM_THEME)
 
     # containers
     left_half_container = Container(
@@ -140,7 +139,7 @@ def main() -> None:
     running = True
 
     while running:
-        dt = min(clock.tick(FPS_CAP) / 1000, DT_CAP)  # dt in seconds
+        clock.tick(FPS_CAP)
 
         # handle events
         for event in pg.event.get():
@@ -154,7 +153,7 @@ def main() -> None:
                     case pg.K_ESCAPE:
                         pg.event.post(pg.Event(pg.QUIT))
 
-        ui.update(dt)
+        ui.update()
 
         # drawing
         screen.fill(MID_ORANGE)

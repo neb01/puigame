@@ -6,15 +6,18 @@ import pytest
 from pygame.typing import Point
 
 from puigame import (
-    DEFAULT_THEME,
     UI,
     Anchor,
+    BundledTypeface,
     Container,
+    FadeProfile,
     Label,
     NoSkin,
     Panel,
     State,
+    Style,
     StyleOverride,
+    TextHorizontalExtent,
     Theme,
     Widget,
 )
@@ -27,15 +30,37 @@ from stubs import BodyColourLayer
 
 ANY_SKIN = NoSkin()
 
+BLACK = (0, 0, 0, 255)
+WHITE = (255, 255, 255, 255)
+
 BASE_COLOUR = (0, 0, 0, 255)
-DISABLED_COLOUR = (255, 0, 0, 255)
 HIGHLIGHTED_COLOUR = (0, 255, 0, 255)
+DISABLED_COLOUR = (255, 0, 0, 255)
+
+ANY_STYLE = Style(
+    body_colour=WHITE,
+    border_colour=BLACK,
+    border_thickness=2,
+    corner_radius=2,
+    halo_colour=(0, 0, 0, 0),
+    halo_fade_profile=FadeProfile.SOLID,
+    halo_thickness=0,
+    swell=0,
+    text_colour=BLACK,
+    text_typeface=BundledTypeface.PYGAME_DEFAULT,
+    text_font_size=12,
+    text_anchor=Anchor.CENTRE,
+    text_parent_anchor=Anchor.CENTRE,
+    text_horizontal_extent=TextHorizontalExtent.INK,
+    text_margin=(0, 0),
+    text_offset=(0, 0),
+)
 
 HIGHLIGHT_THEME = Theme(
-    base_style=replace(DEFAULT_THEME.base_style, body_colour=BASE_COLOUR),
+    base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
     style_overrides={
-        State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
         State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
+        State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR),
     },
 )
 
@@ -138,7 +163,12 @@ def highlight_ui() -> UI:
 # region --- Consuming --------------------------------------------------------
 
 
-def test_consuming_widget_consumes_mouse_button_down(ui: UI):
+@pytest.mark.parametrize(
+    "button",
+    [pg.BUTTON_LEFT, pg.BUTTON_RIGHT],
+    ids=["left button", "right button"],
+)
+def test_consuming_widget_consumes_mouse_button_down(ui: UI, button):
     Panel(
         ui.root,
         size=(4, 5),
@@ -152,8 +182,9 @@ def test_consuming_widget_consumes_mouse_button_down(ui: UI):
     mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=(1, 2),
-        button=pg.BUTTON_LEFT,
+        button=button,
     )
+
     assert ui.handle_event(mouse_button_down_event)
 
 
@@ -197,37 +228,17 @@ def test_non_consuming_widget_does_not_consume_mouse_button_down(ui: UI, widget_
     assert not ui.handle_event(mouse_button_down_event)
 
 
-def test_consuming_widget_consumes_right_mouse_button_down(ui: UI):
-    Panel(
-        ui.root,
-        size=(4, 5),
-        skin=ANY_SKIN,
-        anchor=Anchor.TOP_LEFT,
-        parent_anchor=Anchor.TOP_LEFT,
-        margin=(0, 0),
-        offset=(0, 0),
-    )
-
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_RIGHT,
-    )
-
-    assert ui.handle_event(mouse_button_down_event)
-
-
 @pytest.mark.parametrize(
     "event_type",
-    [pg.MOUSEBUTTONUP, pg.MOUSEBUTTONDOWN],
-    ids=["button up", "button down"],
+    [pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP],
+    ids=["button down", "button up"],
 )
 @pytest.mark.parametrize(
-    "event_button",
+    "button",
     [pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN],
     ids=["wheel up", "wheel down"],
 )
-def test_wheel_button_events_are_not_consumed(ui: UI, event_type, event_button):
+def test_wheel_button_events_are_not_consumed(ui: UI, event_type, button):
     Panel(
         ui.root,
         size=(4, 5),
@@ -241,7 +252,7 @@ def test_wheel_button_events_are_not_consumed(ui: UI, event_type, event_button):
     mouse_button_event = pg.Event(
         event_type,
         pos=(1, 2),
-        button=event_button,
+        button=button,
     )
 
     assert not ui.handle_event(mouse_button_event)
