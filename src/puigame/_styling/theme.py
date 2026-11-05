@@ -22,7 +22,7 @@ from puigame._styling.style import (
 )
 from puigame._widgets.state import State
 
-# order in which style_for() applies overrides, lowest precedence first, so the
+# order in which _style_for() applies overrides, lowest precedence first, so the
 # later of two flags wins a field both set; this tuple decides, not the order
 # State declares its members in or the order of style_overrides
 _STATE_PRECEDENCE = (
@@ -96,7 +96,7 @@ class Theme:
             MappingProxyType(dict(self.style_overrides)),
         )
 
-    def style_for(self, state: State) -> Style:
+    def _style_for(self, state: State) -> Style:
         """Return the style for a combination of state flags.
 
         Starts from ``base_style`` and applies the override for each flag in

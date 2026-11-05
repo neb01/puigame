@@ -32,8 +32,8 @@ class Component(Protocol):
 
         Args:
             size: ``(width, height)`` of the widget's rect, in pixels.
-            style: Style for one of the widget's states, as returned by
-                ``Theme.style_for()``.
+            style: Style for one of the widget's states, as resolved by the
+                widget's theme.
 
         Returns:
             A new surface, never shared with another widget or another call,

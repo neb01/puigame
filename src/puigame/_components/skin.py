@@ -44,8 +44,8 @@ class Skin(ABC):
 
         Args:
             size: ``(width, height)`` of the widget's rect, in pixels.
-            style: Complete style to draw with, as returned by
-                ``Theme.style_for()``.
+            style: Complete style to draw with, as resolved by the widget's
+                theme.
 
         Returns:
             A new surface and its position. Without effects, the surface is
@@ -130,8 +130,8 @@ class DrawnSkin(Skin):
 
         Args:
             size: ``(width, height)`` of the widget's rect, in pixels.
-            style: Complete style to draw with, as returned by
-                ``Theme.style_for()``.
+            style: Complete style to draw with, as resolved by the widget's
+                theme.
 
         Returns:
             The drawn surface, at ``-(swell + halo_thickness)`` on each
