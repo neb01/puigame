@@ -30,7 +30,7 @@ def main() -> None:
     screen = pg.display.set_mode((640, 360), pg.SCALED)
     pg.display.set_caption("puigame minimal demo")
 
-    ui = UI(size=screen.get_size())
+    ui = UI(size=screen.size)
 
     Button(
         ui.root,
@@ -86,7 +86,7 @@ for event in pg.event.get():
 
 Mouse motion, wheel, and window events are never consumed.
 
-For a display opened with `pg.SCALED`, create the UI with the display's own size, `screen.get_size()`, not the window's.
+For a display opened with `pg.SCALED`, create the UI with the display's own size, `screen.size`, not the window's.
 
 ## Widgets
 
@@ -138,7 +138,7 @@ theme = Theme(
     },
 )
 
-ui = UI(size=screen.get_size(), theme=theme)
+ui = UI(size=screen.size, theme=theme)
 ```
 
 An override lists only the fields that differ, and the rest come from the base style. `style_overrides` replaces the default theme's overrides rather than adding to them, so a state left out, such as `DISABLED` above, looks the same as the base style. [`examples/custom_theme.py`](examples/custom_theme.py) restyles the default theme this way, with overrides for the disabled, highlighted, and pressed states.
