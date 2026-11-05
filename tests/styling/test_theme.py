@@ -251,7 +251,7 @@ def test_state_precedence_lists_exactly_non_base_states():
         state for state in State.__members__.values() if state is not State.BASE
     }
 
-    assert expected_states == set(_STATE_PRECEDENCE)
+    assert set(_STATE_PRECEDENCE) == expected_states
 
 
 def test_no_duplicates_in_state_precedence():
