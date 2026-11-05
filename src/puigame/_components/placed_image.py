@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import Self
 
 import pygame as pg
 
@@ -25,6 +26,18 @@ class PlacedImage:
 
     image: pg.Surface
     pos: tuple[int, int]
+
+    @classmethod
+    def zero_size(cls) -> Self:
+        """Create an empty image at the widget's top-left corner.
+
+        Components return it when they have nothing to draw. Each call makes a
+        new surface, so no two placed images share one.
+
+        Returns:
+            A new transparent 0x0 image at ``(0, 0)``.
+        """
+        return cls(image=pg.Surface((0, 0), pg.SRCALPHA), pos=(0, 0))
 
 
 def compose_layers(layers: Iterable[PlacedImage]) -> PlacedImage:
@@ -51,10 +64,7 @@ def compose_layers(layers: Iterable[PlacedImage]) -> PlacedImage:
 
     # no layers, or only zero-size ones
     if len(non_zero_layers) == 0:
-        return PlacedImage(
-            pg.Surface((0, 0), pg.SRCALPHA),
-            (0, 0),
-        )
+        return PlacedImage.zero_size()
 
     if len(non_zero_layers) == 1:  # nothing to combine
         return non_zero_layers[0]

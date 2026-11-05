@@ -74,10 +74,7 @@ class NoSkin(Skin):
         Returns:
             A new 0x0 surface at position ``(0, 0)``.
         """
-        surface = pg.Surface((0, 0), pg.SRCALPHA)
-        pos = (0, 0)
-
-        return PlacedImage(surface, pos)
+        return PlacedImage.zero_size()
 
 
 def _clamp_radius(radius: int, size: tuple[int, int]) -> int:
