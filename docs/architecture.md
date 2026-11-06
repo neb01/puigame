@@ -335,21 +335,21 @@ A widget's state is a `State`, an `enum.Flag`. It is derived from the widget's f
 ```python
 class State(Flag):
     BASE = 0
-    DISABLED = auto()
+    CHECKED = auto()
     HIGHLIGHTED = auto()
     PRESSED = auto()
-    CHECKED = auto()
     EDITING = auto()
+    DISABLED = auto()
 ```
 
 | Member | Meaning |
 |---|---|
 | `BASE` | No flags set: the widget's ordinary state |
-| `DISABLED` | The widget is not `enabled_in_tree`: it ignores input and draws its disabled look |
+| `CHECKED` | Reserved: a `Checkbox` (planned) is checked |
 | `HIGHLIGHTED` | The mouse is over the widget (see [Highlight](#highlight)), or, once keyboard navigation arrives, it has selected the widget. Pressing adds `PRESSED` on top |
 | `PRESSED` | A press, by mouse button or by Enter or Space, is in progress on the widget |
-| `CHECKED` | Reserved: a `Checkbox` (planned) is checked |
 | `EDITING` | Reserved: a `TextBox` (planned) is receiving typed text |
+| `DISABLED` | The widget is not `enabled_in_tree`: it ignores input and draws its disabled look |
 
 Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRESSED` is a single `State` value. Combinations are hashable and are used directly as cache keys. `BASE` has no bits set: it is the empty combination.
 
@@ -372,7 +372,7 @@ Not every combination can occur, so each class lists the combinations it can be 
 | Class | `_possible_states` |
 |---|---|
 | `Widget`, `Container`, `Panel`, `Label` | `BASE`, `DISABLED` |
-| `Button` | `BASE`, `DISABLED`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED` |
+| `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
 | `Checkbox` (planned) | Button's four, each with and without `CHECKED` (eight) |
 | `TextBox` (planned) | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
 
@@ -431,7 +431,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 
 ### Hit-testing
 
-- Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count, and nor does swell, whether positive or negative.
+- Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count, and nor does swell: a negative swell still hits across the whole rect, including the band where nothing is drawn.
 - Hit-testing is clipped to the draw surface, from `(0, 0)` to the UI's `size`, because nothing is drawn beyond it: a position off the surface hits nothing, even where a widget's rect extends past the edge (a panel sliding in, a tooltip at the edge, or a shaking root). This matters when a game scales up a smaller render surface and maps clicks in the letterbox into its coordinates. The boundary is the surface, not `UIRoot.rect`, so the root's offset does not move it. Widgets are not clipped to their parents, for hit-testing or drawing, so a child outside its parent, such as a tooltip, can still be clicked.
 - The walk goes in reverse drawing order (see [Tree order](#tree-order)), so the widget drawn on top is found first. Hidden subtrees are skipped. Disabled widgets still count, so a disabled panel still blocks what is below it.
 - Each widget has a `consumes_clicks` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `Label`, and `UIRoot`: a `Label` on a `Button` must not block the button, HUD text should not block clicks meant for the game, and clicks on empty space reach the game.
