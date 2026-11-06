@@ -882,6 +882,27 @@ def test_click_on_widget_killed_during_click_does_not_activate(ui: UI):
     assert recording_widget.activation_count == 0
 
 
+def test_click_on_widget_moved_away_during_click_does_not_activate(ui: UI):
+    recording_widget = RecordingWidget(
+        ui.root,
+        size=(5, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+    )
+
+    _left_press(ui, pos=(3, 4))
+
+    recording_widget.offset = (10, 20)
+    ui.update()
+
+    _left_release(ui, pos=(3, 4))
+
+    assert recording_widget.activation_count == 0
+
+
 def test_click_on_widget_drag_off_then_back_on_during_click_activates(ui: UI):
     recording_widget = RecordingWidget(
         ui.root,
