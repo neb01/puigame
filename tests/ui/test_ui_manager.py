@@ -10,6 +10,7 @@ from puigame import (
     Anchor,
     BundledTypeface,
     Container,
+    DrawnSkin,
     FadeProfile,
     Label,
     NoSkin,
@@ -558,6 +559,46 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
         parent_anchor=Anchor.TOP_LEFT,
         margin=(3, 5),
         offset=(1, 2),
+    )
+
+    assert _left_press(ui, pos=pos) is consumed
+
+
+@pytest.mark.parametrize(
+    ("swell", "halo_thickness", "pos", "consumed"),
+    [
+        (-2, 0, (10, 26), True),
+        (2, 0, (9, 26), False),
+        (0, 2, (9, 26), False),
+    ],
+    ids=[
+        "negative swell, on left edge of rect",
+        "positive swell, off left edge of rect",
+        "halo, off left edge of rect",
+    ],
+)
+def test_hit_test_uses_rect_not_drawn_shape(swell, halo_thickness, pos, consumed):
+    theme = Theme(
+        base_style=replace(
+            ANY_STYLE,
+            swell=swell,
+            halo_thickness=halo_thickness,
+            halo_colour=BLACK,
+            halo_fade_profile=FadeProfile.SOLID,
+        ),
+        style_overrides={},
+    )
+
+    ui = UI(size=(200, 100), theme=theme)
+
+    Panel(
+        ui.root,
+        size=(10, 12),
+        skin=DrawnSkin(),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(10, 20),
+        offset=(0, 0),
     )
 
     assert _left_press(ui, pos=pos) is consumed
