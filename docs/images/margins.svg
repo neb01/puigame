@@ -28,6 +28,7 @@
   <text class="mtext" x="154" y="69" text-anchor="start">y</text>
   <rect class="child" x="294" y="90" width="132" height="46" rx="3"/>
   <text class="text label" x="360" y="118" text-anchor="middle">MID_TOP</text>
+  <text class="text small muted" x="350" y="69" text-anchor="end">x ignored</text>
   <line class="margin" x1="360" y1="40" x2="360" y2="90" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
   <text class="mtext" x="368" y="69" text-anchor="start">y</text>
   <rect class="child" x="508" y="90" width="132" height="46" rx="3"/>
@@ -38,6 +39,7 @@
   <text class="mtext" x="582" y="69" text-anchor="start">y</text>
   <rect class="child" x="80" y="207" width="132" height="46" rx="3"/>
   <text class="text label" x="146" y="235" text-anchor="middle">MID_LEFT</text>
+  <text class="text small muted" x="146" y="273" text-anchor="middle">y ignored</text>
   <line class="margin" x1="30" y1="230" x2="80" y2="230" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
   <text class="mtext" x="55" y="224" text-anchor="middle">x</text>
   <rect class="child" x="294" y="207" width="132" height="46" rx="3"/>
@@ -45,6 +47,7 @@
   <text class="text small muted" x="360" y="273" text-anchor="middle">margin ignored</text>
   <rect class="child" x="508" y="207" width="132" height="46" rx="3"/>
   <text class="text label" x="574" y="235" text-anchor="middle">MID_RIGHT</text>
+  <text class="text small muted" x="574" y="273" text-anchor="middle">y ignored</text>
   <line class="margin" x1="640" y1="230" x2="690" y2="230" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
   <text class="mtext" x="665" y="224" text-anchor="middle">x</text>
   <rect class="child" x="80" y="324" width="132" height="46" rx="3"/>
@@ -55,6 +58,7 @@
   <text class="mtext" x="154" y="399" text-anchor="start">y</text>
   <rect class="child" x="294" y="324" width="132" height="46" rx="3"/>
   <text class="text label" x="360" y="352" text-anchor="middle">MID_BOTTOM</text>
+  <text class="text small muted" x="350" y="399" text-anchor="end">x ignored</text>
   <line class="margin" x1="360" y1="370" x2="360" y2="420" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
   <text class="mtext" x="368" y="399" text-anchor="start">y</text>
   <rect class="child" x="508" y="324" width="132" height="46" rx="3"/>

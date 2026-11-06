@@ -103,13 +103,15 @@ Widget                  rect, anchor, fixed parent, children, flags, skin, per-s
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + the highlight and activation behaviour interactive widgets share
     ├── Button          + Text component, pressed look, on_click
-    │   └── Checkbox    + checked, can_untoggle, optional CheckboxGroup
-    └── TextBox         + editable Text, editing mode (no PRESSED state)
+    │   └── Checkbox    (planned) + checked, can_untoggle, optional CheckboxGroup
+    └── TextBox         (planned) + editable Text, editing mode (no PRESSED state)
 
-CheckboxGroup           helper: mutual exclusion between checkboxes (radio behaviour)
+CheckboxGroup           (planned) helper: mutual exclusion between checkboxes (radio behaviour)
 UI                      composes root (a UIRoot, which holds the theme) and manager; draws the tree
 UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
+
+Classes marked (planned) are designed but not built yet (see [v0.1 scope](#v01-scope)).
 
 - **`InteractiveWidget` is a base class beside `Widget`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing the concrete widgets. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear, and differ only in appearance: a `Container` is invisible, and a `Panel` is drawn by the skin it is given. `Panel` extends `Widget`, not `Container`, since a `Container` promises to be invisible.
@@ -159,7 +161,7 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 | Component | Held by | Job |
 |---|---|---|
 | **`Skin`** | Every `Widget` (required; `Container` and `UIRoot` use `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
-| **`Text`** | Widgets that display text, such as `Label`, `Button`, and `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; keeps no reference to its owner, so the owner rebuilds its images when it changes the text |
+| **`Text`** | Widgets that display text, such as `Label`, `Button`, and the planned `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; keeps no reference to its owner, so the owner rebuilds its images when it changes the text |
 
 A `Text` component is **not** a child widget: it is not in the tree, receives no input, and is drawn into its owner's image rather than on its own.
 
@@ -171,7 +173,7 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 
 - Without effects, the surface is exactly the requested size and its position is `(0, 0)`.
 - A halo or a positive swell makes the surface **larger** than the widget, and a negative swell makes it smaller. The position is `-(swell + halo)` on each axis, so the drawing stays centred on the widget's rect: negative (up and to the left of `rect.topleft`) when the surface is larger, and positive when it is smaller.
-- The widget's `rect` stays the size it was given, so effects are purely visual: hit-testing ignores the halo.
+- The widget's `rect` stays the size it was given, so effects are purely visual: hit-testing ignores the halo and the swell, whether positive or negative.
 
 ![Drawing a skin surface at rect.topleft plus pos](images/skin_offset.svg)
 
@@ -333,21 +335,21 @@ A widget's state is a `State`, an `enum.Flag`. It is derived from the widget's f
 ```python
 class State(Flag):
     BASE = 0
-    DISABLED = auto()
+    CHECKED = auto()
     HIGHLIGHTED = auto()
     PRESSED = auto()
-    CHECKED = auto()
     EDITING = auto()
+    DISABLED = auto()
 ```
 
 | Member | Meaning |
 |---|---|
 | `BASE` | No flags set: the widget's ordinary state |
-| `DISABLED` | The widget is not `enabled_in_tree`: it ignores input and draws its disabled look |
+| `CHECKED` | Reserved: a `Checkbox` (planned) is checked |
 | `HIGHLIGHTED` | The mouse is over the widget (see [Highlight](#highlight)), or, once keyboard navigation arrives, it has selected the widget. Pressing adds `PRESSED` on top |
 | `PRESSED` | A press, by mouse button or by Enter or Space, is in progress on the widget |
-| `CHECKED` | A `Checkbox` is checked |
-| `EDITING` | A `TextBox` is receiving typed text |
+| `EDITING` | Reserved: a `TextBox` (planned) is receiving typed text |
+| `DISABLED` | The widget is not `enabled_in_tree`: it ignores input and draws its disabled look |
 
 Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRESSED` is a single `State` value. Combinations are hashable and are used directly as cache keys. `BASE` has no bits set: it is the empty combination.
 
@@ -358,8 +360,8 @@ Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRES
 - `Widget` starts from `BASE` and adds `DISABLED` when not `enabled_in_tree`.
 - `InteractiveWidget` calls `super()._current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED`.
 - `Button` adds `PRESSED` only on top of `HIGHLIGHTED`, while a press is held over it. It therefore inherits the suppression by `DISABLED`, and dragging off mid-press shows `BASE`.
-- `Checkbox` adds `CHECKED` when `checked` is true.
-- `TextBox` adds `EDITING`.
+- `Checkbox` (planned) will add `CHECKED` when `checked` is true.
+- `TextBox` (planned) will add `EDITING`.
 
 `DISABLED` suppresses `HIGHLIGHTED` and `PRESSED`: a disabled widget never looks interactive.
 
@@ -370,9 +372,9 @@ Not every combination can occur, so each class lists the combinations it can be 
 | Class | `_possible_states` |
 |---|---|
 | `Widget`, `Container`, `Panel`, `Label` | `BASE`, `DISABLED` |
-| `Button` | `BASE`, `DISABLED`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED` |
-| `Checkbox` | Button's four, each with and without `CHECKED` (eight) |
-| `TextBox` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
+| `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
+| `Checkbox` (planned) | Button's four, each with and without `CHECKED` (eight) |
+| `TextBox` (planned) | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
 
 ## Rendering and caching
 
@@ -429,7 +431,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 
 ### Hit-testing
 
-- Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count.
+- Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count, and nor does swell: a negative swell still hits across the whole rect, including the band where nothing is drawn.
 - Hit-testing is clipped to the draw surface, from `(0, 0)` to the UI's `size`, because nothing is drawn beyond it: a position off the surface hits nothing, even where a widget's rect extends past the edge (a panel sliding in, a tooltip at the edge, or a shaking root). This matters when a game scales up a smaller render surface and maps clicks in the letterbox into its coordinates. The boundary is the surface, not `UIRoot.rect`, so the root's offset does not move it. Widgets are not clipped to their parents, for hit-testing or drawing, so a child outside its parent, such as a tooltip, can still be clicked.
 - The walk goes in reverse drawing order (see [Tree order](#tree-order)), so the widget drawn on top is found first. Hidden subtrees are skipped. Disabled widgets still count, so a disabled panel still blocks what is below it.
 - Each widget has a `consumes_clicks` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `Label`, and `UIRoot`: a `Label` on a `Button` must not block the button, HUD text should not block clicks meant for the game, and clicks on empty space reach the game.
@@ -471,6 +473,8 @@ Not built yet. Mouse hover and keyboard focus will be **one concept**, the highl
 Also later: a **mouse-button enable map**, so that each button chooses which mouse buttons it responds to, and routing wheel events to the nearest scrollable ancestor.
 
 ### Editing text
+
+Not built yet, since `TextBox` is planned.
 
 - Clicking a `TextBox`, or pressing Enter while it is highlighted, starts editing. The text at that moment is kept so editing can be cancelled.
 - While editing, the `TextBox` **keeps the highlight** regardless of mouse movement, and the arrow keys move the text caret instead of the highlight.

@@ -240,7 +240,9 @@ class UIManager:
         wins. Hidden subtrees are skipped, disabled widgets still count, and a
         widget that does not consume clicks lets the walk carry on to the
         widgets below it. Each widget is tested against its ``rect``, which
-        excludes the right and bottom edges. A position off the draw surface
+        excludes the right and bottom edges, whatever its skin draws: a halo
+        or positive swell outside the rect does not hit, and the band inside
+        the rect left undrawn by a negative swell does. A position off the draw surface
         hits nothing, since no widget is drawn there, even if a widget's rect
         extends past the surface's edge. The surface is fixed at ``(0, 0)``, so
         the root's offset does not move this boundary.
