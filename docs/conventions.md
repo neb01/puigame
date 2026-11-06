@@ -97,7 +97,7 @@ Anything a tool already enforces is not repeated below.
 - **Value order** in parametrisations: `bool`, `int`, `float`, then `str`, `bytes`, then containers (`tuple`, `list`, `pg.Vector2`), then `None` last. Enum members come before standard-library types, in declaration order; field-name lists are in declaration order; numbers ascend.
 - **Parameter names** are the name of the argument the value is passed to (`button`, `margin`), prefixed only where that name would shadow a built-in (`event_type`). Expected values are `expected_<name>`. `value` is used only alongside `field_name`, for parametrisations over fields, which need no `ids`; stacked parametrisations put `field_name` on top.
 - **`ids`** are lowercase prose naming the case; code names as written; enum members as lowercase words (`"left button"`, `"pg.Vector2 of ints"`).
-- **Event variables** are named after the pygame event type (`mouse_button_down_event`), as the `UIManager` handlers are.
+- **Event variables** are named after the pygame event type (`mouse_button_down_event`), as the `UIManager` handlers are. Their attributes are passed in pygame's order, `pos` before `button`.
 
 ### Pairing and order
 
@@ -105,7 +105,7 @@ Anything a tool already enforces is not repeated below.
 - **Join or split**: cases share one parametrised test when they follow the same rule with the same valid and invalid values; otherwise they are split.
 - **Raising tests check the exception type only** (no `match=`), and keep raising and non-raising cases in separate tests. A constructor raising test also asserts that the widget was not attached (`ui_root.children == ()`).
 - **One representative wrong value per plausible mistake**, including `None` for every non-optional field.
-- **Assertions** put the actual value first: `assert actual == expected`.
+- **Assertions** put the actual value first: `assert actual == expected`. A fixed bool expectation is a bare `assert x` or `assert not x`; a parametrised one uses `is` (`assert result is consumed`), since `==` would accept `1` for `True`.
 - **Assignment tests** for read-only properties share one shape: the `widget` fixture and one assignment of a plausible value inside `pytest.raises(AttributeError)`, with a Pyright ignore.
 - **Bugs** get a test that fails first.
 
