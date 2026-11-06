@@ -15,7 +15,7 @@ repos:
 
   # Python lint (with safe auto-fixes) and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.10
+    rev: v0.17.3
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -23,6 +23,6 @@ repos:
 
   # Keep pyproject.toml in a standard order and style
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.29.4
+    rev: v2.30.3
     hooks:
       - id: pyproject-fmt
