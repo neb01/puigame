@@ -297,7 +297,7 @@ def test_render_honours_margins_and_anchors(
     ("text_horizontal_extent", "expected_ink_topleft"),
     [
         (TextHorizontalExtent.INK, (0, 0)),
-        (TextHorizontalExtent.LOGICAL, (1, 0)),
+        (TextHorizontalExtent.LOGICAL, (3, 0)),
     ],
     ids=["ink", "logical"],
 )
@@ -307,7 +307,7 @@ def test_render_corrects_for_space_above_capitals_left_bearing(
 ):
     style = replace(
         ANY_STYLE,
-        text_typeface=BundledTypeface.PYGAME_DEFAULT,
+        text_typeface=NEBMON0FONT_PATH,
         text_font_size=18,
         text_anchor=Anchor.TOP_LEFT,
         text_parent_anchor=Anchor.TOP_LEFT,
@@ -316,7 +316,7 @@ def test_render_corrects_for_space_above_capitals_left_bearing(
         text_offset=(0, 0),
     )
 
-    text = Text("SPUD")
+    text = Text("!SPUD")
     placed_image = text.render(WIDGET_SIZE, style)
     ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
 
