@@ -65,7 +65,7 @@ def test_combined_state_in_style_overrides_raises():
         Theme(
             base_style=ANY_STYLE,
             style_overrides={
-                State.DISABLED | State.HIGHLIGHTED: StyleOverride(body_colour=RED),
+                State.HIGHLIGHTED | State.DISABLED: StyleOverride(body_colour=RED),
             },
         )
 
@@ -140,8 +140,8 @@ def test_style_for_single_flag_does_not_change_fields_not_set_in_style_override(
 def test_style_for_inactive_flag_does_not_affect_any_fields():
     # HIGHLIGHTED is not in the state, so its border colour must not apply
     style_overrides = {
-        State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(border_colour=BLUE),
+        State.DISABLED: StyleOverride(body_colour=RED),
     }
     theme = Theme(
         base_style=replace(ANY_STYLE, border_colour=BLACK),
@@ -160,7 +160,7 @@ def test_style_for_flag_not_in_theme_is_ignored():
         style_overrides=style_overrides,
     )
 
-    style = theme._style_for(State.DISABLED | State.HIGHLIGHTED)
+    style = theme._style_for(State.HIGHLIGHTED | State.DISABLED)
 
     assert style.body_colour == RED  # disabled still applies
     assert style.border_colour == BLACK  # highlighted request has not changed others
@@ -168,15 +168,15 @@ def test_style_for_flag_not_in_theme_is_ignored():
 
 def test_style_for_multiple_flags_change_separate_fields_set_in_style_override():
     style_overrides = {
-        State.DISABLED: StyleOverride(body_colour=RED),
         State.HIGHLIGHTED: StyleOverride(border_colour=BLUE),
+        State.DISABLED: StyleOverride(body_colour=RED),
     }
     theme = Theme(
         base_style=replace(ANY_STYLE, body_colour=WHITE, border_colour=BLACK),
         style_overrides=style_overrides,
     )
 
-    style = theme._style_for(State.DISABLED | State.HIGHLIGHTED)
+    style = theme._style_for(State.HIGHLIGHTED | State.DISABLED)
 
     assert style.body_colour == RED
     assert style.border_colour == BLUE

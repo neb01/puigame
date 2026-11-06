@@ -42,6 +42,7 @@ Anything a tool already enforces is not repeated below.
 - **Blank line before `return`**, except when its block is one simple statement plus the `return`. A compound statement (`if`, `for`, `match`) before a `return` always gets one. Guard clauses return early instead of using `else` after `return`.
 - **Empty bodies**: a docstring alone, with no `pass`. `pass` only where there is no docstring, and `...` for stubs. Never `return None` in a function annotated `-> None`.
 - **Membership constants** are module-level `frozenset`s (`_WHEEL_BUTTONS`), not tuples or lists repeated inline.
+- **`State` order**: members, and the flags in a combination, are listed in `State` declaration order (`HIGHLIGHTED | PRESSED`) in code, tests, and docs. The exceptions are `_STATE_PRECEDENCE`, which is in precedence order, and tests that list them out of order on purpose, to show that order makes no difference.
 - **Enums** with explicit values are `@unique`; enums built with `auto()` cannot collide and do not need it.
 - **Read-only properties** rely on Python's default `AttributeError` when there is no setter. Only `rect` and `image` have custom raising setters, because `Sprite` users habitually assign them; those setters are typed `value: Never` and return `NoReturn`, so Pyright flags any assignment.
 - **Exhaustive `match`** over an enum ends with `case _: assert_never(value)`, so Pyright reports any member that is not handled.

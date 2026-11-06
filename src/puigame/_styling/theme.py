@@ -65,7 +65,7 @@ class Theme:
         style_overrides: Changes each state makes to ``base_style``, keyed by
             single state flag. ``State.BASE`` cannot be used as a key, because
             it is part of every state and its override would always apply.
-            Combined flags, such as ``State.DISABLED | State.HIGHLIGHTED``,
+            Combined flags, such as ``State.HIGHLIGHTED | State.DISABLED``,
             cannot be used either; a combination of states is styled by
             applying each flag's override in turn. Stored as a read-only copy.
     """
@@ -147,11 +147,6 @@ DEFAULT_THEME = Theme(
         text_offset=(0, 0),
     ),
     style_overrides={
-        State.DISABLED: StyleOverride(
-            body_colour=_OFF_BLACK,
-            border_colour=_LIGHT_GREY,
-            text_colour=_DARK_GREEN,
-        ),
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=_MID_GREEN,
             halo_fade_profile=FadeProfile.SOFT_QUADRATIC,
@@ -162,6 +157,11 @@ DEFAULT_THEME = Theme(
             body_colour=_DARK_GREY,
             swell=-1,
             text_offset=(0, 1),  # the base offset, 1 px lower
+        ),
+        State.DISABLED: StyleOverride(
+            body_colour=_OFF_BLACK,
+            border_colour=_LIGHT_GREY,
+            text_colour=_DARK_GREEN,
         ),
     },
 )

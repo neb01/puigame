@@ -32,8 +32,8 @@ class InteractiveWidget(Widget):
 
     _possible_states: ClassVar[tuple[State, ...]] = (
         State.BASE,
-        State.DISABLED,
         State.HIGHLIGHTED,
+        State.DISABLED,
     )
 
     def __init__(
