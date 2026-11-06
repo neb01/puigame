@@ -15,3 +15,20 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    # update only uv.lock, so pyproject.toml's lower bounds (the supported
+    # floors users rely on, such as pygame-ce>=2.5.8) are never raised
+    versioning-strategy: lockfile-only
+    # gives PR titles like "build: bump …", which pass the "Check PR title" check
+    commit-message:
+      prefix: build
+    # one PR for all uv.lock updates instead of one each
+    groups:
+      uv:
+        patterns: ["*"]
