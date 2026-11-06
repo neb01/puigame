@@ -32,9 +32,9 @@ class Button(InteractiveWidget):
 
     _possible_states: ClassVar[tuple[State, ...]] = (
         State.BASE,
-        State.DISABLED,
         State.HIGHLIGHTED,
-        State.PRESSED | State.HIGHLIGHTED,
+        State.HIGHLIGHTED | State.PRESSED,
+        State.DISABLED,
     )
 
     def __init__(
