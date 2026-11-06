@@ -69,8 +69,9 @@ class UI:
         A mouse button down over a widget that consumes clicks is consumed, and
         so is its matching up, wherever it lands, so a click on a panel never
         reaches the game. A drag that starts outside the UI still reaches the
-        game when it is released over a widget. Mouse motion, wheel, and window
-        events are never consumed.
+        game when it is released over a widget. Only the part of a widget that
+        lies on the draw surface counts, so a position off the surface hits
+        nothing. Mouse motion, wheel, and window events are never consumed.
 
         Args:
             event: The event to handle.

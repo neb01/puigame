@@ -64,6 +64,8 @@ HIGHLIGHT_THEME = Theme(
     },
 )
 
+ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
+
 # endregion
 
 
@@ -591,6 +593,7 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
         pos=pos,
         button=pg.BUTTON_LEFT,
     )
+
     assert ui.handle_event(mouse_button_down_event) is consumed
 
 
@@ -619,6 +622,105 @@ def test_top_consuming_widget_is_activated(ui: UI):
 
     assert recording_widget_1.activation_count == 0
     assert recording_widget_2.activation_count == 1
+
+
+@pytest.mark.parametrize(
+    ("pos", "consumed"),
+    [
+        ((0, 3), True),
+        ((-1, 3), False),
+        ((3, 0), True),
+        ((3, -1), False),
+    ],
+    ids=[
+        "left on edge",
+        "left off edge",
+        "top on edge",
+        "top off edge",
+    ],
+)
+def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
+    ui = UI(size=(200, 100), theme=ANY_THEME)
+    Widget(
+        ui.root,
+        size=(8, 10),
+        skin=ANY_SKIN,
+        anchor=Anchor.CENTRE,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+    )
+
+    mouse_button_down_event = pg.Event(
+        pg.MOUSEBUTTONDOWN,
+        pos=pos,
+        button=pg.BUTTON_LEFT,
+    )
+
+    assert ui.handle_event(mouse_button_down_event) is consumed
+
+
+@pytest.mark.parametrize(
+    ("pos", "consumed"),
+    [
+        ((199, 97), True),
+        ((200, 97), False),
+        ((197, 99), True),
+        ((197, 100), False),
+    ],
+    ids=[
+        "right on edge",
+        "right off edge",
+        "bottom on edge",
+        "bottom off edge",
+    ],
+)
+def test_hit_test_excludes_positions_off_bottom_right_of_surface(
+    pos,
+    consumed,
+):
+    ui = UI(size=(200, 100), theme=ANY_THEME)
+    Widget(
+        ui.root,
+        size=(8, 10),
+        skin=ANY_SKIN,
+        anchor=Anchor.CENTRE,
+        parent_anchor=Anchor.BOTTOM_RIGHT,
+        margin=(0, 0),
+        offset=(0, 0),
+    )
+
+    mouse_button_down_event = pg.Event(
+        pg.MOUSEBUTTONDOWN,
+        pos=pos,
+        button=pg.BUTTON_LEFT,
+    )
+
+    assert ui.handle_event(mouse_button_down_event) is consumed
+
+
+def test_hit_test_includes_positions_on_surface_but_off_ui_root():
+    ui = UI(size=(200, 100), theme=ANY_THEME)
+    Widget(
+        ui.root,
+        size=(8, 10),
+        skin=ANY_SKIN,
+        anchor=Anchor.CENTRE,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+    )
+
+    ui.root.offset = (3, 4)
+    ui.update()
+
+    mouse_button_down_event = pg.Event(
+        pg.MOUSEBUTTONDOWN,
+        pos=(1, 2),
+        button=pg.BUTTON_LEFT,
+    )
+
+    assert ui.handle_event(mouse_button_down_event)
 
 
 # endregion

@@ -240,7 +240,10 @@ class UIManager:
         wins. Hidden subtrees are skipped, disabled widgets still count, and a
         widget that does not consume clicks lets the walk carry on to the
         widgets below it. Each widget is tested against its ``rect``, which
-        excludes the right and bottom edges.
+        excludes the right and bottom edges. A position off the draw surface
+        hits nothing, since no widget is drawn there, even if a widget's rect
+        extends past the surface's edge. The surface is fixed at ``(0, 0)``, so
+        the root's offset does not move this boundary.
 
         Args:
             pos: Position to test, in the coordinates of the UI's draw surface.
@@ -248,6 +251,12 @@ class UIManager:
         Returns:
             The topmost such widget, or ``None`` if there is none.
         """
+        # nothing is drawn off the surface, so nothing there can be hit; the root's
+        # rect can't stand in for the surface, since an offset moves it
+        surface_rect = pg.Rect((0, 0), self._root.rect.size)
+        if not surface_rect.collidepoint(pos):
+            return None
+
         for widget in reversed(list(self._root._iter_visible_subtree())):
             if widget.rect.collidepoint(pos) and widget.consumes_clicks:
                 return widget
