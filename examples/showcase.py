@@ -130,8 +130,10 @@ class BouncingSquare(pg.sprite.Sprite):
         """Move the sprite by one frame and bounce it off the floor.
 
         A bounce launches the sprite at ``launch_velocity`` rather than
-        reflecting its velocity, so every bounce reaches the same height
-        whatever the frame times.
+        reflecting its velocity, so the height doesn't drift from bounce to
+        bounce. Each frame updates the velocity before the position
+        (semi-implicit Euler), so the peak is slightly lower at longer frame
+        times.
 
         Args:
             dt: Time since the last frame, in seconds.
