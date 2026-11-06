@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # wait a week before proposing a new release, since compromised releases
+    # are usually caught and pulled within days
+    cooldown:
+      default-days: 7
+    # gives PR titles like "ci: bump …", which pass the "Check PR title" check
+    commit-message:
+      prefix: ci
+    # one PR for all action updates instead of one each
+    groups:
+      github-actions:
+        patterns: ["*"]
