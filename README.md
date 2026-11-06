@@ -4,7 +4,7 @@
 
 UI widgets for [pygame-ce](https://pyga.me/): buttons, labels, and panels, placed by anchors and styled by themes.
 
-> **Status:** pre-alpha, ahead of the first release. The API may change in any 0.x release.
+> **Status:** alpha. The API may change in any 0.x release.
 
 ## Install
 
