@@ -10,6 +10,7 @@ from puigame import (
     Anchor,
     BundledTypeface,
     Container,
+    DrawnSkin,
     FadeProfile,
     Label,
     NoSkin,
@@ -125,26 +126,66 @@ class RecordingWidget(InteractiveWidget):
 # region --- Helpers ----------------------------------------------------------
 
 
-def _left_click(ui: UI, *, pos: Point) -> None:
-    """Send a left button down and up at ``pos``, as one click.
+def _left_press(ui: UI, *, pos: tuple[int, int]) -> bool:
+    """Send a left button down at ``pos`` and return whether it was consumed.
 
     Args:
-        ui: UI to send the events to.
-        pos: Position of both events.
+        ui: UI to send the event to.
+        pos: Position of the event.
+
+    Returns:
+        Whether ``ui`` consumed the event.
     """
     mouse_button_down_event = pg.Event(
         pg.MOUSEBUTTONDOWN,
         pos=pos,
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(mouse_button_down_event)
 
+    return ui.handle_event(mouse_button_down_event)
+
+
+def _left_release(ui: UI, *, pos: tuple[int, int]) -> bool:
+    """Send a left button up at ``pos`` and return whether it was consumed.
+
+    Args:
+        ui: UI to send the event to.
+        pos: Position of the event.
+
+    Returns:
+        Whether ``ui`` consumed the event.
+    """
     mouse_button_up_event = pg.Event(
         pg.MOUSEBUTTONUP,
         pos=pos,
         button=pg.BUTTON_LEFT,
     )
-    ui.handle_event(mouse_button_up_event)
+
+    return ui.handle_event(mouse_button_up_event)
+
+
+def _left_click(ui: UI, *, pos: tuple[int, int]) -> None:
+    """Send a left press and release at ``pos``, as one click.
+
+    Args:
+        ui: UI to send the events to.
+        pos: Position of both events.
+    """
+    _left_press(ui, pos=pos)
+    _left_release(ui, pos=pos)
+
+
+def _move_mouse(ui: UI, *, pos: tuple[int, int]) -> None:
+    """Send a mouse motion to ``pos``.
+
+    Motion is never consumed, so nothing is returned.
+
+    Args:
+        ui: UI to send the event to.
+        pos: Position the cursor moves to.
+    """
+    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=pos)
+    ui.handle_event(mouse_motion_event)
 
 
 # endregion
@@ -201,13 +242,7 @@ def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(6, 7),
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert not ui.handle_event(mouse_button_down_event)
+    assert not _left_press(ui, pos=(6, 7))
 
 
 @pytest.mark.parametrize("widget_class", [Container, Label])
@@ -221,13 +256,7 @@ def test_non_consuming_widget_does_not_consume_mouse_button_down(ui: UI, widget_
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert not ui.handle_event(mouse_button_down_event)
+    assert not _left_press(ui, pos=(1, 2))
 
 
 @pytest.mark.parametrize(
@@ -271,20 +300,9 @@ def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
+    _left_press(ui, pos=(1, 2))
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(6, 7),
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert ui.handle_event(mouse_button_up_event)
+    assert _left_release(ui, pos=(6, 7))
 
 
 def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
@@ -298,28 +316,17 @@ def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(6, 7),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
+    _left_press(ui, pos=(6, 7))
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert not ui.handle_event(mouse_button_up_event)
+    assert not _left_release(ui, pos=(1, 2))
 
 
 @pytest.mark.parametrize(
-    "event_pos",
+    "pos",
     [(1, 2), (6, 7)],
     ids=["on widget", "off widget"],
 )
-def test_widget_does_not_consume_lone_up_event(ui: UI, event_pos):
+def test_widget_does_not_consume_lone_up_event(ui: UI, pos):
     Panel(
         ui.root,
         size=(4, 5),
@@ -330,13 +337,7 @@ def test_widget_does_not_consume_lone_up_event(ui: UI, event_pos):
         offset=(0, 0),
     )
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=event_pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert not ui.handle_event(mouse_button_up_event)
+    assert not _left_release(ui, pos=pos)
 
 
 def test_stale_down_event_is_cleared_by_non_consumed_down_of_same_button(ui: UI):
@@ -350,31 +351,13 @@ def test_stale_down_event_is_cleared_by_non_consumed_down_of_same_button(ui: UI)
         offset=(0, 0),
     )
 
-    mouse_button_down_event_1 = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-
-    ui.handle_event(mouse_button_down_event_1)
-
-    mouse_button_down_event_2 = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(6, 7),
-        button=pg.BUTTON_LEFT,
-    )
+    _left_press(ui, pos=(1, 2))
 
     # the first down's up never arrived, so this down discards its record
-    ui.handle_event(mouse_button_down_event_2)
-
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
+    _left_press(ui, pos=(6, 7))
 
     # its down's record was discarded, so the game gets this up
-    assert not ui.handle_event(mouse_button_up_event)
+    assert not _left_release(ui, pos=(1, 2))
 
 
 def test_down_only_clears_record_of_own_button(ui: UI):
@@ -396,19 +379,8 @@ def test_down_only_clears_record_of_own_button(ui: UI):
     ui.handle_event(right_mouse_button_down_event)
 
     # a left down discards only the left record, not the right
-    left_mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(6, 7),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(left_mouse_button_down_event)
-
-    left_mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(6, 7),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(left_mouse_button_up_event)
+    _left_press(ui, pos=(6, 7))
+    _left_release(ui, pos=(6, 7))
 
     # the right down was consumed, so its up still is, wherever it lands
     right_mouse_button_up_event = pg.Event(
@@ -416,6 +388,7 @@ def test_down_only_clears_record_of_own_button(ui: UI):
         pos=(6, 7),
         button=pg.BUTTON_RIGHT,
     )
+
     assert ui.handle_event(right_mouse_button_up_event)
 
 
@@ -588,13 +561,47 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
         offset=(1, 2),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
+    assert _left_press(ui, pos=pos) is consumed
+
+
+@pytest.mark.parametrize(
+    ("swell", "halo_thickness", "pos", "consumed"),
+    [
+        (-2, 0, (10, 26), True),
+        (2, 0, (9, 26), False),
+        (0, 2, (9, 26), False),
+    ],
+    ids=[
+        "negative swell, on left edge of rect",
+        "positive swell, off left edge of rect",
+        "halo, off left edge of rect",
+    ],
+)
+def test_hit_test_uses_rect_not_drawn_shape(swell, halo_thickness, pos, consumed):
+    theme = Theme(
+        base_style=replace(
+            ANY_STYLE,
+            swell=swell,
+            halo_thickness=halo_thickness,
+            halo_colour=BLACK,
+            halo_fade_profile=FadeProfile.SOLID,
+        ),
+        style_overrides={},
     )
 
-    assert ui.handle_event(mouse_button_down_event) is consumed
+    ui = UI(size=(200, 100), theme=theme)
+
+    Panel(
+        ui.root,
+        size=(10, 12),
+        skin=DrawnSkin(),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(10, 20),
+        offset=(0, 0),
+    )
+
+    assert _left_press(ui, pos=pos) is consumed
 
 
 def test_top_consuming_widget_is_activated(ui: UI):
@@ -651,13 +658,7 @@ def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert ui.handle_event(mouse_button_down_event) is consumed
+    assert _left_press(ui, pos=pos) is consumed
 
 
 @pytest.mark.parametrize(
@@ -690,13 +691,7 @@ def test_hit_test_excludes_positions_off_bottom_right_of_surface(
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert ui.handle_event(mouse_button_down_event) is consumed
+    assert _left_press(ui, pos=pos) is consumed
 
 
 def test_hit_test_includes_positions_on_surface_but_off_ui_root():
@@ -714,13 +709,7 @@ def test_hit_test_includes_positions_on_surface_but_off_ui_root():
     ui.root.offset = (3, 4)
     ui.update()
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert ui.handle_event(mouse_button_down_event)
+    assert _left_press(ui, pos=(1, 2))
 
 
 # endregion
@@ -756,19 +745,8 @@ def test_click_release_off_widget_does_not_activate(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
-
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(10, 20),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_press(ui, pos=(3, 4))
+    _left_release(ui, pos=(10, 20))
 
     assert recording_widget.activation_count == 0
 
@@ -784,19 +762,8 @@ def test_click_that_started_off_widget_does_not_activate(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(10, 20),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
-
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_press(ui, pos=(10, 20))
+    _left_release(ui, pos=(3, 4))
 
     assert recording_widget.activation_count == 0
 
@@ -858,21 +825,11 @@ def test_click_on_widget_disabled_during_click_does_not_activate(ui: UI):
         enabled=True,
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
+    _left_press(ui, pos=(3, 4))
 
     recording_widget.enabled = False
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_release(ui, pos=(3, 4))
 
     assert recording_widget.activation_count == 0
 
@@ -888,12 +845,7 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
+    _left_press(ui, pos=(3, 4))
 
     Panel(
         ui.root,
@@ -905,12 +857,7 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_release(ui, pos=(3, 4))
 
     assert recording_widget.activation_count == 0
 
@@ -926,21 +873,11 @@ def test_click_on_widget_killed_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
+    _left_press(ui, pos=(3, 4))
 
     recording_widget.kill()
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_release(ui, pos=(3, 4))
 
     assert recording_widget.activation_count == 0
 
@@ -956,25 +893,10 @@ def test_click_on_widget_drag_off_then_back_on_during_click_activates(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
-
-    mouse_motion_event_1 = pg.Event(pg.MOUSEMOTION, pos=(10, 20))
-    ui.handle_event(mouse_motion_event_1)
-
-    mouse_motion_event_2 = pg.Event(pg.MOUSEMOTION, pos=(3, 4))
-    ui.handle_event(mouse_motion_event_2)
-
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_press(ui, pos=(3, 4))
+    _move_mouse(ui, pos=(10, 20))
+    _move_mouse(ui, pos=(3, 4))
+    _left_release(ui, pos=(3, 4))
 
     assert recording_widget.activation_count == 1
 
@@ -990,28 +912,13 @@ def test_up_after_lost_up_does_not_activate_stale_widget(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event_1 = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event_1)
+    _left_press(ui, pos=(3, 4))
 
     # the first down's up never arrived, so this down ends that press
-    mouse_button_down_event_2 = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(10, 20),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event_2)
+    _left_press(ui, pos=(10, 20))
 
     # the press has ended, so this up cannot complete it
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_up_event)
+    _left_release(ui, pos=(3, 4))
 
     assert recording_widget.activation_count == 0
 
@@ -1037,12 +944,7 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event_1 = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event_1)
+    _left_press(ui, pos=(3, 4))
 
     # the first down's up never arrived, so pressing widget 2 replaces its press
     _left_click(ui, pos=(12, 2))
@@ -1062,23 +964,12 @@ def test_focus_lost_during_click_does_not_activate_but_does_consume_up(ui: UI):
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-    ui.handle_event(mouse_button_down_event)
+    _left_press(ui, pos=(3, 4))
 
     window_focus_lost_event = pg.Event(pg.WINDOWFOCUSLOST)
     ui.handle_event(window_focus_lost_event)
 
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=(3, 4),
-        button=pg.BUTTON_LEFT,
-    )
-
-    assert ui.handle_event(mouse_button_up_event)
+    assert _left_release(ui, pos=(3, 4))
     assert recording_widget.activation_count == 0
 
 
@@ -1115,8 +1006,7 @@ def test_mouse_on_widget_shows_highlighted_colour(highlight_ui: UI):
         offset=(0, 0),
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -1133,12 +1023,10 @@ def test_mouse_off_widget_shows_base_colour(highlight_ui: UI):
         offset=(0, 0),
     )
 
-    mouse_motion_event_1 = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event_1)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
-    mouse_motion_event_2 = pg.Event(pg.MOUSEMOTION, pos=(10, 20))
-    highlight_ui.handle_event(mouse_motion_event_2)
+    _move_mouse(highlight_ui, pos=(10, 20))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
@@ -1167,8 +1055,7 @@ def test_mouse_on_widget_covered_by_consuming_widget_shows_base_colour(
         offset=(0, 0),
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
@@ -1185,8 +1072,7 @@ def test_mouse_leaving_window_shows_base_colour(highlight_ui: UI):
         offset=(0, 0),
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     window_leave_event = pg.Event(pg.WINDOWLEAVE)
@@ -1207,8 +1093,7 @@ def test_focus_lost_shows_highlighted_colour(highlight_ui: UI):
         offset=(0, 0),
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     window_focus_lost_event = pg.Event(pg.WINDOWFOCUSLOST)
@@ -1229,8 +1114,7 @@ def test_widget_disabled_under_cursor_shows_disabled_colour(highlight_ui: UI):
         offset=(0, 0),
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -1252,8 +1136,7 @@ def test_widget_moved_away_from_cursor_shows_base_colour(highlight_ui: UI):
         offset=(0, 0),
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -1288,8 +1171,7 @@ def test_widget_covered_by_hidden_consuming_widget_shows_highlighted_colour(
         visible=True,
     )
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
@@ -1323,16 +1205,10 @@ def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-    highlight_ui.handle_event(mouse_button_down_event)
+    _left_press(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(11, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(11, 2))
     highlight_ui.update()
 
     assert widget_2.image.get_at((1, 2)) == BASE_COLOUR
@@ -1351,16 +1227,10 @@ def test_press_and_drag_off_widget_shows_base_colour(
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-    highlight_ui.handle_event(mouse_button_down_event)
+    _left_press(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=(11, 2))
-    highlight_ui.handle_event(mouse_motion_event)
+    _move_mouse(highlight_ui, pos=(11, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
@@ -1379,20 +1249,13 @@ def test_press_and_drag_off_and_back_on_widget_shows_highlighted_colour(
         offset=(0, 0),
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=pg.BUTTON_LEFT,
-    )
-    highlight_ui.handle_event(mouse_button_down_event)
+    _left_press(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
-    mouse_motion_event_1 = pg.Event(pg.MOUSEMOTION, pos=(11, 2))
-    highlight_ui.handle_event(mouse_motion_event_1)
+    _move_mouse(highlight_ui, pos=(11, 2))
     highlight_ui.update()
 
-    mouse_motion_event_2 = pg.Event(pg.MOUSEMOTION, pos=(1, 2))
-    highlight_ui.handle_event(mouse_motion_event_2)
+    _move_mouse(highlight_ui, pos=(1, 2))
     highlight_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
