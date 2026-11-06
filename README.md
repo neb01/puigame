@@ -1,6 +1,6 @@
 # puigame
 
-<!-- GIF of examples/showcase.py goes here -->
+![The showcase example: buttons highlight and press as the cursor clicks them, pausing two bouncing squares, jostling a column of buttons, and hiding and disabling them, beside a specimen of the bundled Neb0Font](https://raw.githubusercontent.com/neb01/puigame/main/docs/images/showcase.gif)
 
 UI widgets for [pygame-ce](https://pyga.me/): buttons, labels, and panels, placed by anchors and styled by themes.
 
