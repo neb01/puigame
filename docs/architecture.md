@@ -1,6 +1,6 @@
 # puigame architecture
 
-This document records the design of puigame v0.1: what the library does, how it is structured, and the decisions behind it. Later pull requests implement it piece by piece; when a decision changes, this document is updated in the same pull request.
+This document records puigame's design: what the library does, how it is structured, and the decisions behind it. Parts not built yet are marked as planned. When a decision changes, this document is updated in the same pull request.
 
 All puigame code is written by hand. This document, like the rest of the documentation (including the docstrings in the code), was first drafted with AI assistance and then checked by hand.
 
@@ -179,7 +179,7 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 
 - **`NoSkin`**: a 0x0 surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw, and for widgets with content but no background, such as a bare label, whose image is then the size of its content. It is public, so any widget can go without a background, such as a clear button; its hitbox is still its `rect`. A widget with `NoSkin` shows changes of state only through its components' styles, such as text colour and text offset. `Label` always uses it: for text on a background, place a `Label` in a `Panel`. A 0x0 surface is the one exception to the size rules above.
 - **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
-- **`ImageSkin`** (planned, not yet built): one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option would switch to nearest-neighbour scaling to keep hard pixel edges. It would accept a `pygame.Surface` or a path.
+- **`ImageSkin`** (planned): one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option would switch to nearest-neighbour scaling to keep hard pixel edges. It would accept a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
 
 Scaling behaviour is a per-skin option, not a global setting.
