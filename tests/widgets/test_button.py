@@ -306,7 +306,7 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
 # region --- Pressed look -----------------------------------------------------
 
 
-def test_button_down_held_over_shows_pressed_colour(press_ui: UI):
+def test_press_held_on_button_shows_pressed_colour(press_ui: UI):
     button = Button(
         press_ui.root,
         size=(5, 6),
@@ -323,7 +323,7 @@ def test_button_down_held_over_shows_pressed_colour(press_ui: UI):
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
 
 
-def test_button_down_then_dragged_off_shows_base_colour(press_ui: UI):
+def test_press_and_drag_off_button_shows_base_colour(press_ui: UI):
     button = Button(
         press_ui.root,
         size=(5, 6),
@@ -343,7 +343,7 @@ def test_button_down_then_dragged_off_shows_base_colour(press_ui: UI):
     assert button.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_button_down_then_dragged_off_then_back_on_shows_pressed_colour(press_ui: UI):
+def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(press_ui: UI):
     button = Button(
         press_ui.root,
         size=(5, 6),
@@ -366,7 +366,7 @@ def test_button_down_then_dragged_off_then_back_on_shows_pressed_colour(press_ui
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
 
 
-def test_button_down_released_over_button_shows_highlighted_colour(press_ui: UI):
+def test_click_and_keep_mouse_on_button_shows_highlighted_colour(press_ui: UI):
     button = Button(
         press_ui.root,
         size=(5, 6),
@@ -386,7 +386,7 @@ def test_button_down_released_over_button_shows_highlighted_colour(press_ui: UI)
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_button_down_released_off_then_moved_back_on_shows_highlighted_colour(
+def test_release_off_button_then_move_back_on_shows_highlighted_colour(
     press_ui: UI,
 ):
     button = Button(
@@ -452,7 +452,7 @@ def test_focus_lost_during_press_shows_highlighted_colour(press_ui: UI):
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_right_button_down_held_over_shows_highlighted_colour(press_ui: UI):
+def test_right_press_held_on_button_shows_highlighted_colour(press_ui: UI):
     button = Button(
         press_ui.root,
         size=(5, 6),
@@ -525,7 +525,7 @@ def test_on_click_is_called_once_with_button_as_argument(ui: UI):
     assert on_click_calls == [button]
 
 
-def test_button_down_alone_does_not_call_on_click(ui: UI):
+def test_press_alone_does_not_call_on_click(ui: UI):
     on_click_calls = []
 
     Button(
