@@ -67,15 +67,19 @@ def test_style_negative_thickness_or_radius_raises(field_name):
         replace(ANY_STYLE, **{field_name: -5})
 
 
-def test_style_override_halo_thickness_can_be_zero():
-    style_override = StyleOverride(halo_thickness=0)
+@pytest.mark.parametrize("field_name", ["border_thickness", "halo_thickness"])
+def test_style_override_thickness_can_be_zero(field_name):
+    style_override = replace(StyleOverride(), **{field_name: 0})
 
-    assert style_override.halo_thickness == 0
+    assert getattr(style_override, field_name) == 0
 
 
-def test_style_override_negative_halo_thickness_raises():
+@pytest.mark.parametrize("field_name", ["border_thickness", "halo_thickness"])
+def test_style_override_negative_thickness_raises(field_name):
+    style_override = StyleOverride()
+
     with pytest.raises(ValueError):
-        StyleOverride(halo_thickness=-5)
+        replace(style_override, **{field_name: -5})
 
 
 @pytest.mark.parametrize("halo_fade_profile", [*FadeProfile])

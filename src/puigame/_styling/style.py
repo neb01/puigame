@@ -175,9 +175,9 @@ class Style:
     # general appearance options
     body_colour: RGBA  # alpha channel controls transparency
     border_colour: RGBA
+    border_thickness: int  # 0 for no border
 
     # general appearance options (state-agnostic)
-    border_thickness: int  # 0 for no border
     corner_radius: int  # outer edge; halo, border, and body radii derive from it
 
     # effect options
@@ -287,14 +287,16 @@ class StyleOverride:
     overrides are applied in order of precedence, so the higher-precedence
     state wins when two set the same field (see ``Theme``).
 
-    A negative halo thickness raises ``ValueError`` when the override is
-    created. A negative swell is allowed. A halo fade profile that is not a
-    ``FadeProfile``, or a text offset that is not a tuple, raises
+    A negative border thickness or halo thickness raises ``ValueError`` when
+    the override is created. A negative swell is allowed. A halo fade profile
+    that is not a ``FadeProfile``, or a text offset that is not a tuple, raises
     ``TypeError``.
 
     Attributes:
         body_colour: Colour of the body as RGBA, or ``None`` to keep it.
         border_colour: Border colour as RGBA, or ``None`` to keep it.
+        border_thickness: Border thickness in pixels, or ``None`` to keep it.
+            0 turns the border off.
         halo_colour: Halo colour as RGBA, or ``None`` to keep it.
         halo_fade_profile: How the halo fades towards its outer edge, or
             ``None`` to keep it.
@@ -311,6 +313,7 @@ class StyleOverride:
     # general appearance options
     body_colour: RGBA | None = None  # alpha channel controls transparency
     border_colour: RGBA | None = None
+    border_thickness: int | None = None  # 0 for no border
 
     # effect options
     halo_colour: RGBA | None = None
@@ -331,8 +334,14 @@ class StyleOverride:
         Raises:
             TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, or
                 if ``text_offset`` is not a tuple.
-            ValueError: If ``halo_thickness`` is negative.
+            ValueError: If ``border_thickness`` or ``halo_thickness`` is
+                negative.
         """
+        if self.border_thickness is not None and self.border_thickness < 0:
+            raise ValueError(
+                f"border_thickness cannot be negative, got {self.border_thickness} px",
+            )
+
         if self.halo_fade_profile is not None and not isinstance(
             self.halo_fade_profile,
             FadeProfile,

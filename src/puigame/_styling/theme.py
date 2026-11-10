@@ -51,15 +51,15 @@ class Theme:
     """Shared drawing rules for every widget in a UI.
 
     Overrides combine best when each state changes its own fields: for
-    example, highlighting changes the border, checking changes the body, and
+    example, highlighting adds a halo, checking thickens the border, and
     disabling greys out the colours. Overrides that set different fields
     always combine. Where two set the same field, the flag with higher
     precedence wins, whatever order ``style_overrides`` holds them in. From
     lowest to highest, the precedence is ``CHECKED``, ``HIGHLIGHTED``,
     ``PRESSED``, ``EDITING``, then ``DISABLED``, so a disabled widget always
     shows every field its override sets. If checking and disabling both change
-    the body colour, for example, a disabled checkbox looks the same whether it
-    is checked or not.
+    the body colour, for example, a disabled toggle button looks the same
+    whether it is checked or not.
 
     Attributes:
         base_style: Appearance of a widget when no state flags are set.
@@ -149,6 +149,10 @@ DEFAULT_THEME = Theme(
         text_offset=(0, 0),
     ),
     style_overrides={
+        State.CHECKED: StyleOverride(
+            border_colour=_MID_GREEN,
+            border_thickness=3,
+        ),
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=_MID_GREEN,
             halo_fade_profile=FadeProfile.SOFT_QUADRATIC,

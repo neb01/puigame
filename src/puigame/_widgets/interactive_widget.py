@@ -1,7 +1,8 @@
 """InteractiveWidget, the base class for widgets the user can interact with.
 
 InteractiveWidget extends Widget with the highlight and activation behaviour
-that interactive widgets share. Button builds on it.
+that interactive widgets share. Button, and ToggleButton through it, build
+on it.
 
 The UIManager recognises interactive widgets with ``isinstance()`` against this
 class, so it never imports the concrete widgets.

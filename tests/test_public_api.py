@@ -22,6 +22,7 @@ PUBLIC_NAMES = [
     "TextAlign",
     "TextHorizontalExtent",
     "Theme",
+    "ToggleButton",
     "Widget",
 ]
 

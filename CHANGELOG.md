@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `ToggleButton`, a button that switches between checked and unchecked when clicked. It calls `on_toggle` with the button and its new value on every change, from a click, from `toggle()`, or from assigning `checked`. While checked, it adds `State.CHECKED` on top of its other states, including disabled.
+- `StyleOverride.border_thickness`, so the border thickness can change between states.
+- `DEFAULT_THEME` styles `State.CHECKED` with a thicker green border, which stays visible while a toggle button is highlighted, pressed, or disabled.
 - Line alignment for multi-line text, set with `Style.text_align` and chosen with `TextAlign`: `LEFT`, `CENTRE`, or `RIGHT`. The anchors still place the whole block of text; alignment places each line within it.
 
 ### Changed

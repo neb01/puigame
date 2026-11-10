@@ -103,10 +103,11 @@ Widget                  rect, anchor, fixed parent, children, flags, skin, per-s
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + the highlight and activation behaviour interactive widgets share
     ├── Button          + Text component, pressed look, on_click
-    │   └── Checkbox    (planned) + checked, can_untoggle, optional CheckboxGroup
+    │   └── ToggleButton + checked, toggle(), on_toggle (no on_click)
+    ├── Checkbox        (planned) box-and-tick indicator beside a label, with checked
     └── TextBox         (planned) + editable Text, editing mode (no PRESSED state)
 
-CheckboxGroup           (planned) helper: mutual exclusion between checkboxes (radio behaviour)
+Exclusive group         (planned, name open) helper: mutual exclusion between toggle buttons or checkboxes (radio behaviour)
 UI                      composes root (a UIRoot, which holds the theme) and manager; draws the tree
 UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
@@ -228,11 +229,11 @@ The private `theme._style_for(state)` returns a complete `Style` for any combina
 
 - Themes are **immutable**: `Theme`, `Style`, and `StyleOverride` are frozen dataclasses, and `style_overrides` is stored as a read-only copy. Cached images therefore never go out of date because a theme changed. A variation is made with `dataclasses.replace()`.
 - `State.BASE` cannot be a key in `style_overrides`, because it is part of every state and its override would always apply. Combined flags, such as `State.HIGHLIGHTED | State.DISABLED`, cannot be keys either: a combination of states is styled by applying each flag's override in turn. Both raise `ValueError` when the theme is created.
-- Overrides combine best when each state changes its own fields: for example, highlighting changes the border, checking changes the body, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the higher-precedence flag wins. If checking and disabling both change the body colour, for example, a disabled checkbox looks the same whether it is checked or not.
+- Overrides combine best when each state changes its own fields: for example, highlighting adds a halo, checking thickens the border, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the higher-precedence flag wins. If checking and disabling both change the body colour, for example, a disabled toggle button looks the same whether it is checked or not.
 - Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. A text margin or offset that is not a tuple, a typeface that is neither a `BundledTypeface` nor a `Path`, or a horizontal extent that is not a `TextHorizontalExtent`, raises `TypeError`. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
 - Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
 - The theme lives on the UI's **`UIRoot`**, and every widget reaches it through the root of its tree, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
-- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games. It uses Neb0Font (`BundledTypeface.NEB0FONT`) at size 18, three times its 6-pixel grid, with `TextHorizontalExtent.INK`, so text is centred exactly at any size with a `text_offset` of `(0, 0)`; pressed text moves down 1 pixel.
+- puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games. It uses Neb0Font (`BundledTypeface.NEB0FONT`) at size 18, three times its 6-pixel grid, with `TextHorizontalExtent.INK`, so text is centred exactly at any size with a `text_offset` of `(0, 0)`; pressed text moves down 1 pixel. Its `CHECKED` look is a thicker green border, set with `border_colour` and `border_thickness`. No other state sets the border thickness, so a checked toggle button looks different from an unchecked one in every state, including disabled, where the border turns grey but stays thick.
 - **Later:** individual widgets, or whole subtrees, could have a different theme from the UI's. An earlier attempt, with themes inherited down the tree, is kept at the tag `archive/per-widget-themes`.
 
 ## Anchors
@@ -345,7 +346,7 @@ class State(Flag):
 | Member | Meaning |
 |---|---|
 | `BASE` | No flags set: the widget's ordinary state |
-| `CHECKED` | Reserved: a `Checkbox` (planned) is checked |
+| `CHECKED` | The widget is checked, as a `ToggleButton` is while its `checked` is true |
 | `HIGHLIGHTED` | The mouse is over the widget (see [Highlight](#highlight)), or, once keyboard navigation arrives, it has selected the widget. Pressing adds `PRESSED` on top |
 | `PRESSED` | A press, by mouse button or by Enter or Space, is in progress on the widget |
 | `EDITING` | Reserved: a `TextBox` (planned) is receiving typed text |
@@ -360,10 +361,10 @@ Each member is one bit, so a combination such as `State.HIGHLIGHTED | State.PRES
 - `Widget` starts from `BASE` and adds `DISABLED` when not `enabled_in_tree`.
 - `InteractiveWidget` calls `super()._current_state` and, unless `DISABLED` is set, adds `HIGHLIGHTED`.
 - `Button` adds `PRESSED` only on top of `HIGHLIGHTED`, while a press is held over it. It therefore inherits the suppression by `DISABLED`, and dragging off mid-press shows `BASE`.
-- `Checkbox` (planned) will add `CHECKED` when `checked` is true.
+- `ToggleButton` adds `CHECKED` while `checked` is true, on top of every other state, including `DISABLED`, so a disabled toggle button still shows its value.
 - `TextBox` (planned) will add `EDITING`.
 
-`DISABLED` suppresses `HIGHLIGHTED` and `PRESSED`: a disabled widget never looks interactive.
+`DISABLED` suppresses `HIGHLIGHTED` and `PRESSED`: a disabled widget never looks interactive. It does not suppress `CHECKED`, which is a value rather than interaction feedback.
 
 ### Valid states
 
@@ -373,7 +374,7 @@ Not every combination can occur, so each class lists the combinations it can be 
 |---|---|
 | `Widget`, `Container`, `Panel`, `Label` | `BASE`, `DISABLED` |
 | `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
-| `Checkbox` (planned) | Button's four, each with and without `CHECKED` (eight) |
+| `ToggleButton` | Button's four, each with and without `CHECKED` (eight) |
 | `TextBox` (planned) | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
 
 ## Rendering and caching
@@ -497,10 +498,18 @@ Callbacks are plain callables passed to widgets on creation. Each receives the w
 - **Called synchronously** from inside `ui.handle_event()`, on the release that completes a click (see [Pressing](#pressing)). Changes it makes to the widget tree, such as killing or disabling the button, show from the next `update()`. A coroutine function would never run its body, since the coroutine it returns is ignored.
 - **Exceptions propagate** to the caller of `handle_event()`. puigame does not catch them, since that would hide bugs in the game.
 
+### ToggleButton
+
+- **Signature:** `on_toggle: Callable[[ToggleButton, bool], object] | None = None`, called with the button and its new `checked` value. One callback reports every change, as Qt's `toggled` and GTK's `toggled` do; a handler that cares about the direction reads the value.
+- **No `on_click`:** a toggle button reports changes, not clicks. Qt keeps both, but `clicked` only adds information when changes made in code also notify and a handler must tell them apart, or when a click changes nothing, as on the checked member of an exclusive group. Adding `on_click` later would not break anything.
+- **Every real change notifies:** a click, `toggle()`, and assigning `checked` all call `on_toggle`, as Qt's `setChecked()` does. Creating a button with `checked=True` does not, and nor does assigning the value it already has.
+- **The value changes first:** the setter stores the new value, then calls `on_toggle`, so a handler that reads `button.checked` sees the new value.
+- **`toggle()` returns `None`**, following command–query separation and Qt's `toggle()`; the new value is in `checked`.
+- Otherwise as for `Button`: fixed and validated on creation, called synchronously, and exceptions propagate to whoever changed the value (for a click, the caller of `handle_event()`).
+
 ### Later
 
-- `Checkbox` will inherit `on_click` from `Button` and add a separate `on_toggle(checkbox, checked)` callback for a change of state, following Qt's split between `clicked` and `toggled`.
-- The callbacks for `CheckboxGroup` and `TextBox` are still open (see [Open questions](#open-questions)).
+- The callbacks for the exclusive group and `TextBox` are still open (see [Open questions](#open-questions)).
 
 ## Positions and types
 
@@ -551,6 +560,7 @@ src/puigame/
 │   ├── label.py               Label
 │   ├── panel.py               Panel
 │   ├── state.py               State
+│   ├── toggle_button.py       ToggleButton
 │   └── widget.py              Widget
 ├── assets/
 │   └── fonts/
@@ -573,10 +583,10 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | Group | Names |
 | --- | --- |
 | Running a UI | `UI` |
-| Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button` |
+| Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button`, `ToggleButton` |
 | Placement | `Anchor` |
 | States | `State` |
-| Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
+| Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
 - **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
@@ -614,7 +624,7 @@ Each layer imports only from the layers above it:
 - Left-click press-and-release activation with mouse capture
 - Bundled fonts, loaded with `importlib.resources`
 
-**Later:** `Checkbox` with `CheckboxGroup`, `TextBox` with text editing, keyboard navigation, cursor management, a mouse-button enable map, `ImageSkin` with default art, mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
+**Later:** an indicator-style `Checkbox`, an exclusive group for radio behaviour, `TextBox` with text editing, keyboard navigation, cursor management, a mouse-button enable map, `ImageSkin` with default art, mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
 
 ## Build order
 
@@ -634,8 +644,8 @@ Each step is one branch and pull request, with tests:
 
 ## Open questions
 
-- **Callbacks**: names and signatures for `CheckboxGroup` and `TextBox`, whether programmatic changes (for example `checkbox.checked = True`) notify, and whether Escape on a `TextBox` has its own callback.
-- **Combining style overrides**: overrides are currently absolute, so when two active states set the same field the higher-precedence one wins, and combined keys such as `State.HIGHLIGHTED | State.DISABLED` are rejected. Possible next steps, decided once a real widget needs them (most likely `Checkbox`):
+- **Callbacks**: names and signatures for the exclusive group and `TextBox`, and whether Escape on a `TextBox` has its own callback. Whether changes made in code notify is settled by `ToggleButton`: they do.
+- **Combining style overrides**: overrides are currently absolute, so when two active states set the same field the higher-precedence one wins, and combined keys such as `State.HIGHLIGHTED | State.DISABLED` are rejected. `ToggleButton` did not need more: `DEFAULT_THEME` shows `CHECKED` through `border_thickness`, which no other state sets. Possible next steps, decided once a real widget or theme needs them:
   - **Relative overrides**: colour fields that multiply the value underneath (a tint, or a lighten or darken factor) as well as replacing it, so effects such as hover and checked combine on the same field. Integer fields would add, and enum fields such as `halo_fade_profile` would still replace. `StyleOverride` would need a way to mark each value as absolute or relative.
   - **Two passes**: apply absolute values first, so the most specific wins, then relative values on top. Multiplication gives the same result in any order, so relative values would not depend on precedence.
   - **Combined keys**: allowed only if stacking and relative overrides cannot express a look. Overrides would apply in order of specificity (fewer flags first, then by precedence), worked out once when the theme is created and stored privately, so `style_overrides` stays as given. A relative value in a combined key is an extra adjustment for the combination; an absolute value replaces whatever came before.

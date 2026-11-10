@@ -91,6 +91,7 @@ For a display opened with `pg.SCALED`, create the UI with the display's own size
 ## Widgets
 
 - `Button`: a clickable widget with text.
+- `ToggleButton`: a button that switches between checked and unchecked when clicked.
 - `Label`: text.
 - `Panel`: a background for its children, which by default stops clicks reaching the widgets and game below it.
 - `Container`: an invisible widget that groups and places its children.
