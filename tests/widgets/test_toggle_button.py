@@ -5,6 +5,7 @@ import pygame as pg
 import pytest
 from pygame.typing import Point
 
+from mouse_helpers import left_click, left_press, left_release, move_mouse
 from puigame import (
     DEFAULT_THEME,
     UI,
@@ -115,74 +116,6 @@ def on_toggle_error(_toggle_button: ToggleButton, _checked: bool) -> NoReturn:
         OnToggleError: Always.
     """
     raise OnToggleError
-
-
-# endregion
-
-
-# region --- Helpers ----------------------------------------------------------
-
-
-def _left_press(ui: UI, *, pos: tuple[int, int]) -> bool:
-    """Send a left button down at ``pos`` and return whether it was consumed.
-
-    Args:
-        ui: UI to send the event to.
-        pos: Position of the event.
-
-    Returns:
-        Whether ``ui`` consumed the event.
-    """
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    return ui.handle_event(mouse_button_down_event)
-
-
-def _left_release(ui: UI, *, pos: tuple[int, int]) -> bool:
-    """Send a left button up at ``pos`` and return whether it was consumed.
-
-    Args:
-        ui: UI to send the event to.
-        pos: Position of the event.
-
-    Returns:
-        Whether ``ui`` consumed the event.
-    """
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    return ui.handle_event(mouse_button_up_event)
-
-
-def _left_click(ui: UI, *, pos: tuple[int, int]) -> None:
-    """Send a left press and release at ``pos``, as one click.
-
-    Args:
-        ui: UI to send the events to.
-        pos: Position of both events.
-    """
-    _left_press(ui, pos=pos)
-    _left_release(ui, pos=pos)
-
-
-def _move_mouse(ui: UI, *, pos: tuple[int, int]) -> None:
-    """Send a mouse motion to ``pos``.
-
-    Motion is never consumed, so nothing is returned.
-
-    Args:
-        ui: UI to send the event to.
-        pos: Position the cursor moves to.
-    """
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=pos)
-    ui.handle_event(mouse_motion_event)
 
 
 # endregion
@@ -520,7 +453,7 @@ def test_click_toggles_checked(ui: UI, checked, expected_checked):
         checked=checked,
     )
 
-    _left_click(ui, pos=(1, 2))
+    left_click(ui, pos=(1, 2))
 
     assert toggle_button.checked is expected_checked
 
@@ -552,7 +485,7 @@ def test_click_calls_on_toggle_once_with_new_value(ui: UI, checked, expected_che
         checked=checked,
     )
 
-    _left_click(ui, pos=(1, 2))
+    left_click(ui, pos=(1, 2))
 
     assert on_toggle_calls == [(toggle_button, expected_checked)]
 
@@ -580,7 +513,7 @@ def test_press_alone_does_not_toggle_checked(ui: UI, checked, expected_checked):
         checked=checked,
     )
 
-    _left_press(ui, pos=(1, 2))
+    left_press(ui, pos=(1, 2))
 
     assert toggle_button.checked is expected_checked
 
@@ -608,8 +541,8 @@ def test_release_off_button_does_not_toggle_checked(ui: UI, checked, expected_ch
         checked=checked,
     )
 
-    _left_press(ui, pos=(1, 2))
-    _left_release(ui, pos=(10, 20))
+    left_press(ui, pos=(1, 2))
+    left_release(ui, pos=(10, 20))
 
     assert toggle_button.checked is expected_checked
 
@@ -641,7 +574,7 @@ def test_click_on_disabled_button_does_not_toggle_checked(
         checked=checked,
     )
 
-    _left_click(ui, pos=(1, 2))
+    left_click(ui, pos=(1, 2))
 
     assert toggle_button.checked is expected_checked
 
@@ -661,10 +594,10 @@ def test_exceptions_propagate(ui: UI):
         hit_testable=True,
     )
 
-    _left_press(ui, pos=(1, 2))
+    left_press(ui, pos=(1, 2))
 
     with pytest.raises(OnToggleError):
-        _left_release(ui, pos=(1, 2))
+        left_release(ui, pos=(1, 2))
 
 
 # endregion
@@ -708,7 +641,7 @@ def test_checked_and_highlighted_button_shows_checked_border_and_highlighted_bod
         checked=True,
     )
 
-    _move_mouse(state_colour_ui, pos=(1, 2))
+    move_mouse(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     assert toggle_button.image.get_at((1, 0)) == CHECKED_COLOUR
@@ -732,7 +665,7 @@ def test_checked_and_pressed_button_shows_checked_border_and_pressed_body(
         checked=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     assert toggle_button.image.get_at((1, 0)) == CHECKED_COLOUR
