@@ -22,6 +22,7 @@ from puigame._widgets.container import Container
 from puigame._widgets.label import Label
 from puigame._widgets.panel import Panel
 from puigame._widgets.state import State
+from puigame._widgets.toggle_button import ToggleButton
 from puigame._widgets.widget import Widget
 
 __all__ = [
@@ -42,5 +43,6 @@ __all__ = [
     "TextAlign",
     "TextHorizontalExtent",
     "Theme",
+    "ToggleButton",
     "Widget",
 ]
