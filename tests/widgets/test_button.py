@@ -4,6 +4,7 @@ from typing import NoReturn
 import pygame as pg
 import pytest
 
+from mouse_helpers import left_click, left_press, left_release, move_mouse
 from puigame import (
     UI,
     Anchor,
@@ -87,74 +88,6 @@ def on_click_error(_button: Button) -> NoReturn:
         OnClickError: Always.
     """
     raise OnClickError
-
-
-# endregion
-
-
-# region --- Helpers ----------------------------------------------------------
-
-
-def _left_press(ui: UI, *, pos: tuple[int, int]) -> bool:
-    """Send a left button down at ``pos`` and return whether it was consumed.
-
-    Args:
-        ui: UI to send the event to.
-        pos: Position of the event.
-
-    Returns:
-        Whether ``ui`` consumed the event.
-    """
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    return ui.handle_event(mouse_button_down_event)
-
-
-def _left_release(ui: UI, *, pos: tuple[int, int]) -> bool:
-    """Send a left button up at ``pos`` and return whether it was consumed.
-
-    Args:
-        ui: UI to send the event to.
-        pos: Position of the event.
-
-    Returns:
-        Whether ``ui`` consumed the event.
-    """
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
-
-    return ui.handle_event(mouse_button_up_event)
-
-
-def _left_click(ui: UI, *, pos: tuple[int, int]) -> None:
-    """Send a left press and release at ``pos``, as one click.
-
-    Args:
-        ui: UI to send the events to.
-        pos: Position of both events.
-    """
-    _left_press(ui, pos=pos)
-    _left_release(ui, pos=pos)
-
-
-def _move_mouse(ui: UI, *, pos: tuple[int, int]) -> None:
-    """Send a mouse motion to ``pos``.
-
-    Motion is never consumed, so nothing is returned.
-
-    Args:
-        ui: UI to send the event to.
-        pos: Position the cursor moves to.
-    """
-    mouse_motion_event = pg.Event(pg.MOUSEMOTION, pos=pos)
-    ui.handle_event(mouse_motion_event)
 
 
 # endregion
@@ -302,7 +235,7 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
 
     assert surface.get_at((15, 15)) == BLACK
 
-    _move_mouse(ui, pos=(10, 11))
+    move_mouse(ui, pos=(10, 11))
     ui.update()
 
     surface.fill(WHITE)
@@ -331,7 +264,7 @@ def test_press_held_on_button_shows_pressed_colour(state_colour_ui: UI):
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
@@ -351,10 +284,10 @@ def test_press_and_drag_off_button_shows_base_colour(state_colour_ui: UI):
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
-    _move_mouse(state_colour_ui, pos=(10, 11))
+    move_mouse(state_colour_ui, pos=(10, 11))
     state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == BASE_COLOUR
@@ -376,13 +309,13 @@ def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
-    _move_mouse(state_colour_ui, pos=(11, 12))
+    move_mouse(state_colour_ui, pos=(11, 12))
     state_colour_ui.update()
 
-    _move_mouse(state_colour_ui, pos=(1, 2))
+    move_mouse(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
@@ -402,10 +335,10 @@ def test_click_and_keep_mouse_on_button_shows_highlighted_colour(state_colour_ui
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
-    _left_release(state_colour_ui, pos=(1, 2))
+    left_release(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -427,13 +360,13 @@ def test_release_off_button_then_move_back_on_shows_highlighted_colour(
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
-    _left_release(state_colour_ui, pos=(11, 12))
+    left_release(state_colour_ui, pos=(11, 12))
     state_colour_ui.update()
 
-    _move_mouse(state_colour_ui, pos=(1, 2))
+    move_mouse(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -453,7 +386,7 @@ def test_disabled_during_press_shows_disabled_colour(state_colour_ui: UI):
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     button.enabled = False
@@ -476,7 +409,7 @@ def test_focus_lost_during_press_shows_highlighted_colour(state_colour_ui: UI):
         hit_testable=True,
     )
 
-    _left_press(state_colour_ui, pos=(1, 2))
+    left_press(state_colour_ui, pos=(1, 2))
     state_colour_ui.update()
 
     window_focus_lost_event = pg.Event(pg.WINDOWFOCUSLOST)
@@ -534,7 +467,7 @@ def test_pressed_keeps_highlighted_fields_that_it_does_not_override():
         hit_testable=True,
     )
 
-    _left_press(ui, pos=(1, 2))
+    left_press(ui, pos=(1, 2))
     ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
@@ -563,7 +496,7 @@ def test_on_click_is_called_once_with_button_as_argument(ui: UI):
         hit_testable=True,
     )
 
-    _left_click(ui, pos=(1, 2))
+    left_click(ui, pos=(1, 2))
 
     assert on_click_calls == [button]
 
@@ -585,7 +518,7 @@ def test_press_alone_does_not_call_on_click(ui: UI):
         hit_testable=True,
     )
 
-    _left_press(ui, pos=(1, 2))
+    left_press(ui, pos=(1, 2))
 
     assert on_click_calls == []
 
@@ -605,7 +538,7 @@ def test_click_on_button_with_no_on_click_does_not_raise(ui: UI):
         hit_testable=True,
     )
 
-    _left_click(ui, pos=(1, 2))
+    left_click(ui, pos=(1, 2))
 
 
 def test_exceptions_propagate(ui: UI):
@@ -623,10 +556,10 @@ def test_exceptions_propagate(ui: UI):
         hit_testable=True,
     )
 
-    _left_press(ui, pos=(1, 2))
+    left_press(ui, pos=(1, 2))
 
     with pytest.raises(OnClickError):
-        _left_release(ui, pos=(1, 2))
+        left_release(ui, pos=(1, 2))
 
 
 # endregion
