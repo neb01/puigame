@@ -7,6 +7,7 @@ from puigame import (
     BundledTypeface,
     FadeProfile,
     Style,
+    TextAlign,
     TextHorizontalExtent,
     Theme,
 )
@@ -34,6 +35,7 @@ ANY_STYLE = Style(
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
+    text_align=TextAlign.LEFT,
     text_horizontal_extent=TextHorizontalExtent.INK,
     text_margin=(0, 0),
     text_offset=(0, 0),

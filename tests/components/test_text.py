@@ -9,9 +9,10 @@ from puigame import (
     BundledTypeface,
     FadeProfile,
     Style,
+    TextAlign,
     TextHorizontalExtent,
 )
-from puigame._components.text import Text
+from puigame._components.text import Text, _get_cap_height, _get_font
 
 # region --- Constants --------------------------------------------------------
 
@@ -39,6 +40,7 @@ ANY_STYLE = Style(
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
+    text_align=TextAlign.LEFT,
     text_horizontal_extent=TextHorizontalExtent.INK,
     text_margin=(0, 0),
     text_offset=(0, 0),
@@ -80,6 +82,20 @@ def _centred_ink_rect(
 # endregion
 
 
+# region --- Fixtures ---------------------------------------------------------
+
+
+# the font and cap-height caches last for the whole run, so clear them before each
+# test; otherwise a font cached by an earlier test could hide a cache-key bug
+@pytest.fixture(autouse=True)
+def clear_text_caches() -> None:
+    _get_font.cache_clear()
+    _get_cap_height.cache_clear()
+
+
+# endregion
+
+
 # region --- Empty text -------------------------------------------------------
 
 
@@ -96,6 +112,29 @@ def test_render_empty_string_creates_zero_size_image():
             text_offset=(1, 5),
         ),
     )
+
+    assert placed_image.image.size == (0, 0)
+    assert placed_image.pos == (0, 0)
+
+
+@pytest.mark.parametrize(
+    "content",
+    ["   ", "\n\n\n", "\t\t\t", " \t\n \n\t  "],
+    ids=["spaces only", "newlines only", "tabs only", "spaces, newlines, and tabs"],
+)
+def test_render_whitespace_only_creates_zero_size_image(content):
+    style = replace(
+        ANY_STYLE,
+        text_anchor=Anchor.TOP_LEFT,
+        text_parent_anchor=Anchor.BOTTOM_RIGHT,
+        text_align=TextAlign.LEFT,
+        text_horizontal_extent=ANY_TEXT_HORIZONTAL_EXTENT,
+        text_margin=(0, 0),
+        text_offset=(0, 0),
+    )
+
+    text = Text(content)
+    placed_image = text.render(WIDGET_SIZE, style)
 
     assert placed_image.image.size == (0, 0)
     assert placed_image.pos == (0, 0)
@@ -221,11 +260,207 @@ def test_render_logical_width_comes_from_longest_line():
     assert ink_rect.right == 71
 
 
-def test_render_draws_nothing_for_spaces_only():
-    ink_rect = _centred_ink_rect(18, "       ", ANY_TEXT_HORIZONTAL_EXTENT)
+# endregion
 
-    assert ink_rect.size == (0, 0)
-    assert ink_rect.topleft == (50, 19)
+
+# region --- Alignment --------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text_align", "expected_left"),
+    [
+        (TextAlign.LEFT, 0),
+        (TextAlign.CENTRE, 30),
+        (TextAlign.RIGHT, 60),
+    ],
+)
+def test_render_aligns_lines_by_text_align(text_align, expected_left):
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_align=text_align,
+    )
+
+    text = Text("SPUD_SPUD\nSPUD")
+
+    placed_image = text.render(WIDGET_SIZE, style)
+    line_2_image = placed_image.image.subsurface(
+        (0, 18),
+        (placed_image.image.width, 18),
+    )
+
+    line_2_glyph_ink_rects = pg.mask.from_surface(line_2_image, 0).get_bounding_rects()
+    line_2_ink_rect = line_2_glyph_ink_rects[0].unionall(line_2_glyph_ink_rects[1:])
+
+    assert line_2_ink_rect.left == expected_left
+
+
+@pytest.mark.parametrize(
+    "text_align",
+    [TextAlign.LEFT, TextAlign.CENTRE, TextAlign.RIGHT],
+)
+def test_render_text_align_does_not_move_single_line_of_text(text_align):
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_align=text_align,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(0, 0),
+        text_offset=(0, 0),
+    )
+
+    text = Text("SPUD")
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
+
+    assert ink_rect == pg.Rect((27, 19), (45, 12))
+
+
+def test_render_leading_spaces_count_towards_alignment():
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_align=TextAlign.CENTRE,
+    )
+
+    text = Text("SPUD_SPUD\n  SPUD")
+
+    placed_image = text.render(WIDGET_SIZE, style)
+    line_2_image = placed_image.image.subsurface(
+        (0, 18),
+        (placed_image.image.width, 18),
+    )
+
+    line_2_glyph_ink_rects = pg.mask.from_surface(line_2_image, 0).get_bounding_rects()
+    line_2_ink_rect = line_2_glyph_ink_rects[0].unionall(line_2_glyph_ink_rects[1:])
+
+    assert line_2_ink_rect.left == 42
+
+
+@pytest.mark.parametrize(
+    "text_align",
+    [TextAlign.LEFT, TextAlign.CENTRE, TextAlign.RIGHT],
+)
+@pytest.mark.parametrize(
+    ("text_horizontal_extent", "expected_ink_rect"),
+    [
+        (TextHorizontalExtent.INK, pg.Rect((15, 10), (69, 30))),
+        (TextHorizontalExtent.LOGICAL, pg.Rect((14, 10), (69, 30))),
+    ],
+    ids=["ink", "logical"],
+)
+def test_render_aligned_block_stays_centred_on_widget(
+    text_align,
+    text_horizontal_extent,
+    expected_ink_rect,
+):
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_align=text_align,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=(0, 0),
+        text_offset=(0, 0),
+    )
+
+    text = Text("SPUD\nSPUDDY")
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect().move(placed_image.pos)
+
+    assert ink_rect == expected_ink_rect
+
+
+def test_render_text_align_does_not_leak_between_styles():
+    centre_style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_align=TextAlign.CENTRE,
+    )
+
+    text = Text("SPUDDY\nSPUD")
+    # cache a centre-aligned font first, so the left-aligned render below would
+    # reuse it if alignment were missing from the font cache's key
+    text.render(WIDGET_SIZE, centre_style)
+
+    left_style = replace(centre_style, text_align=TextAlign.LEFT)
+    left_placed_image = text.render(WIDGET_SIZE, left_style)
+
+    line_2_left_image = left_placed_image.image.subsurface(
+        (0, 18),
+        (left_placed_image.image.width, 18),
+    )
+
+    line_2_glyph_ink_rects = pg.mask.from_surface(
+        line_2_left_image,
+        0,
+    ).get_bounding_rects()
+    line_2_ink_rect = line_2_glyph_ink_rects[0].unionall(line_2_glyph_ink_rects[1:])
+
+    assert line_2_ink_rect.left == 0
+
+
+@pytest.mark.parametrize(
+    "text_align",
+    [TextAlign.LEFT, TextAlign.CENTRE, TextAlign.RIGHT],
+)
+def test_render_trailing_spaces_do_not_shift_aligned_lines(text_align):
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_align=text_align,
+    )
+
+    text = Text("SPUD\nSPUD        ")
+    placed_image = text.render(WIDGET_SIZE, style)
+    ink_rect = placed_image.image.get_bounding_rect()
+
+    assert ink_rect == pg.Rect((0, 0), (45, 30))
+
+
+# endregion
+
+
+# region --- stripped_content -------------------------------------------------
+
+
+def test_stripped_content_removes_trailing_whitespace_from_each_line():
+    text = Text("SPUD  \nSPUD    ")
+
+    assert text.stripped_content == "SPUD\nSPUD"
+
+
+def test_stripped_content_keeps_leading_whitespace_from_each_line():
+    text = Text("   SPUD\n   SPUD")
+
+    assert text.stripped_content == "   SPUD\n   SPUD"
+
+
+def test_stripped_content_keeps_trailing_newlines():
+    text = Text("SPUD\nSPUD\n\n\n")
+
+    assert text.stripped_content == "SPUD\nSPUD\n\n\n"
+
+
+def test_stripped_content_whitespace_only_is_empty():
+    text = Text("   \t\t  \n\n ")
+
+    assert text.stripped_content == ""
+
+
+def test_content_keeps_whitespace():
+    text = Text("   \n SPUD\n  \t\t SPUD\n  ")
+
+    assert text.content == "   \n SPUD\n  \t\t SPUD\n  "
 
 
 # endregion
