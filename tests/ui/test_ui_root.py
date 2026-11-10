@@ -87,8 +87,8 @@ def test_constructor_with_negative_size_raises():
         UIRoot(size=(-1, 0), theme=ANY_THEME)
 
 
-def test_consumes_clicks_false_by_default(ui_root: UIRoot):
-    assert not ui_root.consumes_clicks
+def test_hit_testable_false_by_default(ui_root: UIRoot):
+    assert not ui_root.hit_testable
 
 
 # endregion

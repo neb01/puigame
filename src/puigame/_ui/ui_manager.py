@@ -40,7 +40,7 @@ class UIManager:
     def handle_event(self, event: pg.Event) -> bool:
         """Handle one pygame event and report whether the UI consumed it.
 
-        A mouse button down over a widget that consumes clicks is consumed, and
+        A mouse button down over a hit-testable widget is consumed, and
         so is its matching up, wherever it lands. A left down on an enabled
         interactive widget starts a press, and the left up activates the widget
         if it is still under the cursor. Wheel buttons, mouse motion, and window
@@ -82,7 +82,7 @@ class UIManager:
             event: A ``MOUSEBUTTONDOWN`` event.
 
         Returns:
-            ``True`` if the down was over a widget that consumes clicks,
+            ``True`` if the down was over a hit-testable widget,
             otherwise ``False``. Always ``False`` for the wheel buttons.
         """
         self._mouse_pos = event.pos
@@ -99,7 +99,7 @@ class UIManager:
             self._clear_pressed_widget()
 
         hit_widget = self._hit_test(event.pos)
-        if hit_widget is None:  # nothing here consumes clicks, so the game gets it
+        if hit_widget is None:  # nothing here is hit-testable, so the game gets it
             return False
 
         self._buttons_down.add(event.button)
@@ -200,7 +200,7 @@ class UIManager:
         ``UI.update()`` calls this each frame, after layout, so the highlight
         follows widgets that moved, were hidden, or were disabled under a still
         cursor. The candidate is the hit-test result, so a widget covered by
-        another that consumes clicks is not highlighted. Only an enabled
+        another hit-testable widget is not highlighted. Only an enabled
         interactive widget can be highlighted, and during a press only the
         pressed widget can be.
         """
@@ -211,7 +211,7 @@ class UIManager:
 
         hit_widget = self._hit_test(self._mouse_pos)
 
-        if hit_widget is None:  # nothing under the cursor consumes clicks
+        if hit_widget is None:  # nothing under the cursor is hit-testable
             self._clear_highlighted_widget()
             return
 
@@ -234,18 +234,18 @@ class UIManager:
             self._clear_highlighted_widget()
 
     def _hit_test(self, pos: Point) -> Widget | None:
-        """Return the topmost visible widget at ``pos`` that consumes clicks.
+        """Return the topmost visible hit-testable widget at ``pos``.
 
         Widgets are checked in reverse drawing order, so the one drawn on top
         wins. Hidden subtrees are skipped, disabled widgets still count, and a
-        widget that does not consume clicks lets the walk carry on to the
-        widgets below it. Each widget is tested against its ``rect``, which
-        excludes the right and bottom edges, whatever its skin draws: a halo
-        or positive swell outside the rect does not hit, and the band inside
-        the rect left undrawn by a negative swell does. A position off the draw surface
-        hits nothing, since no widget is drawn there, even if a widget's rect
-        extends past the surface's edge. The surface is fixed at ``(0, 0)``, so
-        the root's offset does not move this boundary.
+        widget that is not hit-testable lets the walk carry on to the widgets
+        below it. Each widget is tested against its ``rect``, which excludes
+        the right and bottom edges, whatever its skin draws: a halo or
+        positive swell outside the rect does not hit, and the band inside the
+        rect left undrawn by a negative swell does. A position off the draw
+        surface hits nothing, since no widget is drawn there, even if a
+        widget's rect extends past the surface's edge. The surface is fixed at
+        ``(0, 0)``, so the root's offset does not move this boundary.
 
         Args:
             pos: Position to test, in the coordinates of the UI's draw surface.
@@ -260,7 +260,7 @@ class UIManager:
             return None
 
         for widget in reversed(list(self._root._iter_visible_subtree())):
-            if widget.rect.collidepoint(pos) and widget.consumes_clicks:
+            if widget.rect.collidepoint(pos) and widget.hit_testable:
                 return widget
 
         return None

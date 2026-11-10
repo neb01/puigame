@@ -26,7 +26,7 @@ class Container(Widget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = False,
+        hit_testable: bool = False,
     ) -> None:
         """Create a container as the last child of ``parent``.
 
@@ -46,9 +46,9 @@ class Container(Widget):
                 Defaults to ``True``.
             visible: Whether the container's children are drawn. Defaults to
                 ``True``.
-            consumes_clicks: Whether mouse clicks over the container stop at
-                it. Defaults to ``False``, so clicks on its empty space reach
-                the widgets below it and the game.
+            hit_testable: Whether the mouse can hit the container, so that
+                clicks over it stop at it. Defaults to ``False``, so clicks on
+                its empty space reach the widgets below it and the game.
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
@@ -68,5 +68,5 @@ class Container(Widget):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
         )

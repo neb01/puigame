@@ -66,7 +66,7 @@ class UI:
         events it is given. Event positions must be in the coordinates of the
         UI's draw surface.
 
-        A mouse button down over a widget that consumes clicks is consumed, and
+        A mouse button down over a hit-testable widget is consumed, and
         so is its matching up, wherever it lands, so a click on a panel never
         reaches the game. A drag that starts outside the UI still reaches the
         game when it is released over a widget. Only the part of a widget that
