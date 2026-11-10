@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Line alignment for multi-line text, set with `Style.text_align` and chosen with `TextAlign`: `LEFT`, `CENTRE`, or `RIGHT`. The anchors still place the whole block of text; alignment places each line within it.
+
+### Changed
+
+- **Breaking:** `Style` now requires `text_align`.
+- Trailing whitespace at the end of each line is no longer drawn, so it no longer widens the text's image or moves aligned lines. Text made only of whitespace and newlines now gives a 0x0 image, as empty text does.
+
 ## [0.1.0] - 2026-11-06
 
 ### Added
