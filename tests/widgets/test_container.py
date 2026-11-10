@@ -1,6 +1,7 @@
 import pytest
 
 from puigame import (
+    UI,
     Anchor,
     BundledTypeface,
     Container,
@@ -47,8 +48,10 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 # region --- Construction -----------------------------------------------------
 
 
-def test_image_is_zero_size(ui_root: UIRoot):
-    container = Container(ui_root, size=(5, 10))
+def test_image_is_zero_size(ui: UI):
+    container = Container(ui.root, size=(5, 10))
+
+    ui.update()
 
     assert container.image.size == (0, 0)
 

@@ -183,6 +183,7 @@ def test_draw_skips_hidden_subtree():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        visible=True,
     )
     parent_2 = Widget(
         ui.root,
@@ -192,9 +193,10 @@ def test_draw_skips_hidden_subtree():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        visible=False,
     )
 
-    child_1 = Widget(
+    Widget(
         parent_1,
         size=ANY_SIZE,
         skin=FixedLayer(size=(1, 2), colour=RED, pos=(0, 0)),
@@ -202,6 +204,7 @@ def test_draw_skips_hidden_subtree():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        visible=False,
     )
 
     Widget(
@@ -212,10 +215,8 @@ def test_draw_skips_hidden_subtree():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        visible=True,
     )
-
-    parent_2.visible = False
-    child_1.visible = False
 
     ui.update()
     ui.draw(surface)

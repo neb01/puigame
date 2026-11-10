@@ -3,6 +3,7 @@ from dataclasses import replace
 import pytest
 
 from puigame import (
+    UI,
     Anchor,
     BundledTypeface,
     FadeProfile,
@@ -59,10 +60,10 @@ def test_rect_has_given_size():
     assert ui_root.rect.size == (10, 20)
 
 
-def test_root_position_is_origin():
-    ui_root = UIRoot(size=ANY_SIZE, theme=ANY_THEME)
+def test_root_position_is_origin(ui: UI):
+    ui.update()
 
-    assert ui_root.rect.topleft == (0, 0)
+    assert ui.root.rect.topleft == (0, 0)
 
 
 def test_theme_is_given_theme():
@@ -75,10 +76,10 @@ def test_theme_is_given_theme():
     assert ui_root.theme is theme
 
 
-def test_image_is_zero_size():
-    ui_root = UIRoot(size=(10, 20), theme=ANY_THEME)
+def test_image_is_zero_size(ui: UI):
+    ui.update()
 
-    assert ui_root.image.size == (0, 0)
+    assert ui.root.image.size == (0, 0)
 
 
 def test_constructor_with_negative_size_raises():
@@ -107,16 +108,11 @@ def test_kill_raises(ui_root: UIRoot):
 # region --- Layout -----------------------------------------------------------
 
 
-def test_given_offset_is_floored():
-    ui_root = UIRoot(size=ANY_SIZE, theme=ANY_THEME)
+def test_given_offset_is_floored(ui: UI):
+    ui.root.offset = (-1.4, 2.5)
+    ui.update()
 
-    assert ui_root.rect.topleft == (0, 0)
-
-    ui_root.offset = (-1.4, 2.5)
-    # white-box: nothing public runs the layout pass until UI does
-    ui_root._place_tree()
-
-    assert ui_root.rect.topleft == (-2, 2)
+    assert ui.root.rect.topleft == (-2, 2)
 
 
 # endregion

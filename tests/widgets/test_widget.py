@@ -34,6 +34,9 @@ BLUE = (0, 0, 255, 255)
 BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 
+BASE_COLOUR = BLUE
+DISABLED_COLOUR = RED
+
 ANY_STYLE = Style(
     body_colour=WHITE,
     border_colour=BLACK,
@@ -52,6 +55,11 @@ ANY_STYLE = Style(
     text_horizontal_extent=TextHorizontalExtent.INK,
     text_margin=(0, 0),
     text_offset=(0, 0),
+)
+
+STATE_COLOUR_THEME = Theme(
+    base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
+    style_overrides={State.DISABLED: StyleOverride(body_colour=DISABLED_COLOUR)},
 )
 
 ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
@@ -87,6 +95,12 @@ class RecordingLayer(Skin):
 
 
 # region --- Fixtures ---------------------------------------------------------
+
+
+@pytest.fixture
+def state_colour_ui() -> UI:
+    """Return a UI whose theme gives each state its own body colour."""
+    return UI(size=(300, 200), theme=STATE_COLOUR_THEME)
 
 
 @pytest.fixture
@@ -645,35 +659,27 @@ def test_showing_parent_does_not_override_hidden_grandparent(
 # region --- State images -----------------------------------------------------
 
 
-def test_image_shows_base_style_by_default():
-    base_style = replace(ANY_STYLE, body_colour=BLUE)
-    theme = Theme(
-        base_style=base_style,
-        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
+def test_image_shows_base_style_when_enabled(state_colour_ui: UI):
+    widget = Widget(
+        state_colour_ui.root,
+        size=(12, 10),
+        skin=BodyColourLayer(),
+        enabled=True,
     )
 
-    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
+    state_colour_ui.update()
 
-    widget = Widget(ui_root, size=(12, 10), skin=BodyColourLayer())
-
-    assert widget.image.get_at((4, 5)) == BLUE
+    assert widget.image.get_at((4, 5)) == BASE_COLOUR
 
 
-def test_image_shows_disabled_style_when_ancestor_is_disabled():
-    base_style = replace(ANY_STYLE, body_colour=BLUE)
-    theme = Theme(
-        base_style=base_style,
-        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
-    )
-
-    ui = UI(size=ANY_SIZE, theme=theme)
-    parent = Widget(ui.root, size=ANY_SIZE, skin=BodyColourLayer())
-    child = Widget(parent, size=(10, 12), skin=BodyColourLayer())
+def test_image_shows_disabled_style_when_ancestor_is_disabled(state_colour_ui: UI):
+    parent = Widget(state_colour_ui.root, size=ANY_SIZE, skin=BodyColourLayer())
+    child = Widget(parent, size=(10, 12), skin=BodyColourLayer(), enabled=True)
 
     parent.enabled = False
-    ui.update()
+    state_colour_ui.update()
 
-    assert child.image.get_at((3, 5)) == RED
+    assert child.image.get_at((3, 5)) == DISABLED_COLOUR
 
 
 # endregion
@@ -712,6 +718,8 @@ def test_image_cache_has_one_image_per_state(widget: Widget):
 def test_image_cache_reuses_object():
     ui = UI(size=ANY_SIZE, theme=ANY_THEME)
     widget = Widget(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
+
+    ui.update()
     original_base_image = widget.image
 
     widget.enabled = False
@@ -728,22 +736,24 @@ def test_image_cache_reuses_object():
 # region --- Skin and components ----------------------------------------------
 
 
-def test_image_without_components_gives_skin_image(ui_root: UIRoot):
+def test_image_without_components_gives_skin_image(ui: UI):
     widget = Widget(
-        ui_root,
+        ui.root,
         size=(10, 12),
         skin=FixedLayer(size=(5, 6), colour=BLUE, pos=(-3, 10)),
         components=[],
     )
+
+    ui.update()
 
     assert widget.image.size == (5, 6)
     assert widget.image_pos == (-3, 10)
     assert widget.image.get_at((0, 0)) == BLUE
 
 
-def test_image_draws_components_over_skin_in_given_order(ui_root: UIRoot):
+def test_image_draws_components_over_skin_in_given_order(ui: UI):
     widget = Widget(
-        ui_root,
+        ui.root,
         size=ANY_SIZE,
         skin=FixedLayer(size=(9, 10), colour=WHITE, pos=(1, 0)),
         components=[
@@ -752,14 +762,16 @@ def test_image_draws_components_over_skin_in_given_order(ui_root: UIRoot):
         ],
     )
 
+    ui.update()
+
     assert widget.image.get_at((0, 0)) == WHITE
     assert widget.image.get_at((1, 3)) == RED
     assert widget.image.get_at((3, 5)) == BLUE
 
 
-def test_image_covers_all_layers(ui_root: UIRoot):
+def test_image_covers_all_layers(ui: UI):
     widget = Widget(
-        ui_root,
+        ui.root,
         size=ANY_SIZE,
         skin=FixedLayer(size=(10, 12), colour=WHITE, pos=(0, 0)),
         components=[
@@ -768,40 +780,27 @@ def test_image_covers_all_layers(ui_root: UIRoot):
         ],
     )
 
+    ui.update()
+
     assert widget.image.size == (27, 13)
     assert widget.image_pos == (-3, -1)
 
 
 def test_skin_receives_style_for_each_possible_state():
-    base_style = replace(ANY_STYLE, body_colour=BLUE)
-    theme = Theme(
-        base_style=base_style,
-        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
-    )
-
-    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
+    ui_root = UIRoot(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
     skin = RecordingLayer()
     Widget(ui_root, size=ANY_SIZE, skin=skin)
 
-    expected_base_style = base_style
-    expected_override_style = replace(base_style, body_colour=RED)
-
     assert set(skin.received_styles) == {
-        expected_base_style,
-        expected_override_style,
+        replace(ANY_STYLE, body_colour=BASE_COLOUR),
+        replace(ANY_STYLE, body_colour=DISABLED_COLOUR),
     }
 
     assert len(skin.received_styles) == 2
 
 
 def test_components_receive_rect_size_and_style_for_each_possible_state():
-    base_style = replace(ANY_STYLE, body_colour=BLUE)
-    theme = Theme(
-        base_style=base_style,
-        style_overrides={State.DISABLED: StyleOverride(body_colour=RED)},
-    )
-
-    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
+    ui_root = UIRoot(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
     component = RecordingLayer()
 
     Widget(
@@ -811,12 +810,9 @@ def test_components_receive_rect_size_and_style_for_each_possible_state():
         components=[component],
     )
 
-    expected_base_style = base_style
-    expected_override_style = replace(base_style, body_colour=RED)
-
     assert set(component.received_styles) == {
-        expected_base_style,
-        expected_override_style,
+        replace(ANY_STYLE, body_colour=BASE_COLOUR),
+        replace(ANY_STYLE, body_colour=DISABLED_COLOUR),
     }
     assert len(component.received_styles) == 2
     assert component.received_sizes == [(10, 12), (10, 12)]
