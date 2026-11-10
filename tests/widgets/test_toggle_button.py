@@ -24,6 +24,8 @@ from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import Skin
 from puigame._ui.ui_root import UIRoot
 
+# region --- Constants --------------------------------------------------------
+
 ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
 
@@ -75,32 +77,47 @@ STATE_COLOUR_THEME = Theme(
 
 ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
-# region --- Fixtures ---------------------------------------------------------
-
-
-@pytest.fixture
-def state_colour_ui() -> UI:
-    """Return a UI whose theme gives each state its own body colour."""
-    return UI(size=(300, 200), theme=STATE_COLOUR_THEME)
-
-
 # endregion
 
 
-class BodyAndBorderColourLayer(Skin):
-    """Skin or component that fills its whole size with the style's body colour.
+# region --- Stubs ------------------------------------------------------------
 
-    Unlike ``FixedLayer``, it reads the style, so its image shows which state's
-    style it was given.
+
+class BodyAndBorderColourLayer(Skin):
+    """Skin that shows the style's body colour and border colour side by side.
+
+    The top row is the border colour and the rest is the body colour, at fixed
+    positions whatever the border thickness, so a test can read both fields
+    from one image, such as ``CHECKED``'s border with ``PRESSED``'s body.
     """
 
     def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a new surface of ``size``, filled with the body colour, at (0, 0)."""
+        """Return a new surface of ``size`` at (0, 0), top row in the border colour."""
         image = pg.Surface(size, pg.SRCALPHA)
         image.fill(style.body_colour)
         image.fill(style.border_colour, pg.Rect((0, 0), (size[0], 1)))
 
         return PlacedImage(image, (0, 0))
+
+
+class OnToggleError(Exception):
+    """Error raised by ``on_toggle_error()``, distinct from any built-in error."""
+
+
+def on_toggle_error(_toggle_button: ToggleButton, _checked: bool) -> NoReturn:
+    """Raise ``OnToggleError``, as an ``on_toggle`` callback that fails.
+
+    Args:
+        _toggle_button: The toggled button. Not used.
+        _checked: The button's new value. Not used.
+
+    Raises:
+        OnToggleError: Always.
+    """
+    raise OnToggleError
+
+
+# endregion
 
 
 # region --- Helpers ----------------------------------------------------------
@@ -171,6 +188,25 @@ def _move_mouse(ui: UI, *, pos: tuple[int, int]) -> None:
 # endregion
 
 
+# region --- Fixtures ---------------------------------------------------------
+
+
+@pytest.fixture
+def state_colour_ui() -> UI:
+    """Return a UI whose theme gives each state its own colour.
+
+    ``CHECKED`` changes the border colour and every other state the body
+    colour, so a checked look shows alongside each of the others.
+    """
+    return UI(size=(300, 200), theme=STATE_COLOUR_THEME)
+
+
+# endregion
+
+
+# region --- Construction -----------------------------------------------------
+
+
 @pytest.mark.parametrize(
     ("field_name", "value"),
     [
@@ -205,26 +241,22 @@ def test_forwards_placement_arguments():
     assert toggle_button.rect.topleft == (-5, 21)
 
 
+def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+    toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert toggle_button.consumes_clicks
+
+
 def test_checked_false_by_default(ui_root: UIRoot):
     toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert not toggle_button.checked
 
 
-class OnToggleError(Exception):
-    """Error raised by ``on_click_error()``, distinct from any built-in error."""
+def test_checked_true_when_created_checked(ui_root: UIRoot):
+    toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN, checked=True)
 
-
-def _on_toggle_error(_toggle_button: ToggleButton, _checked: bool) -> NoReturn:
-    """Raise ``OnClickError``, as an ``on_click`` callback that fails.
-
-    Args:
-        _button: The clicked button. Not used.
-
-    Raises:
-        OnClickError: Always.
-    """
-    raise OnToggleError
+    assert toggle_button.checked
 
 
 def test_on_toggle_not_called_when_created_checked(ui_root: UIRoot):
@@ -242,16 +274,10 @@ def test_on_toggle_not_called_when_created_checked(ui_root: UIRoot):
     assert on_toggle_calls == []
 
 
-def test_checked_true_when_created_checked(ui_root: UIRoot):
-    toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN, checked=True)
-
-    assert toggle_button.checked
+# endregion
 
 
-def test_text_defaults_to_empty_string(ui_root: UIRoot):
-    toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-
-    assert toggle_button.text == ""
+# region --- text -------------------------------------------------------------
 
 
 def test_text_getter_returns_given_text(ui_root: UIRoot):
@@ -260,10 +286,16 @@ def test_text_getter_returns_given_text(ui_root: UIRoot):
     assert toggle_button.text == "carapace"
 
 
-def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+def test_text_defaults_to_empty_string(ui_root: UIRoot):
     toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
 
-    assert toggle_button.consumes_clicks
+    assert toggle_button.text == ""
+
+
+# endregion
+
+
+# region --- checked ----------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -365,6 +397,24 @@ def test_on_toggle_sees_new_checked_value(ui_root: UIRoot, checked, expected_che
     assert on_toggle_calls == [(toggle_button, expected_checked)]
 
 
+def test_changing_checked_with_no_on_toggle_does_not_raise(ui_root: UIRoot):
+    toggle_button = ToggleButton(
+        ui_root,
+        size=ANY_SIZE,
+        skin=ANY_SKIN,
+        on_toggle=None,
+        checked=True,
+    )
+
+    toggle_button.checked = False
+
+
+# endregion
+
+
+# region --- toggle() ---------------------------------------------------------
+
+
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
     [
@@ -441,16 +491,10 @@ def test_toggle_on_disabled_button_toggles_checked(
     assert toggle_button.checked is expected_checked
 
 
-def test_changing_checked_with_no_on_toggle_does_not_raise(ui_root: UIRoot):
-    toggle_button = ToggleButton(
-        ui_root,
-        size=ANY_SIZE,
-        skin=ANY_SKIN,
-        on_toggle=None,
-        checked=True,
-    )
+# endregion
 
-    toggle_button.checked = False
+
+# region --- Clicks -----------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -607,7 +651,7 @@ def test_exceptions_propagate(ui: UI):
         ui.root,
         size=(5, 6),
         skin=ANY_SKIN,
-        on_toggle=_on_toggle_error,
+        on_toggle=on_toggle_error,
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
@@ -621,6 +665,12 @@ def test_exceptions_propagate(ui: UI):
 
     with pytest.raises(OnToggleError):
         _left_release(ui, pos=(1, 2))
+
+
+# endregion
+
+
+# region --- Checked look -----------------------------------------------------
 
 
 def test_checked_button_shows_checked_border_colour(state_colour_ui: UI):
@@ -640,30 +690,6 @@ def test_checked_button_shows_checked_border_colour(state_colour_ui: UI):
     state_colour_ui.update()
 
     assert toggle_button.image.get_at((1, 0)) == CHECKED_COLOUR
-
-
-def test_checked_and_pressed_button_shows_checked_border_and_pressed_body(
-    state_colour_ui: UI,
-):
-    toggle_button = ToggleButton(
-        state_colour_ui.root,
-        size=(5, 6),
-        skin=BodyAndBorderColourLayer(),
-        anchor=Anchor.TOP_LEFT,
-        parent_anchor=Anchor.TOP_LEFT,
-        margin=(0, 0),
-        offset=(0, 0),
-        enabled=True,
-        visible=True,
-        consumes_clicks=True,
-        checked=True,
-    )
-
-    _left_press(state_colour_ui, pos=(1, 2))
-    state_colour_ui.update()
-
-    assert toggle_button.image.get_at((1, 0)) == CHECKED_COLOUR
-    assert toggle_button.image.get_at((1, 3)) == PRESSED_COLOUR
 
 
 def test_checked_and_highlighted_button_shows_checked_border_and_highlighted_body(
@@ -688,6 +714,30 @@ def test_checked_and_highlighted_button_shows_checked_border_and_highlighted_bod
 
     assert toggle_button.image.get_at((1, 0)) == CHECKED_COLOUR
     assert toggle_button.image.get_at((1, 3)) == HIGHLIGHTED_COLOUR
+
+
+def test_checked_and_pressed_button_shows_checked_border_and_pressed_body(
+    state_colour_ui: UI,
+):
+    toggle_button = ToggleButton(
+        state_colour_ui.root,
+        size=(5, 6),
+        skin=BodyAndBorderColourLayer(),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
+        checked=True,
+    )
+
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
+
+    assert toggle_button.image.get_at((1, 0)) == CHECKED_COLOUR
+    assert toggle_button.image.get_at((1, 3)) == PRESSED_COLOUR
 
 
 def test_checked_and_disabled_button_shows_checked_border_and_disabled_body(
@@ -746,6 +796,12 @@ def test_checked_setter_updates_image_after_update(
     assert toggle_button.image.get_at((1, 0)) == expected_border_colour
 
 
+# endregion
+
+
+# region --- Validation -------------------------------------------------------
+
+
 @pytest.mark.parametrize(
     "on_toggle",
     [3, "large rooster mayhem"],
@@ -775,6 +831,12 @@ def test_constructor_with_non_string_text_raises(ui_root: UIRoot):
     assert ui_root.children == ()
 
 
+# endregion
+
+
+# region --- DEFAULT_THEME ----------------------------------------------------
+
+
 @pytest.mark.parametrize(
     "state",
     [
@@ -789,3 +851,6 @@ def test_default_theme_checked_changes_style_in_every_toggle_button_state(state)
     unchecked_style = DEFAULT_THEME._style_for(state)
 
     assert checked_style != unchecked_style
+
+
+# endregion
