@@ -12,6 +12,7 @@ from puigame._styling.style import (
     FadeProfile,
     Style,
     StyleOverride,
+    TextAlign,
     TextHorizontalExtent,
 )
 from puigame._styling.theme import DEFAULT_THEME, Theme
@@ -38,6 +39,7 @@ __all__ = [
     "State",
     "Style",
     "StyleOverride",
+    "TextAlign",
     "TextHorizontalExtent",
     "Theme",
     "Widget",

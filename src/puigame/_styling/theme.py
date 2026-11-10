@@ -18,6 +18,7 @@ from puigame._styling.style import (
     FadeProfile,
     Style,
     StyleOverride,
+    TextAlign,
     TextHorizontalExtent,
 )
 from puigame._widgets.state import State
@@ -140,6 +141,7 @@ DEFAULT_THEME = Theme(
         text_font_size=18,
         text_anchor=Anchor.CENTRE,
         text_parent_anchor=Anchor.CENTRE,
+        text_align=TextAlign.LEFT,
         # Neb0Font's blank space is all after each glyph, so measuring the ink
         # centres it exactly, with no offset
         text_horizontal_extent=TextHorizontalExtent.INK,

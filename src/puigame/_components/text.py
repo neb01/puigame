@@ -10,7 +10,12 @@ from pygame.typing import Point
 
 from puigame._components.placed_image import PlacedImage
 from puigame._layout.anchor import get_pos_from_anchor_match
-from puigame._styling.style import BundledTypeface, Style, TextHorizontalExtent
+from puigame._styling.style import (
+    BundledTypeface,
+    Style,
+    TextAlign,
+    TextHorizontalExtent,
+)
 
 
 @cache
@@ -18,17 +23,20 @@ def _get_font(
     *,
     typeface: BundledTypeface | Path,
     size: int,
+    text_align: TextAlign,
 ) -> pg.Font:
-    """Return a font for a typeface and size, loading it on first use.
+    """Return a font for a typeface, size, and alignment, loading it on first use.
 
-    Results are cached by both arguments, so every caller that passes the same
-    arguments receives the same font object. Callers must not change the
-    returned font, for example by setting ``bold`` or ``align``, since that
-    would change it for every other caller too.
+    Results are cached by all three arguments, so every caller that passes the
+    same arguments receives the same font object. The alignment is set once,
+    when the font is created. Callers must not change the returned font, for
+    example by setting ``bold`` or ``align``, since that would change it for
+    every other caller too.
 
     Args:
         typeface: Bundled typeface, or path to a font file supplied by the game.
         size: Font size, in pixels.
+        text_align: How the lines of multi-line text line up with each other.
 
     Returns:
         The font, shared with every caller that passes the same arguments.
@@ -48,6 +56,19 @@ def _get_font(
 
     else:  # user-defined path
         font = pg.Font(typeface, size)
+
+    match text_align:
+        case TextAlign.LEFT:
+            font.align = pg.FONT_LEFT
+
+        case TextAlign.CENTRE:
+            font.align = pg.FONT_CENTER
+
+        case TextAlign.RIGHT:
+            font.align = pg.FONT_RIGHT
+
+        case _:
+            assert_never(text_align)
 
     return font
 
@@ -97,7 +118,10 @@ class Text:
     style's ``text_colour`` sets its transparency.
 
     Each newline starts a new line, using pygame-ce's own multiline rendering:
-    lines are left-aligned and spaced by the font's line size. The last
+    lines are aligned by the style's ``text_align`` (see ``TextAlign``) and
+    spaced by the font's line size. Trailing whitespace on each line is not
+    drawn (see ``stripped_content``), so it does not affect alignment or the
+    placement box, and text that is only whitespace draws nothing. The last
     newline in the text is drawn as a blank space at the end of its line
     rather than starting an empty line, so ``"A\n"`` is one line and
     ``"A\n\n"`` is two. Empty lines count towards the placement box.
@@ -133,6 +157,22 @@ class Text:
 
         self._content = value
 
+    @property
+    def stripped_content(self) -> str:
+        """The content as drawn, with trailing whitespace removed from each line.
+
+        Leading whitespace and newlines are kept, so a final newline is still
+        drawn as a blank space at the end of its line. Whitespace is anything
+        ``str.rstrip()`` removes, including tabs and non-breaking spaces. A
+        line that is only whitespace becomes empty, but its newline is kept.
+        Content with nothing to draw, made only of whitespace and newlines,
+        gives an empty string, so it draws nothing rather than blank lines.
+        """
+        if self.content.strip() == "":
+            return ""
+
+        return "\n".join(line.rstrip() for line in self.content.split("\n"))
+
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Render the text and place it for a widget's size and style.
 
@@ -140,27 +180,29 @@ class Text:
             size: ``(width, height)`` of the widget's rect, in pixels, which the
                 text is placed against.
             style: Style for the widget's current state. Sets the text's
-                typeface, font size, colour, anchors, horizontal extent,
-                margin, and offset.
+                typeface, font size, colour, anchors, alignment, horizontal
+                extent, margin, and offset.
 
         Returns:
             The rendered text and its position relative to the widget's
-            ``rect.topleft``. Empty text gives a 0x0 image at ``(0, 0)``.
+            ``rect.topleft``. Empty text, or text that is only whitespace,
+            gives a 0x0 image at ``(0, 0)``.
 
         Raises:
             FileNotFoundError: If the style's typeface's font file does not
                 exist.
         """
-        if self.content == "":
+        if self.stripped_content == "":
             return PlacedImage.zero_size()
 
         font = _get_font(
             typeface=style.text_typeface,
             size=style.text_font_size,
+            text_align=style.text_align,
         )
 
         surface = font.render(
-            self.content,
+            self.stripped_content,
             antialias=False,
             color=style.text_colour,
         )
@@ -170,9 +212,9 @@ class Text:
         # the placement box's width, and its left edge inside the surface
         match style.text_horizontal_extent:
             case TextHorizontalExtent.LOGICAL:
-                text_lines = self.content.split("\n")
+                text_lines = self.stripped_content.split("\n")
                 placement_box_width = max(
-                    font.size(text_line.rstrip())[0] for text_line in text_lines
+                    font.size(text_line)[0] for text_line in text_lines
                 )
                 pos_x_correction = 0
 

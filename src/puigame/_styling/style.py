@@ -2,9 +2,9 @@
 
 A ``Style`` holds every value needed to draw a widget, and a ``StyleOverride``
 holds the changes one state makes to it. ``FadeProfile``,
-``TextHorizontalExtent``, and ``BundledTypeface`` are the choices for a
-style's halo fade, text placement box, and typeface, and ``RGBA`` is the type
-of its colours.
+``TextHorizontalExtent``, ``TextAlign``, and ``BundledTypeface`` are the
+choices for a style's halo fade, text placement box, line alignment, and
+typeface, and ``RGBA`` is the type of its colours.
 """
 
 from dataclasses import dataclass
@@ -69,6 +69,27 @@ class TextHorizontalExtent(Enum):
     LOGICAL = auto()
 
 
+class TextAlign(Enum):
+    """How the lines of multi-line text line up with each other.
+
+    The text's anchors place the whole block of text on the widget; this
+    setting places each line within the block, against the widest line:
+
+    - ``LEFT``: lines start level with each other.
+    - ``CENTRE``: lines are centred on each other.
+    - ``RIGHT``: lines end level with each other.
+
+    Lines are measured with the font's own spacing. Trailing whitespace is not
+    drawn, so it does not move a line, while leading whitespace is drawn as
+    blank space and counts as part of the line. Single-line text looks the
+    same with every member.
+    """
+
+    LEFT = auto()
+    CENTRE = auto()
+    RIGHT = auto()
+
+
 @unique
 class BundledTypeface(Enum):
     """Typefaces bundled with puigame.
@@ -106,9 +127,9 @@ class Style:
     negative swell is allowed. A halo fade profile that is not a
     ``FadeProfile``, a text offset that is not a tuple, a typeface that is
     neither a ``BundledTypeface`` nor a ``Path``, a text anchor or parent anchor
-    that is not an ``Anchor``, a horizontal extent that is not a
-    ``TextHorizontalExtent``, or a text margin that is not a tuple, raises
-    ``TypeError``.
+    that is not an ``Anchor``, a text alignment that is not a ``TextAlign``, a
+    horizontal extent that is not a ``TextHorizontalExtent``, or a text margin
+    that is not a tuple, raises ``TypeError``.
 
     Attributes:
         body_colour: Colour of the body, the fill inside the border, as
@@ -143,6 +164,8 @@ class Style:
         text_anchor: Point on the text's placement box that is aligned to the
             widget.
         text_parent_anchor: Point on the widget that the text is aligned to.
+        text_align: How the lines of multi-line text line up with each other.
+            See ``TextAlign``.
         text_horizontal_extent: How wide the text's placement box is. See
             ``TextHorizontalExtent``.
         text_margin: Distance in pixels that the text is moved from its anchor
@@ -173,6 +196,7 @@ class Style:
     text_font_size: int
     text_anchor: Anchor
     text_parent_anchor: Anchor
+    text_align: TextAlign
     text_horizontal_extent: TextHorizontalExtent
     text_margin: tuple[int, int]
 
@@ -190,9 +214,9 @@ class Style:
             TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, if
                 ``text_offset`` is not a tuple, if ``text_typeface`` is neither
                 a ``BundledTypeface`` nor a ``Path``, if ``text_anchor`` or
-                ``text_parent_anchor`` is not an ``Anchor``, if
-                ``text_horizontal_extent`` is not a ``TextHorizontalExtent``, or
-                if ``text_margin`` is not a tuple.
+                ``text_parent_anchor`` is not an ``Anchor``, if ``text_align``
+                is not a ``TextAlign``, if ``text_horizontal_extent`` is not a
+                ``TextHorizontalExtent``, or if ``text_margin`` is not a tuple.
         """
         if self.border_thickness < 0:
             raise ValueError(
@@ -236,6 +260,11 @@ class Style:
             raise TypeError(
                 "text_parent_anchor must be an Anchor, "
                 f"got {self.text_parent_anchor!r}",
+            )
+
+        if not isinstance(self.text_align, TextAlign):
+            raise TypeError(
+                f"text_align must be a TextAlign, got {self.text_align!r}",
             )
 
         if not isinstance(self.text_horizontal_extent, TextHorizontalExtent):

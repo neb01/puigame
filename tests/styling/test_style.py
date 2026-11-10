@@ -10,6 +10,7 @@ from puigame import (
     FadeProfile,
     Style,
     StyleOverride,
+    TextAlign,
     TextHorizontalExtent,
 )
 
@@ -35,6 +36,7 @@ ANY_STYLE = Style(
     text_font_size=12,
     text_anchor=Anchor.CENTRE,
     text_parent_anchor=Anchor.CENTRE,
+    text_align=TextAlign.LEFT,
     text_horizontal_extent=TextHorizontalExtent.INK,
     text_margin=(0, 0),
     text_offset=(0, 0),
@@ -250,6 +252,23 @@ def test_style_str_tuple_or_none_text_anchor_or_text_parent_anchor_raises(
 ):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, **{field_name: value})
+
+
+@pytest.mark.parametrize("text_align", [*TextAlign])
+def test_style_text_align_can_take_any_member(text_align):
+    style = replace(ANY_STYLE, text_align=text_align)
+
+    assert style.text_align == text_align
+
+
+@pytest.mark.parametrize(
+    "text_align",
+    [True, pg.FONT_LEFT, "LEFT", None],
+    ids=["bool", "int", "str", "None"],
+)
+def test_style_bool_int_str_or_none_text_align_raises(text_align):
+    with pytest.raises(TypeError):
+        replace(ANY_STYLE, text_align=text_align)
 
 
 @pytest.mark.parametrize("text_horizontal_extent", [*TextHorizontalExtent])
