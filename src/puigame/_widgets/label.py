@@ -31,7 +31,7 @@ class Label(Widget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = False,
+        hit_testable: bool = False,
     ) -> None:
         """Create a label as the last child of ``parent``.
 
@@ -53,10 +53,10 @@ class Label(Widget):
             enabled: Whether the label is enabled. A disabled label is drawn in
                 the theme's style for the disabled state. Defaults to ``True``.
             visible: Whether the label is drawn. Defaults to ``True``.
-            consumes_clicks: Whether mouse clicks over the label stop at it.
-                Defaults to ``False``, so a label on a button does not block
-                the button, and HUD text does not block clicks meant for the
-                game.
+            hit_testable: Whether the mouse can hit the label, so that clicks
+                over it stop at it. Defaults to ``False``, so a label on a
+                button does not block the button, and HUD text does not block
+                clicks meant for the game.
 
         Raises:
             TypeError: If ``text`` is not a string, if ``anchor`` is not an
@@ -80,7 +80,7 @@ class Label(Widget):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
             components=[self._text],
         )
 

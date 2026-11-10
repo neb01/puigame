@@ -56,7 +56,7 @@ class ToggleButton(Button):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = True,
+        hit_testable: bool = True,
         checked: bool = False,
     ) -> None:
         """Create a toggle button as the last child of ``parent``.
@@ -94,9 +94,10 @@ class ToggleButton(Button):
                 highlighted, pressed, or clicked, but its value can still be
                 changed from code. Defaults to ``True``.
             visible: Whether the button is drawn. Defaults to ``True``.
-            consumes_clicks: Whether mouse clicks over the button stop at it,
+            hit_testable: Whether the mouse can hit the button, so that it can
+                be highlighted and pressed, and clicks over it stop at it
                 rather than passing to the widgets below it and to the game. A
-                disabled button still stops them. Defaults to ``True``.
+                disabled button is still hit. Defaults to ``True``.
             checked: Whether the button starts checked. Defaults to ``False``.
 
         Raises:
@@ -126,7 +127,7 @@ class ToggleButton(Button):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
         )
 
     @property

@@ -213,7 +213,7 @@ def state_colour_ui() -> UI:
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
-        ("consumes_clicks", False),
+        ("hit_testable", False),
     ],
 )
 def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
@@ -241,10 +241,10 @@ def test_forwards_placement_arguments():
     assert toggle_button.rect.topleft == (-5, 21)
 
 
-def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+def test_hit_testable_true_by_default(ui_root: UIRoot):
     toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
 
-    assert toggle_button.consumes_clicks
+    assert toggle_button.hit_testable
 
 
 def test_checked_false_by_default(ui_root: UIRoot):
@@ -516,7 +516,7 @@ def test_click_toggles_checked(ui: UI, checked, expected_checked):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=checked,
     )
 
@@ -548,7 +548,7 @@ def test_click_calls_on_toggle_once_with_new_value(ui: UI, checked, expected_che
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=checked,
     )
 
@@ -576,7 +576,7 @@ def test_press_alone_does_not_toggle_checked(ui: UI, checked, expected_checked):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=checked,
     )
 
@@ -604,7 +604,7 @@ def test_release_off_button_does_not_toggle_checked(ui: UI, checked, expected_ch
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=checked,
     )
 
@@ -637,7 +637,7 @@ def test_click_on_disabled_button_does_not_toggle_checked(
         offset=(0, 0),
         enabled=False,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=checked,
     )
 
@@ -658,7 +658,7 @@ def test_exceptions_propagate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -704,7 +704,7 @@ def test_checked_and_highlighted_button_shows_checked_border_and_highlighted_bod
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=True,
     )
 
@@ -728,7 +728,7 @@ def test_checked_and_pressed_button_shows_checked_border_and_pressed_body(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
         checked=True,
     )
 

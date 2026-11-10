@@ -181,7 +181,7 @@ def state_colour_ui() -> UI:
         ("offset", (3, 5)),
         ("enabled", False),
         ("visible", False),
-        ("consumes_clicks", False),
+        ("hit_testable", False),
     ],
 )
 def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
@@ -209,10 +209,10 @@ def test_forwards_placement_arguments():
     assert button.rect.topleft == (-5, 21)
 
 
-def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+def test_hit_testable_true_by_default(ui_root: UIRoot):
     button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
 
-    assert button.consumes_clicks
+    assert button.hit_testable
 
 
 # endregion
@@ -294,7 +294,7 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     ui.update()
@@ -328,7 +328,7 @@ def test_press_held_on_button_shows_pressed_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -348,7 +348,7 @@ def test_press_and_drag_off_button_shows_base_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -373,7 +373,7 @@ def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -399,7 +399,7 @@ def test_click_and_keep_mouse_on_button_shows_highlighted_colour(state_colour_ui
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -424,7 +424,7 @@ def test_release_off_button_then_move_back_on_shows_highlighted_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -450,7 +450,7 @@ def test_disabled_during_press_shows_disabled_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -473,7 +473,7 @@ def test_focus_lost_during_press_shows_highlighted_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -497,7 +497,7 @@ def test_right_press_held_on_button_shows_highlighted_colour(state_colour_ui: UI
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     mouse_button_down_event = pg.Event(
@@ -531,7 +531,7 @@ def test_pressed_keeps_highlighted_fields_that_it_does_not_override():
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -560,7 +560,7 @@ def test_on_click_is_called_once_with_button_as_argument(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -582,7 +582,7 @@ def test_press_alone_does_not_call_on_click(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -602,7 +602,7 @@ def test_click_on_button_with_no_on_click_does_not_raise(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -620,7 +620,7 @@ def test_exceptions_propagate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(1, 2))

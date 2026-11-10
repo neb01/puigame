@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **Breaking:** `consumes_clicks` is renamed `hit_testable`, as a constructor argument and as an attribute of every widget. The flag decides whether hit-testing can stop on a widget, so it also decides whether the widget can be highlighted or pressed, not only whether clicks stop at it.
 - **Breaking:** `Style` now requires `text_align`.
 - Trailing whitespace at the end of each line is no longer drawn, so it no longer widens the text's image or moves aligned lines. Text made only of whitespace and newlines now gives a 0x0 image, as empty text does.
 

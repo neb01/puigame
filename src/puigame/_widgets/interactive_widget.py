@@ -49,7 +49,7 @@ class InteractiveWidget(Widget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = True,
+        hit_testable: bool = True,
         components: Iterable[Component] = (),
     ) -> None:
         """Create an interactive widget as the last child of ``parent``.
@@ -76,11 +76,12 @@ class InteractiveWidget(Widget):
                 through ``offset``. Defaults to no shift.
             enabled: Whether the widget responds to input. Defaults to ``True``.
             visible: Whether the widget is drawn. Defaults to ``True``.
-            consumes_clicks: Whether mouse clicks over the widget stop at it,
+            hit_testable: Whether the mouse can hit the widget, so that it can
+                be highlighted and pressed, and clicks over it stop at it
                 rather than passing to the widgets below it and to the game. A
-                hidden widget never stops clicks, but a disabled one still
-                does. It can be changed later through ``consumes_clicks``.
-                Defaults to ``True``.
+                hidden widget is never hit, but a disabled one still is. It
+                can be changed later through ``hit_testable``. Defaults to
+                ``True``.
             components: Parts drawn above the skin, in the order given, each
                 rendered at the widget's size in the theme's style for each
                 state. Fixed on creation. Internal: for puigame's own widgets,
@@ -109,7 +110,7 @@ class InteractiveWidget(Widget):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
             components=components,
         )
 

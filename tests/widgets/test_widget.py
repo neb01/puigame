@@ -140,10 +140,10 @@ def test_rect_has_given_size(ui_root: UIRoot):
     assert widget.rect.size == (10, 20)
 
 
-def test_consumes_clicks_true_by_default(ui_root: UIRoot):
+def test_hit_testable_true_by_default(ui_root: UIRoot):
     widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
 
-    assert widget.consumes_clicks
+    assert widget.hit_testable
 
 
 # endregion

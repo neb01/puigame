@@ -51,7 +51,7 @@ class Button(InteractiveWidget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = True,
+        hit_testable: bool = True,
     ) -> None:
         """Create a button as the last child of ``parent``.
 
@@ -84,9 +84,10 @@ class Button(InteractiveWidget):
                 drawn in the theme's style for the disabled state, and is never
                 highlighted, pressed, or clicked. Defaults to ``True``.
             visible: Whether the button is drawn. Defaults to ``True``.
-            consumes_clicks: Whether mouse clicks over the button stop at it,
+            hit_testable: Whether the mouse can hit the button, so that it can
+                be highlighted and pressed, and clicks over it stop at it
                 rather than passing to the widgets below it and to the game. A
-                disabled button still stops them. Defaults to ``True``.
+                disabled button is still hit. Defaults to ``True``.
 
         Raises:
             TypeError: If ``text`` is not a string, if ``on_click`` is neither
@@ -114,7 +115,7 @@ class Button(InteractiveWidget):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
             components=[self._text],
         )
 

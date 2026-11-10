@@ -94,7 +94,7 @@ class RecordingWidget(InteractiveWidget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = True,
+        hit_testable: bool = True,
         components: Iterable[Component] = (),
     ) -> None:
         """Create the widget as the last child of ``parent``, never activated.
@@ -111,7 +111,7 @@ class RecordingWidget(InteractiveWidget):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
             components=components,
         )
 
@@ -213,7 +213,7 @@ def state_colour_ui() -> UI:
     [pg.BUTTON_LEFT, pg.BUTTON_RIGHT],
     ids=["left button", "right button"],
 )
-def test_consuming_widget_consumes_mouse_button_down(ui: UI, button):
+def test_hit_testable_widget_consumes_mouse_button_down(ui: UI, button):
     Panel(
         ui.root,
         size=(4, 5),
@@ -224,7 +224,7 @@ def test_consuming_widget_consumes_mouse_button_down(ui: UI, button):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     mouse_button_down_event = pg.Event(
@@ -247,14 +247,17 @@ def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert not _left_press(ui, pos=(6, 7))
 
 
 @pytest.mark.parametrize("widget_class", [Container, Label])
-def test_non_consuming_widget_does_not_consume_mouse_button_down(ui: UI, widget_class):
+def test_non_hit_testable_widget_does_not_consume_mouse_button_down(
+    ui: UI,
+    widget_class,
+):
     widget_class(
         ui.root,
         size=(4, 5),
@@ -264,7 +267,7 @@ def test_non_consuming_widget_does_not_consume_mouse_button_down(ui: UI, widget_
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=False,
+        hit_testable=False,
     )
 
     assert not _left_press(ui, pos=(1, 2))
@@ -291,7 +294,7 @@ def test_wheel_button_events_are_not_consumed(ui: UI, event_type, button):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     mouse_button_event = pg.Event(
@@ -314,7 +317,7 @@ def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -333,7 +336,7 @@ def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(6, 7))
@@ -357,7 +360,7 @@ def test_widget_does_not_consume_lone_up_event(ui: UI, pos):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert not _left_release(ui, pos=pos)
@@ -374,7 +377,7 @@ def test_stale_down_event_is_cleared_by_non_consumed_down_of_same_button(ui: UI)
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -397,7 +400,7 @@ def test_down_only_clears_record_of_own_button(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     right_mouse_button_down_event = pg.Event(
@@ -449,7 +452,7 @@ def test_non_button_events_are_not_consumed(ui: UI, event):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert not ui.handle_event(event)
@@ -461,7 +464,7 @@ def test_non_button_events_are_not_consumed(ui: UI, event):
 # region --- Hit-testing ------------------------------------------------------
 
 
-def test_consuming_widget_prevents_widget_below_activation(ui: UI):
+def test_hit_testable_widget_prevents_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
         ui.root,
         size=(2, 3),
@@ -472,7 +475,7 @@ def test_consuming_widget_prevents_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     Panel(
@@ -485,7 +488,7 @@ def test_consuming_widget_prevents_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -493,7 +496,7 @@ def test_consuming_widget_prevents_widget_below_activation(ui: UI):
     assert recording_widget.activation_count == 0
 
 
-def test_hidden_consuming_widget_allows_widget_below_activation(ui: UI):
+def test_hidden_hit_testable_widget_allows_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
         ui.root,
         size=(2, 3),
@@ -504,7 +507,7 @@ def test_hidden_consuming_widget_allows_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     Panel(
@@ -517,7 +520,7 @@ def test_hidden_consuming_widget_allows_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=False,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -525,7 +528,7 @@ def test_hidden_consuming_widget_allows_widget_below_activation(ui: UI):
     assert recording_widget.activation_count == 1
 
 
-def test_disabled_consuming_widget_prevents_widget_below_activation(ui: UI):
+def test_disabled_hit_testable_widget_prevents_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
         ui.root,
         size=(2, 3),
@@ -536,7 +539,7 @@ def test_disabled_consuming_widget_prevents_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     Panel(
@@ -549,7 +552,7 @@ def test_disabled_consuming_widget_prevents_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=False,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -557,7 +560,7 @@ def test_disabled_consuming_widget_prevents_widget_below_activation(ui: UI):
     assert recording_widget.activation_count == 0
 
 
-def test_non_consuming_widget_allows_widget_below_activation(ui: UI):
+def test_non_hit_testable_widget_allows_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
         ui.root,
         size=(2, 3),
@@ -568,7 +571,7 @@ def test_non_consuming_widget_allows_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     Panel(
@@ -581,7 +584,7 @@ def test_non_consuming_widget_allows_widget_below_activation(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=False,
+        hit_testable=False,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -614,7 +617,7 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
         offset=(1, 2),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -657,13 +660,13 @@ def test_hit_test_uses_rect_not_drawn_shape(swell, halo_thickness, pos, consumed
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
 
 
-def test_top_consuming_widget_is_activated(ui: UI):
+def test_top_hit_testable_widget_is_activated(ui: UI):
     recording_widget_1 = RecordingWidget(
         ui.root,
         size=(6, 7),
@@ -674,7 +677,7 @@ def test_top_consuming_widget_is_activated(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     recording_widget_2 = RecordingWidget(
@@ -687,7 +690,7 @@ def test_top_consuming_widget_is_activated(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(2, 3))
@@ -723,7 +726,7 @@ def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -759,7 +762,7 @@ def test_hit_test_excludes_positions_off_bottom_right_of_surface(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -777,7 +780,7 @@ def test_hit_test_includes_positions_on_surface_but_off_ui_root():
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     ui.root.offset = (3, 4)
@@ -803,7 +806,7 @@ def test_click_on_widget_activates(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(3, 4))
@@ -822,7 +825,7 @@ def test_click_release_off_widget_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -842,7 +845,7 @@ def test_click_that_started_off_widget_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(10, 20))
@@ -862,7 +865,7 @@ def test_right_click_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     mouse_button_down_event = pg.Event(
@@ -893,7 +896,7 @@ def test_click_on_disabled_widget_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=False,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(ui, pos=(3, 4))
@@ -912,7 +915,7 @@ def test_click_on_widget_disabled_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -935,7 +938,7 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -950,7 +953,7 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_release(ui, pos=(3, 4))
@@ -969,7 +972,7 @@ def test_click_on_widget_killed_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -992,7 +995,7 @@ def test_click_on_widget_moved_away_during_click_does_not_activate(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -1016,7 +1019,7 @@ def test_click_on_widget_drag_off_then_back_on_during_click_activates(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -1038,7 +1041,7 @@ def test_up_after_lost_up_does_not_activate_stale_widget(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -1063,7 +1066,7 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     recording_widget_2 = RecordingWidget(
@@ -1076,7 +1079,7 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -1099,7 +1102,7 @@ def test_focus_lost_during_click_does_not_activate_but_does_consume_up(ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -1145,7 +1148,7 @@ def test_mouse_on_widget_shows_highlighted_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1165,7 +1168,7 @@ def test_mouse_off_widget_shows_base_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1177,7 +1180,7 @@ def test_mouse_off_widget_shows_base_colour(state_colour_ui: UI):
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_mouse_on_widget_covered_by_consuming_widget_shows_base_colour(
+def test_mouse_on_widget_covered_by_hit_testable_widget_shows_base_colour(
     state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
@@ -1190,7 +1193,7 @@ def test_mouse_on_widget_covered_by_consuming_widget_shows_base_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     Panel(
@@ -1203,7 +1206,7 @@ def test_mouse_on_widget_covered_by_consuming_widget_shows_base_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1223,7 +1226,7 @@ def test_mouse_leaving_window_shows_base_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1247,7 +1250,7 @@ def test_focus_lost_shows_highlighted_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1271,7 +1274,7 @@ def test_widget_disabled_under_cursor_shows_disabled_colour(state_colour_ui: UI)
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1296,7 +1299,7 @@ def test_widget_moved_away_from_cursor_shows_base_colour(state_colour_ui: UI):
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1310,7 +1313,7 @@ def test_widget_moved_away_from_cursor_shows_base_colour(state_colour_ui: UI):
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_widget_covered_by_hidden_consuming_widget_shows_highlighted_colour(
+def test_widget_covered_by_hidden_hit_testable_widget_shows_highlighted_colour(
     state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
@@ -1323,7 +1326,7 @@ def test_widget_covered_by_hidden_consuming_widget_shows_highlighted_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     panel = Panel(
@@ -1336,7 +1339,7 @@ def test_widget_covered_by_hidden_consuming_widget_shows_highlighted_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _move_mouse(state_colour_ui, pos=(1, 2))
@@ -1363,7 +1366,7 @@ def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     widget_2 = InteractiveWidget(
@@ -1376,7 +1379,7 @@ def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -1401,7 +1404,7 @@ def test_press_and_drag_off_widget_shows_base_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -1426,7 +1429,7 @@ def test_press_and_drag_off_and_back_on_widget_shows_highlighted_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_press(state_colour_ui, pos=(1, 2))
@@ -1454,7 +1457,7 @@ def test_click_and_keep_mouse_on_widget_shows_highlighted_colour(
         offset=(0, 0),
         enabled=True,
         visible=True,
-        consumes_clicks=True,
+        hit_testable=True,
     )
 
     _left_click(state_colour_ui, pos=(1, 2))

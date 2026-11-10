@@ -27,7 +27,7 @@ class Panel(Widget):
         offset: Point = (0, 0),
         enabled: bool = True,
         visible: bool = True,
-        consumes_clicks: bool = True,
+        hit_testable: bool = True,
     ) -> None:
         """Create a panel as the last child of ``parent``.
 
@@ -50,9 +50,9 @@ class Panel(Widget):
                 state. Defaults to ``True``.
             visible: Whether the panel and its children are drawn. Defaults to
                 ``True``.
-            consumes_clicks: Whether mouse clicks over the panel stop at it.
-                Defaults to ``True``, so clicks on its background reach neither
-                the widgets below it nor the game.
+            hit_testable: Whether the mouse can hit the panel, so that clicks
+                over it stop at it. Defaults to ``True``, so clicks on its
+                background reach neither the widgets below it nor the game.
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
@@ -72,5 +72,5 @@ class Panel(Widget):
             offset=offset,
             enabled=enabled,
             visible=visible,
-            consumes_clicks=consumes_clicks,
+            hit_testable=hit_testable,
         )
