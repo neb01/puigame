@@ -683,7 +683,6 @@ def test_checked_button_shows_checked_border_colour(state_colour_ui: UI):
         margin=(0, 0),
         offset=(0, 0),
         enabled=True,
-        visible=True,
         checked=True,
     )
 
@@ -752,7 +751,6 @@ def test_checked_and_disabled_button_shows_checked_border_and_disabled_body(
         margin=(0, 0),
         offset=(0, 0),
         enabled=False,
-        visible=True,
         checked=True,
     )
 
@@ -785,8 +783,6 @@ def test_checked_setter_updates_image_after_update(
         margin=(0, 0),
         offset=(0, 0),
         enabled=True,
-        visible=True,
-        consumes_clicks=True,
         checked=initial_checked,
     )
 

@@ -1,6 +1,7 @@
 import pytest
 
 from puigame import (
+    UI,
     Anchor,
     BundledTypeface,
     FadeProfile,
@@ -52,12 +53,14 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 # region --- Construction -----------------------------------------------------
 
 
-def test_image_comes_from_skin(ui_root: UIRoot):
+def test_image_comes_from_skin(ui: UI):
     panel = Panel(
-        ui_root,
+        ui.root,
         size=ANY_SIZE,
         skin=FixedLayer(size=(2, 3), colour=BLUE, pos=(10, 12)),
     )
+
+    ui.update()
 
     assert panel.image.size == (2, 3)
     assert panel.image_pos == (10, 12)

@@ -1,6 +1,7 @@
 import pytest
 
 from puigame import (
+    UI,
     Anchor,
     BundledTypeface,
     FadeProfile,
@@ -106,33 +107,43 @@ def test_text_defaults_to_empty_string(ui_root: UIRoot):
 # region --- Image ------------------------------------------------------------
 
 
-def test_label_with_text_has_non_zero_size_image(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE, text="coracle")
+def test_label_with_text_has_non_zero_size_image(ui: UI):
+    label = Label(ui.root, size=ANY_SIZE, text="coracle")
+
+    ui.update()
 
     assert 0 not in label.image.size
 
 
-def test_label_without_text_has_zero_size_image(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE, text="")
+def test_label_without_text_has_zero_size_image(ui: UI):
+    label = Label(ui.root, size=ANY_SIZE, text="")
+
+    ui.update()
 
     assert label.image.size == (0, 0)
 
 
-def test_text_setter_updates_image(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE, text="")
+def test_text_setter_updates_image(ui: UI):
+    label = Label(ui.root, size=ANY_SIZE, text="")
+
+    ui.update()
 
     assert label.image.size == (0, 0)
 
     label.text = ANY_STRING
+    ui.update()
 
     assert 0 not in label.image.size
 
 
-def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE, text="calcium")
+def test_text_setter_with_current_text_keeps_image(ui: UI):
+    label = Label(ui.root, size=ANY_SIZE, text="calcium")
+
+    ui.update()
     image = label.image
 
     label.text = "calcium"
+    ui.update()
 
     assert label.image is image
 

@@ -31,10 +31,10 @@ RED = (255, 0, 0, 255)
 BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 
-BASE_COLOUR = (0, 0, 0, 255)
+BASE_COLOUR = (0, 100, 50, 255)
 HIGHLIGHTED_COLOUR = (0, 255, 0, 255)
 PRESSED_COLOUR = (0, 0, 255, 255)
-DISABLED_COLOUR = (255, 0, 0, 255)
+DISABLED_COLOUR = RED
 
 ANY_STYLE = Style(
     body_colour=WHITE,
@@ -56,7 +56,7 @@ ANY_STYLE = Style(
     text_offset=(0, 0),
 )
 
-PRESS_THEME = Theme(
+STATE_COLOUR_THEME = Theme(
     base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
     style_overrides={
         State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
@@ -164,9 +164,9 @@ def _move_mouse(ui: UI, *, pos: tuple[int, int]) -> None:
 
 
 @pytest.fixture
-def press_ui() -> UI:
+def state_colour_ui() -> UI:
     """Return a UI whose theme gives each state its own body colour."""
-    return UI(size=(300, 200), theme=PRESS_THEME)
+    return UI(size=(300, 200), theme=STATE_COLOUR_THEME)
 
 
 # endregion
@@ -239,21 +239,27 @@ def test_text_defaults_to_empty_string(ui_root: UIRoot):
 # region --- Image ------------------------------------------------------------
 
 
-def test_text_setter_updates_image(ui_root: UIRoot):
-    button = Button(ui_root, size=ANY_SIZE, skin=NoSkin(), text="")
+def test_text_setter_updates_image(ui: UI):
+    button = Button(ui.root, size=ANY_SIZE, skin=NoSkin(), text="")
+
+    ui.update()
 
     assert button.image.size == (0, 0)
 
     button.text = ANY_STRING
+    ui.update()
 
     assert 0 not in button.image.size
 
 
-def test_text_setter_with_current_text_keeps_image(ui_root: UIRoot):
-    button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN, text="cranium")
+def test_text_setter_with_current_text_keeps_image(ui: UI):
+    button = Button(ui.root, size=ANY_SIZE, skin=ANY_SKIN, text="cranium")
+
+    ui.update()
     image = button.image
 
     button.text = "cranium"
+    ui.update()
 
     assert button.image is image
 
@@ -286,6 +292,9 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     ui.update()
@@ -308,161 +317,187 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
 # region --- Pressed look -----------------------------------------------------
 
 
-def test_press_held_on_button_shows_pressed_colour(press_ui: UI):
+def test_press_held_on_button_shows_pressed_colour(state_colour_ui: UI):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
 
 
-def test_press_and_drag_off_button_shows_base_colour(press_ui: UI):
+def test_press_and_drag_off_button_shows_base_colour(state_colour_ui: UI):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _move_mouse(press_ui, pos=(10, 11))
-    press_ui.update()
+    _move_mouse(state_colour_ui, pos=(10, 11))
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(press_ui: UI):
+def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(
+    state_colour_ui: UI,
+):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _move_mouse(press_ui, pos=(11, 12))
-    press_ui.update()
+    _move_mouse(state_colour_ui, pos=(11, 12))
+    state_colour_ui.update()
 
-    _move_mouse(press_ui, pos=(1, 2))
-    press_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == PRESSED_COLOUR
 
 
-def test_click_and_keep_mouse_on_button_shows_highlighted_colour(press_ui: UI):
+def test_click_and_keep_mouse_on_button_shows_highlighted_colour(state_colour_ui: UI):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _left_release(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_release(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
 def test_release_off_button_then_move_back_on_shows_highlighted_colour(
-    press_ui: UI,
+    state_colour_ui: UI,
 ):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _left_release(press_ui, pos=(11, 12))
-    press_ui.update()
+    _left_release(state_colour_ui, pos=(11, 12))
+    state_colour_ui.update()
 
-    _move_mouse(press_ui, pos=(1, 2))
-    press_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_disabled_during_press_shows_disabled_colour(press_ui: UI):
+def test_disabled_during_press_shows_disabled_colour(state_colour_ui: UI):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     button.enabled = False
-    press_ui.update()
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == DISABLED_COLOUR
 
 
-def test_focus_lost_during_press_shows_highlighted_colour(press_ui: UI):
+def test_focus_lost_during_press_shows_highlighted_colour(state_colour_ui: UI):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(press_ui, pos=(1, 2))
-    press_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     window_focus_lost_event = pg.Event(pg.WINDOWFOCUSLOST)
-    press_ui.handle_event(window_focus_lost_event)
-    press_ui.update()
+    state_colour_ui.handle_event(window_focus_lost_event)
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_right_press_held_on_button_shows_highlighted_colour(press_ui: UI):
+def test_right_press_held_on_button_shows_highlighted_colour(state_colour_ui: UI):
     button = Button(
-        press_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     mouse_button_down_event = pg.Event(
@@ -470,8 +505,8 @@ def test_right_press_held_on_button_shows_highlighted_colour(press_ui: UI):
         pos=(1, 2),
         button=pg.BUTTON_RIGHT,
     )
-    press_ui.handle_event(mouse_button_down_event)
-    press_ui.update()
+    state_colour_ui.handle_event(mouse_button_down_event)
+    state_colour_ui.update()
 
     assert button.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
@@ -494,6 +529,9 @@ def test_pressed_keeps_highlighted_fields_that_it_does_not_override():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -520,6 +558,9 @@ def test_on_click_is_called_once_with_button_as_argument(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -539,6 +580,9 @@ def test_press_alone_does_not_call_on_click(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -556,6 +600,9 @@ def test_click_on_button_with_no_on_click_does_not_raise(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -571,6 +618,9 @@ def test_exceptions_propagate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(1, 2))

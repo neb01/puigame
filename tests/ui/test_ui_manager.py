@@ -35,7 +35,7 @@ ANY_SKIN = NoSkin()
 BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
 
-BASE_COLOUR = (0, 0, 0, 255)
+BASE_COLOUR = (0, 100, 50, 255)
 HIGHLIGHTED_COLOUR = (0, 255, 0, 255)
 DISABLED_COLOUR = (255, 0, 0, 255)
 
@@ -59,7 +59,7 @@ ANY_STYLE = Style(
     text_offset=(0, 0),
 )
 
-HIGHLIGHT_THEME = Theme(
+STATE_COLOUR_THEME = Theme(
     base_style=replace(ANY_STYLE, body_colour=BASE_COLOUR),
     style_overrides={
         State.HIGHLIGHTED: StyleOverride(body_colour=HIGHLIGHTED_COLOUR),
@@ -197,9 +197,9 @@ def _move_mouse(ui: UI, *, pos: tuple[int, int]) -> None:
 
 
 @pytest.fixture
-def highlight_ui() -> UI:
+def state_colour_ui() -> UI:
     """Return a UI whose theme gives each state its own body colour."""
-    return UI(size=(300, 200), theme=HIGHLIGHT_THEME)
+    return UI(size=(300, 200), theme=STATE_COLOUR_THEME)
 
 
 # endregion
@@ -222,6 +222,9 @@ def test_consuming_widget_consumes_mouse_button_down(ui: UI, button):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     mouse_button_down_event = pg.Event(
@@ -242,6 +245,9 @@ def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert not _left_press(ui, pos=(6, 7))
@@ -256,6 +262,9 @@ def test_non_consuming_widget_does_not_consume_mouse_button_down(ui: UI, widget_
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=False,
     )
 
     assert not _left_press(ui, pos=(1, 2))
@@ -280,6 +289,9 @@ def test_wheel_button_events_are_not_consumed(ui: UI, event_type, button):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     mouse_button_event = pg.Event(
@@ -300,6 +312,9 @@ def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -316,6 +331,9 @@ def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(6, 7))
@@ -337,6 +355,9 @@ def test_widget_does_not_consume_lone_up_event(ui: UI, pos):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert not _left_release(ui, pos=pos)
@@ -351,6 +372,9 @@ def test_stale_down_event_is_cleared_by_non_consumed_down_of_same_button(ui: UI)
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(1, 2))
@@ -371,6 +395,9 @@ def test_down_only_clears_record_of_own_button(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     right_mouse_button_down_event = pg.Event(
@@ -420,6 +447,9 @@ def test_non_button_events_are_not_consumed(ui: UI, event):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert not ui.handle_event(event)
@@ -440,6 +470,9 @@ def test_consuming_widget_prevents_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     Panel(
@@ -450,6 +483,9 @@ def test_consuming_widget_prevents_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -466,6 +502,9 @@ def test_hidden_consuming_widget_allows_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     Panel(
@@ -476,7 +515,9 @@ def test_hidden_consuming_widget_allows_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
         visible=False,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -493,6 +534,9 @@ def test_disabled_consuming_widget_prevents_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     Panel(
@@ -504,6 +548,8 @@ def test_disabled_consuming_widget_prevents_widget_below_activation(ui: UI):
         margin=(0, 0),
         offset=(0, 0),
         enabled=False,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(1, 2))
@@ -520,6 +566,9 @@ def test_non_consuming_widget_allows_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     Panel(
@@ -530,6 +579,8 @@ def test_non_consuming_widget_allows_widget_below_activation(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
         consumes_clicks=False,
     )
 
@@ -561,6 +612,9 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
         parent_anchor=Anchor.TOP_LEFT,
         margin=(3, 5),
         offset=(1, 2),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -601,6 +655,9 @@ def test_hit_test_uses_rect_not_drawn_shape(swell, halo_thickness, pos, consumed
         parent_anchor=Anchor.TOP_LEFT,
         margin=(10, 20),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -615,6 +672,9 @@ def test_top_consuming_widget_is_activated(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     recording_widget_2 = RecordingWidget(
@@ -625,6 +685,9 @@ def test_top_consuming_widget_is_activated(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(2, 3))
@@ -658,6 +721,9 @@ def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -691,6 +757,9 @@ def test_hit_test_excludes_positions_off_bottom_right_of_surface(
         parent_anchor=Anchor.BOTTOM_RIGHT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     assert _left_press(ui, pos=pos) is consumed
@@ -706,6 +775,9 @@ def test_hit_test_includes_positions_on_surface_but_off_ui_root():
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     ui.root.offset = (3, 4)
@@ -729,6 +801,9 @@ def test_click_on_widget_activates(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(3, 4))
@@ -745,6 +820,9 @@ def test_click_release_off_widget_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -762,6 +840,9 @@ def test_click_that_started_off_widget_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(10, 20))
@@ -779,6 +860,9 @@ def test_right_click_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     mouse_button_down_event = pg.Event(
@@ -808,6 +892,8 @@ def test_click_on_disabled_widget_does_not_activate(ui: UI):
         margin=(0, 0),
         offset=(0, 0),
         enabled=False,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_click(ui, pos=(3, 4))
@@ -825,6 +911,8 @@ def test_click_on_widget_disabled_during_click_does_not_activate(ui: UI):
         margin=(0, 0),
         offset=(0, 0),
         enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -845,6 +933,9 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -857,6 +948,9 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_release(ui, pos=(3, 4))
@@ -873,6 +967,9 @@ def test_click_on_widget_killed_during_click_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -893,6 +990,9 @@ def test_click_on_widget_moved_away_during_click_does_not_activate(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -914,6 +1014,9 @@ def test_click_on_widget_drag_off_then_back_on_during_click_activates(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -933,6 +1036,9 @@ def test_up_after_lost_up_does_not_activate_stale_widget(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -955,6 +1061,9 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     recording_widget_2 = RecordingWidget(
@@ -965,6 +1074,9 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(10, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -985,6 +1097,9 @@ def test_focus_lost_during_click_does_not_activate_but_does_consume_up(ui: UI):
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     _left_press(ui, pos=(3, 4))
@@ -1002,303 +1117,348 @@ def test_focus_lost_during_click_does_not_activate_but_does_consume_up(ui: UI):
 # region --- Highlight --------------------------------------------------------
 
 
-def test_initial_widget_shows_base_colour(highlight_ui: UI):
+def test_initial_widget_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
     )
 
-    highlight_ui.update()
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_mouse_on_widget_shows_highlighted_colour(highlight_ui: UI):
+def test_mouse_on_widget_shows_highlighted_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_mouse_off_widget_shows_base_colour(highlight_ui: UI):
+def test_mouse_off_widget_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _move_mouse(highlight_ui, pos=(10, 20))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(10, 20))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
 def test_mouse_on_widget_covered_by_consuming_widget_shows_base_colour(
-    highlight_ui: UI,
+    state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     Panel(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_mouse_leaving_window_shows_base_colour(highlight_ui: UI):
+def test_mouse_leaving_window_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     window_leave_event = pg.Event(pg.WINDOWLEAVE)
-    highlight_ui.handle_event(window_leave_event)
-    highlight_ui.update()
+    state_colour_ui.handle_event(window_leave_event)
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_focus_lost_shows_highlighted_colour(highlight_ui: UI):
+def test_focus_lost_shows_highlighted_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     window_focus_lost_event = pg.Event(pg.WINDOWFOCUSLOST)
-    highlight_ui.handle_event(window_focus_lost_event)
-    highlight_ui.update()
+    state_colour_ui.handle_event(window_focus_lost_event)
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_widget_disabled_under_cursor_shows_disabled_colour(highlight_ui: UI):
+def test_widget_disabled_under_cursor_shows_disabled_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
     widget.enabled = False
-    highlight_ui.update()
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == DISABLED_COLOUR
 
 
-def test_widget_moved_away_from_cursor_shows_base_colour(highlight_ui: UI):
+def test_widget_moved_away_from_cursor_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
     widget.offset = (10, 20)
-    highlight_ui.update()
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
 def test_widget_covered_by_hidden_consuming_widget_shows_highlighted_colour(
-    highlight_ui: UI,
+    state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     panel = Panel(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
         visible=True,
+        consumes_clicks=True,
     )
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
     panel.visible = False
-    highlight_ui.update()
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
 def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
-    highlight_ui: UI,
+    state_colour_ui: UI,
 ):
     InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
     widget_2 = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(10, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _move_mouse(highlight_ui, pos=(11, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(11, 2))
+    state_colour_ui.update()
 
     assert widget_2.image.get_at((1, 2)) == BASE_COLOUR
 
 
 def test_press_and_drag_off_widget_shows_base_colour(
-    highlight_ui: UI,
+    state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _move_mouse(highlight_ui, pos=(11, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(11, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
 def test_press_and_drag_off_and_back_on_widget_shows_highlighted_colour(
-    highlight_ui: UI,
+    state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_press(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _left_press(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
-    _move_mouse(highlight_ui, pos=(11, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(11, 2))
+    state_colour_ui.update()
 
-    _move_mouse(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
 def test_click_and_keep_mouse_on_widget_shows_highlighted_colour(
-    highlight_ui: UI,
+    state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        highlight_ui.root,
+        state_colour_ui.root,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
         margin=(0, 0),
         offset=(0, 0),
+        enabled=True,
+        visible=True,
+        consumes_clicks=True,
     )
 
-    _left_click(highlight_ui, pos=(1, 2))
-    highlight_ui.update()
+    _left_click(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
