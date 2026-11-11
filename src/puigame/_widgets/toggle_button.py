@@ -106,8 +106,9 @@ class ToggleButton(Button):
                 rather than passing to the widgets below it and to the game. A
                 disabled button is still hit. Defaults to ``True``.
             group: ``ToggleGroup`` to join, in which checking a button unchecks
-                the group's checked button. It cannot be changed later.
-                Defaults to ``None``, which joins no group.
+                the group's checked button. It cannot be changed later, so a
+                button belongs to at most one group. Defaults to ``None``,
+                which joins no group.
             checked: Whether the button starts checked. At most one button in a
                 group can start checked. Defaults to ``False``.
 
