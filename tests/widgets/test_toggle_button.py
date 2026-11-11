@@ -1,5 +1,4 @@
 from dataclasses import replace
-from typing import NoReturn
 
 import pygame as pg
 import pytest
@@ -20,10 +19,12 @@ from puigame import (
     TextHorizontalExtent,
     Theme,
     ToggleButton,
+    ToggleGroup,
 )
 from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import Skin
 from puigame._ui.ui_root import UIRoot
+from stubs import OnToggleError, on_toggle_error
 
 # region --- Constants --------------------------------------------------------
 
@@ -99,23 +100,6 @@ class BodyAndBorderColourLayer(Skin):
         image.fill(style.border_colour, pg.Rect((0, 0), (size[0], 1)))
 
         return PlacedImage(image, (0, 0))
-
-
-class OnToggleError(Exception):
-    """Error raised by ``on_toggle_error()``, distinct from any built-in error."""
-
-
-def on_toggle_error(_toggle_button: ToggleButton, _checked: bool) -> NoReturn:
-    """Raise ``OnToggleError``, as an ``on_toggle`` callback that fails.
-
-    Args:
-        _toggle_button: The toggled button. Not used.
-        _checked: The button's new value. Not used.
-
-    Raises:
-        OnToggleError: Always.
-    """
-    raise OnToggleError
 
 
 # endregion
@@ -205,6 +189,12 @@ def test_on_toggle_not_called_when_created_checked(ui_root: UIRoot):
     )
 
     assert on_toggle_calls == []
+
+
+def test_group_none_by_default(ui_root: UIRoot):
+    toggle_button = ToggleButton(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert toggle_button.group is None
 
 
 # endregion
@@ -340,6 +330,24 @@ def test_changing_checked_with_no_on_toggle_does_not_raise(ui_root: UIRoot):
     )
 
     toggle_button.checked = False
+
+
+# endregion
+
+
+# region --- group ------------------------------------------------------------
+
+
+def test_group_getter_returns_given_group(ui_root: UIRoot):
+    toggle_group = ToggleGroup()
+    toggle_button = ToggleButton(
+        ui_root,
+        size=ANY_SIZE,
+        skin=ANY_SKIN,
+        group=toggle_group,
+    )
+
+    assert toggle_button.group is toggle_group
 
 
 # endregion
@@ -746,6 +754,23 @@ def test_constructor_with_non_callable_on_toggle_raises(ui: UI, on_toggle):
         )
 
     assert ui.root.children == ()
+
+
+@pytest.mark.parametrize(
+    "group",
+    [5, ToggleGroup],
+    ids=["int", "class instead of instance"],
+)
+def test_constructor_with_non_toggle_group_raises(ui_root: UIRoot, group):
+    with pytest.raises(TypeError):
+        ToggleButton(
+            ui_root,
+            size=ANY_SIZE,
+            skin=ANY_SKIN,
+            group=group,
+        )
+
+    assert ui_root.children == ()
 
 
 def test_constructor_with_non_string_text_raises(ui_root: UIRoot):

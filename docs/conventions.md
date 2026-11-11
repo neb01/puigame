@@ -24,7 +24,7 @@ Anything a tool already enforces is not repeated below.
 
 - **State flags** are adjectives: `enabled`, `visible`, `highlightable`, `checked`; `State` members likewise (`HIGHLIGHTED`, `PRESSED`, `EDITING`).
 - **Tree-aware values** end in `_in_tree`: `enabled_in_tree`, `visible_in_tree`. They are calculated on demand, never stored.
-- **Permissions** start with `can_` (`can_untoggle`); **possession** starts with `has_` (`has_text`, `has_children`).
+- **Permissions** start with `can_` (`can_uncheck`); **possession** starts with `has_` (`has_text`, `has_children`).
 - **Methods** are verbs: `show()`, `hide()`, `toggle()`. Values that read and write like attributes, such as `Label.text`, are properties instead.
 - **Classes** use `CapWords` with capitalised acronyms (`UIManager`). Public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos`). English spelling is used (`CENTRE`, `colour`).
 - **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`.
@@ -103,6 +103,7 @@ Anything a tool already enforces is not repeated below.
 - **Value order** in parametrisations: `bool`, `int`, `float`, then `str`, `bytes`, then containers (`tuple`, `list`, `pg.Vector2`), then `None` last. Enum members come before standard-library types, in declaration order; field-name lists are in declaration order; numbers ascend.
 - **Parameter names** are the name of the argument the value is passed to (`button`, `margin`), prefixed only where that name would shadow a built-in (`event_type`). Expected values are `expected_<name>`. `value` is used only alongside `field_name`, for parametrisations over fields, which need no `ids`; stacked parametrisations put `field_name` on top.
 - **`ids`** are lowercase prose naming the case; code names as written; enum members as lowercase words (`"left button"`, `"pg.Vector2 of ints"`). A parametrisation whose only parameter is an enum member needs no `ids`, since pytest names each case after the member (`[TextAlign.LEFT]`).
+- **Variable names** are the class name in snake_case (`toggle_button`, `toggle_group`), including callback parameters (`lambda toggle_button, checked: …`). Where a test has several of one class, the role goes in front (`old_toggle_button`, `new_toggle_button`); numbers are used only where position is the point (`toggle_button_1` in a joining-order test).
 - **Event variables** are named after the pygame event type (`mouse_button_down_event`), as the `UIManager` handlers are. Their attributes are passed in pygame's order, `pos` before `button`.
 
 ### Pairing and order

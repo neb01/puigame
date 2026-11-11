@@ -1,9 +1,11 @@
 """Stubs shared by more than one test file."""
 
+from typing import NoReturn
+
 import pygame as pg
 from pygame.typing import Point
 
-from puigame import Style
+from puigame import Style, ToggleButton
 from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import Skin
 from puigame._styling.style import RGBA
@@ -45,3 +47,20 @@ class BodyColourLayer(Skin):
         image.fill(style.body_colour)
 
         return PlacedImage(image, (0, 0))
+
+
+class OnToggleError(Exception):
+    """Error raised by ``on_toggle_error()``, distinct from any built-in error."""
+
+
+def on_toggle_error(_toggle_button: ToggleButton, _checked: bool) -> NoReturn:
+    """Raise ``OnToggleError``, as an ``on_toggle`` callback that fails.
+
+    Args:
+        _toggle_button: The toggled button. Not used.
+        _checked: The button's new value. Not used.
+
+    Raises:
+        OnToggleError: Always.
+    """
+    raise OnToggleError
