@@ -23,6 +23,7 @@ PUBLIC_NAMES = [
     "TextHorizontalExtent",
     "Theme",
     "ToggleButton",
+    "ToggleGroup",
     "Widget",
 ]
 

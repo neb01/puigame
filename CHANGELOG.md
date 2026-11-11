@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `ToggleButton`, a button that switches between checked and unchecked when clicked. It calls `on_toggle` with the button and its new value on every change, from a click, from `toggle()`, or from assigning `checked`. While checked, it adds `State.CHECKED` on top of its other states, including disabled.
+- `ToggleGroup`, which keeps at most one of its toggle buttons checked, as radio buttons do. A button joins a group by passing it as `group` when it is created, and leaves it when it is killed. Checking a button in the group, by a click or from code, unchecks the one that was checked. By default a click cannot uncheck the checked button; `can_uncheck=True` allows it, and code always can. `checked_button` reads or sets the group's checked button, `buttons` lists its buttons, and `ToggleButton.group` gives a button's group.
 - `StyleOverride.border_thickness`, so the border thickness can change between states.
 - `DEFAULT_THEME` styles `State.CHECKED` with a thicker green border, which stays visible while a toggle button is highlighted, pressed, or disabled.
 - Line alignment for multi-line text, set with `Style.text_align` and chosen with `TextAlign`: `LEFT`, `CENTRE`, or `RIGHT`. The anchors still place the whole block of text; alignment places each line within it.
