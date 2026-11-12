@@ -5,7 +5,7 @@ import pygame as pg
 import pytest
 from pygame.typing import Point
 
-from mouse_helpers import left_click, left_press, left_release, move_mouse
+from mouse_helpers import left_click, left_press, left_release, move_mouse, scroll_mouse
 from puigame import (
     UI,
     Anchor,
@@ -143,8 +143,8 @@ def state_colour_ui() -> UI:
 
 @pytest.mark.parametrize(
     "button",
-    [pg.BUTTON_LEFT, pg.BUTTON_RIGHT],
-    ids=["left button", "right button"],
+    [pg.BUTTON_LEFT, pg.BUTTON_RIGHT, pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN],
+    ids=["left button", "right button", "up wheel button", "down wheel button"],
 )
 def test_hit_testable_widget_consumes_mouse_button_down(ui: UI, button):
     Panel(
@@ -169,6 +169,23 @@ def test_hit_testable_widget_consumes_mouse_button_down(ui: UI, button):
     assert ui.handle_event(mouse_button_down_event)
 
 
+def test_hit_testable_widget_consumes_mouse_wheel(ui: UI):
+    Panel(
+        ui.root,
+        size=(4, 5),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        hit_testable=True,
+    )
+
+    assert scroll_mouse(ui, pos=(1, 2))
+
+
 def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
     Panel(
         ui.root,
@@ -184,6 +201,23 @@ def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
     )
 
     assert not left_press(ui, pos=(6, 7))
+
+
+def test_empty_space_does_not_consume_mouse_wheel(ui: UI):
+    Panel(
+        ui.root,
+        size=(4, 5),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        hit_testable=True,
+    )
+
+    assert not scroll_mouse(ui, pos=(6, 7))
 
 
 @pytest.mark.parametrize("widget_class", [Container, Label])
@@ -206,17 +240,27 @@ def test_non_hit_testable_widget_does_not_consume_mouse_button_down(
     assert not left_press(ui, pos=(1, 2))
 
 
-@pytest.mark.parametrize(
-    "event_type",
-    [pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP],
-    ids=["button down", "button up"],
-)
-@pytest.mark.parametrize(
-    "button",
-    [pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN],
-    ids=["wheel up", "wheel down"],
-)
-def test_wheel_button_events_are_not_consumed(ui: UI, event_type, button):
+@pytest.mark.parametrize("widget_class", [Container, Label])
+def test_non_hit_testable_widget_does_not_consume_mouse_wheel(
+    ui: UI,
+    widget_class,
+):
+    widget_class(
+        ui.root,
+        size=(4, 5),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        hit_testable=False,
+    )
+
+    assert not scroll_mouse(ui, pos=(1, 2))
+
+
+def test_mouse_wheel_without_pos_is_not_consumed(ui: UI):
     Panel(
         ui.root,
         size=(4, 5),
@@ -230,13 +274,9 @@ def test_wheel_button_events_are_not_consumed(ui: UI, event_type, button):
         hit_testable=True,
     )
 
-    mouse_button_event = pg.Event(
-        event_type,
-        pos=(1, 2),
-        button=button,
-    )
+    mouse_wheel_event = pg.Event(pg.MOUSEWHEEL, x=0, y=1, pos=None)
 
-    assert not ui.handle_event(mouse_button_event)
+    assert not ui.handle_event(mouse_wheel_event)
 
 
 def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
@@ -256,6 +296,37 @@ def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
     left_press(ui, pos=(1, 2))
 
     assert left_release(ui, pos=(6, 7))
+
+
+def test_wheel_button_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
+    Panel(
+        ui.root,
+        size=(4, 5),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        hit_testable=True,
+    )
+
+    mouse_button_down_event = pg.Event(
+        pg.MOUSEBUTTONDOWN,
+        pos=(1, 2),
+        button=pg.BUTTON_WHEELDOWN,
+    )
+
+    ui.handle_event(mouse_button_down_event)
+
+    mouse_button_up_event = pg.Event(
+        pg.MOUSEBUTTONUP,
+        pos=(6, 7),
+        button=pg.BUTTON_WHEELDOWN,
+    )
+
+    assert ui.handle_event(mouse_button_up_event)
 
 
 def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
@@ -364,14 +435,12 @@ def test_down_only_clears_record_of_own_button(ui: UI):
         pg.Event(pg.WINDOWLEAVE),
         pg.Event(pg.WINDOWFOCUSLOST),
         pg.Event(pg.KEYDOWN),
-        pg.Event(pg.MOUSEWHEEL),
     ],
     ids=[
         "mouse motion",
         "window leave",
         "window focus lost",
         "key down",
-        "mouse wheel",
     ],
 )
 def test_non_button_events_are_not_consumed(ui: UI, event):
@@ -1194,6 +1263,53 @@ def test_focus_lost_shows_highlighted_colour(state_colour_ui: UI):
     state_colour_ui.update()
 
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
+
+
+def test_mouse_wheel_without_pos_shows_highlighted_colour(state_colour_ui: UI):
+    widget = InteractiveWidget(
+        state_colour_ui.root,
+        size=(5, 6),
+        skin=BodyColourLayer(),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        hit_testable=True,
+    )
+
+    move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
+
+    mouse_wheel_event = pg.Event(pg.MOUSEWHEEL, x=0, y=1, pos=None)
+    state_colour_ui.handle_event(mouse_wheel_event)
+    state_colour_ui.update()
+
+    assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
+
+
+def test_mouse_wheel_off_widget_shows_base_colour(state_colour_ui: UI):
+    widget = InteractiveWidget(
+        state_colour_ui.root,
+        size=(5, 6),
+        skin=BodyColourLayer(),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        enabled=True,
+        visible=True,
+        hit_testable=True,
+    )
+
+    move_mouse(state_colour_ui, pos=(1, 2))
+    state_colour_ui.update()
+
+    scroll_mouse(state_colour_ui, pos=(9, 10))
+    state_colour_ui.update()
+
+    assert widget.image.get_at((1, 2)) == BASE_COLOUR
 
 
 def test_widget_disabled_under_cursor_shows_disabled_colour(state_colour_ui: UI):

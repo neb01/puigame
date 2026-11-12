@@ -442,7 +442,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 
 - A button down is consumed when the hit-test finds a widget, whichever button it is, and the UI records that button as down.
 - A button up is consumed **exactly when its down was**, wherever it lands. A drag in the game world that is released over a panel still reaches the game, and a click on a panel never leaks its release to the game.
-- Wheel buttons are never consumed, even over a blocking widget, until a scrollable widget needs them.
+- The wheel is consumed like a click, in both forms pygame reports it. The button 4 and 5 down and up events follow the two rules above, and a `MOUSEWHEEL` is consumed when the hit-test at its `pos` finds a widget. pygame sends both for each step of the wheel, at the same position, so both get the same answer, and a panel stops scrolling from reaching the game below it. A `MOUSEWHEEL` without a `pos` (pygame-ce built against SDL older than 2.26) is not consumed, and the stored cursor position is kept. Nothing scrolls yet: a scrollable widget will act on `MOUSEWHEEL` alone, since only it carries horizontal and precise amounts.
 - Mouse motion and window events are never consumed.
 - A down for a button that is already recorded as down means its up was lost, for example because the game stopped passing events to this UI mid-press, so the stale record is dropped before the new down is handled.
 

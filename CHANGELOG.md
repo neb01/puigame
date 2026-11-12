@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **Breaking:** `consumes_clicks` is renamed `hit_testable`, as a constructor argument and as an attribute of every widget. The flag decides whether hit-testing can stop on a widget, so it also decides whether the widget can be highlighted or pressed, not only whether clicks stop at it.
 - **Breaking:** `Style` now requires `text_align`.
+- **Breaking:** the mouse wheel is consumed over hit-testable widgets, as clicks are, so scrolling over a panel no longer reaches the game. Both `MOUSEWHEEL` and the wheel's button 4 and 5 events are consumed. Mouse motion and window events still are not.
 - Trailing whitespace at the end of each line is no longer drawn, so it no longer widens the text's image or moves aligned lines. Text made only of whitespace and newlines now gives a 0x0 image, as empty text does.
 
 ## [0.1.0] - 2026-11-06
