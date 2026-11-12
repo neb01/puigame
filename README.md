@@ -84,7 +84,7 @@ for event in pg.event.get():
         ...  # a click on the game world, not on the UI
 ```
 
-Mouse motion, wheel, and window events are never consumed.
+The mouse wheel is consumed over widgets as clicks are, so scrolling over a panel never reaches the game. Mouse motion and window events are never consumed.
 
 For a display opened with `pg.SCALED`, create the UI with the display's own size, `screen.size`, not the window's.
 

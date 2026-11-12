@@ -71,7 +71,9 @@ class UI:
         reaches the game. A drag that starts outside the UI still reaches the
         game when it is released over a widget. Only the part of a widget that
         lies on the draw surface counts, so a position off the surface hits
-        nothing. Mouse motion, wheel, and window events are never consumed.
+        nothing. The mouse wheel is consumed over a hit-testable widget too, so
+        scrolling over a panel never reaches the game. Mouse motion and window
+        events are never consumed.
 
         Args:
             event: The event to handle.

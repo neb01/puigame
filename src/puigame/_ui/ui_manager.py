@@ -12,8 +12,6 @@ from puigame._ui.ui_root import UIRoot
 from puigame._widgets.interactive_widget import InteractiveWidget
 from puigame._widgets.widget import Widget
 
-_WHEEL_BUTTONS = frozenset({pg.BUTTON_WHEELUP, pg.BUTTON_WHEELDOWN})
-
 
 class UIManager:
     """Input handler for one UI: consuming events, the highlight, and presses.
@@ -43,8 +41,10 @@ class UIManager:
         A mouse button down over a hit-testable widget is consumed, and
         so is its matching up, wherever it lands. A left down on an enabled
         interactive widget starts a press, and the left up activates the widget
-        if it is still under the cursor. Wheel buttons, mouse motion, and window
-        events are never consumed, and every other event is ignored.
+        if it is still under the cursor. The wheel buttons follow the same
+        rules, and a ``MOUSEWHEEL`` over a hit-testable widget is consumed too,
+        so scrolling over a panel never reaches the game. Mouse motion and
+        window events are never consumed, and every other event is ignored.
 
         Args:
             event: The event to handle.
@@ -59,6 +59,9 @@ class UIManager:
 
             case pg.MOUSEBUTTONUP:
                 return self._handle_mouse_button_up(event)
+
+            case pg.MOUSEWHEEL:
+                return self._handle_mouse_wheel(event)
 
             case pg.MOUSEMOTION:
                 return self._handle_mouse_motion(event)
@@ -83,13 +86,9 @@ class UIManager:
 
         Returns:
             ``True`` if the down was over a hit-testable widget,
-            otherwise ``False``. Always ``False`` for the wheel buttons.
+            otherwise ``False``.
         """
         self._mouse_pos = event.pos
-
-        # wheel buttons pass through until a scrollable widget needs them
-        if event.button in _WHEEL_BUTTONS:
-            return False
 
         # a down for a button already recorded as down means its up was lost
         self._buttons_down.discard(event.button)
@@ -126,13 +125,8 @@ class UIManager:
 
         Returns:
             ``True`` if the UI consumed the matching down, otherwise ``False``.
-            Always ``False`` for the wheel buttons.
         """
         self._mouse_pos = event.pos
-
-        # wheel buttons pass through until a scrollable widget needs them
-        if event.button in _WHEEL_BUTTONS:
-            return False
 
         # the down went to the game, so the up does too, such as a drag's release
         if event.button not in self._buttons_down:
@@ -159,6 +153,30 @@ class UIManager:
             pressed_widget._activate()
 
         return True
+
+    def _handle_mouse_wheel(self, event: pg.Event) -> bool:
+        """Consume a mouse wheel event over a hit-testable widget.
+
+        The event's position is stored for the next highlight update, as for
+        the other mouse events. pygame also sends a wheel button down and up at
+        the same position for each step of the wheel, so all three get the same
+        answer. pygame-ce sets ``pos`` only when built against SDL 2.26 or
+        later. Without it, the event is not consumed and the stored position is
+        kept, since a missing position does not mean the cursor has moved.
+
+        Args:
+            event: A ``MOUSEWHEEL`` event.
+
+        Returns:
+            ``True`` if the event was over a hit-testable widget, otherwise
+            ``False``.
+        """
+        if event.pos is None:
+            return False
+
+        self._mouse_pos = event.pos
+
+        return self._hit_test(event.pos) is not None
 
     def _handle_mouse_motion(self, event: pg.Event) -> bool:
         """Store the cursor position for the next highlight update.
