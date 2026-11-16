@@ -2,7 +2,7 @@
 
 This document records puigame's design: what the library does, how it is structured, and the decisions behind it. Parts not built yet are marked as planned. When a decision changes, this document is updated in the same pull request.
 
-All puigame code is written by hand. This document, like the rest of the documentation (including the docstrings in the code), was first drafted with AI assistance and then checked by hand.
+The library code in `src/` is written by hand. This document, like the rest of the documentation (including the docstrings and comments in the code), the tests, and the CI and Dependabot configuration, is drafted with AI assistance and checked by hand.
 
 ## Contents
 
