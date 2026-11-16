@@ -172,7 +172,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setting up, running the checks, and
 
 ## Authorship
 
-All code in puigame is written by hand. Documentation, including this README, the `docs/` folder, and the docstrings in the code, is first drafted with AI assistance and then checked by hand.
+The library code in `src/` is written by hand. The tests (everything under `tests/`), the CI and Dependabot configuration, and the documentation (this README, the `docs/` folder, and the docstrings and comments in the code) are drafted with AI assistance and checked by hand.
 
 ## License
 
