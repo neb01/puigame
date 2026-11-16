@@ -43,6 +43,8 @@ class UIRoot(Widget):
             theme: Theme that every widget in the tree draws with.
 
         Raises:
+            TypeError: If ``size`` is a single number rather than an ``(x, y)``
+                pair or contains a ``bool``.
             ValueError: If either dimension of ``size`` is negative.
         """
         # deliberately not calling Widget.__init__(), which needs a parent

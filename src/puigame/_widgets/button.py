@@ -93,8 +93,9 @@ class Button(InteractiveWidget):
             TypeError: If ``text`` is not a string, if ``on_click`` is neither
                 ``None`` nor callable, if ``anchor`` is not an ``Anchor``, if
                 ``parent_anchor`` is neither an ``Anchor`` nor ``None``, or if
-                ``margin`` or ``offset`` is a single number rather than an
-                ``(x, y)`` pair. The button is not added to ``parent``.
+                ``size``, ``margin``, or ``offset`` is a single number rather
+                than an ``(x, y)`` pair or contains a ``bool``. The button is
+                not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The button
                 is not added to ``parent``.
         """

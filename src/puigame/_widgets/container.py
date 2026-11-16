@@ -52,9 +52,10 @@ class Container(Widget):
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
-                is neither an ``Anchor`` nor ``None``, or if ``margin`` or
-                ``offset`` is a single number rather than an ``(x, y)`` pair.
-                The container is not added to ``parent``.
+                is neither an ``Anchor`` nor ``None``, or if ``size``,
+                ``margin``, or ``offset`` is a single number rather than an
+                ``(x, y)`` pair or contains a ``bool``. The container is not
+                added to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The
                 container is not added to ``parent``.
         """
