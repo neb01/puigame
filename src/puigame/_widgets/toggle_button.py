@@ -116,10 +116,10 @@ class ToggleButton(Button):
             TypeError: If ``text`` is not a string, if ``on_toggle`` is neither
                 ``None`` nor callable, if ``anchor`` is not an ``Anchor``, if
                 ``parent_anchor`` is neither an ``Anchor`` nor ``None``, if
-                ``margin`` or ``offset`` is a single number rather than an
-                ``(x, y)`` pair, or if ``group`` is neither a ``ToggleGroup``
-                nor ``None``. The button is not added to ``parent`` or
-                ``group``.
+                ``size``, ``margin``, or ``offset`` is a single number rather
+                than an ``(x, y)`` pair or contains a ``bool``, or if ``group``
+                is neither a ``ToggleGroup`` nor ``None``. The button is not
+                added to ``parent`` or ``group``.
             ValueError: If either dimension of ``size`` is negative, or if
                 ``checked`` is ``True`` and ``group`` already has a checked
                 button. The button is not added to ``parent`` or ``group``.

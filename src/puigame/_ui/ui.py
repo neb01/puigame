@@ -43,6 +43,8 @@ class UI:
             theme: Theme that every widget in the UI draws with.
 
         Raises:
+            TypeError: If ``size`` is a single number rather than an ``(x, y)``
+                pair or contains a ``bool``.
             ValueError: If either dimension of ``size`` is negative.
         """
         self._root = UIRoot(size=size, theme=theme)

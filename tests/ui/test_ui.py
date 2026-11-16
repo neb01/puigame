@@ -1,6 +1,7 @@
 from dataclasses import replace
 
 import pygame as pg
+import pytest
 
 from puigame import (
     UI,
@@ -50,6 +51,22 @@ ANY_STYLE = Style(
 )
 
 ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
+
+# endregion
+
+
+# region --- Validation -------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "size",
+    [5, (True, 3), (3, True)],
+    ids=["single value", "bool x", "bool y"],
+)
+def test_constructor_with_single_value_or_bool_in_size_raises(size):
+    with pytest.raises(TypeError):
+        UI(size=size, theme=ANY_THEME)
+
 
 # endregion
 

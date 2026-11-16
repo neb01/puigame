@@ -217,17 +217,47 @@ def test_offset_converts_to_vector2_on_correct_axes(
     assert widget.offset == expected_offset
 
 
-@pytest.mark.parametrize("field_name", ["margin", "offset"])
+@pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
 @pytest.mark.parametrize("value", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_margin_or_offset_raises(
+def test_constructor_with_single_value_size_margin_or_offset_raises(
     ui_root: UIRoot,
     field_name,
     value,
 ):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
+        Widget(ui_root, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
 
     assert ui_root.children == ()
+
+
+@pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
+@pytest.mark.parametrize("value", [(True, 3), (3, True)], ids=["bool x", "bool y"])
+def test_constructor_with_bool_in_size_margin_or_offset_raises(
+    ui_root: UIRoot,
+    field_name,
+    value,
+):
+    with pytest.raises(TypeError):
+        Widget(ui_root, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
+
+    assert ui_root.children == ()
+
+
+@pytest.mark.parametrize(
+    "offset",
+    [2, (3, True)],
+    ids=["single value", "bool in pair"],
+)
+def test_assigning_single_value_or_pair_with_bool_to_offset_raises(
+    ui_root: UIRoot,
+    offset,
+):
+    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=(2, 3))
+
+    with pytest.raises(TypeError):
+        widget.offset = offset
+
+    assert widget.offset == (2, 3)
 
 
 @pytest.mark.parametrize("anchor", [*Anchor])

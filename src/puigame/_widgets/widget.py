@@ -12,6 +12,7 @@ from puigame._components.placed_image import PlacedImage, compose_layers
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor, get_pos_from_anchor_match
 from puigame._styling.theme import Theme
+from puigame._validation import validate_pair
 from puigame._widgets.state import State
 
 if TYPE_CHECKING:
@@ -91,9 +92,10 @@ class Widget:
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
-                is neither an ``Anchor`` nor ``None``, or if ``margin`` or
-                ``offset`` is a single number rather than an ``(x, y)`` pair.
-                The widget is not added to ``parent``.
+                is neither an ``Anchor`` nor ``None``, or if ``size``,
+                ``margin``, or ``offset`` is a single number rather than an
+                ``(x, y)`` pair or contains a ``bool``. The widget is not added
+                to ``parent``.
             ValueError: If either dimension of ``size`` is negative. The widget
                 is not added to ``parent``.
         """
@@ -152,9 +154,10 @@ class Widget:
 
         Raises:
             ValueError: If either dimension of ``size`` is negative.
-            TypeError: If ``margin`` or ``offset`` is a single number rather
-                than an ``(x, y)`` pair.
+            TypeError: If ``size``, ``margin``, or ``offset`` is a single number
+                rather than an ``(x, y)`` pair or contains a ``bool``.
         """
+        validate_pair("size", size)
         if min(size[0], size[1]) < 0:
             raise ValueError(f"size cannot be negative, got {size!r} px")
 
@@ -169,11 +172,7 @@ class Widget:
         else:
             self._parent_anchor = parent_anchor
 
-        if isinstance(margin, (int, float)):
-            raise TypeError(
-                f"margin cannot be a single value, got {margin!r}; "
-                "margin must be an (x, y) pair",
-            )
+        validate_pair("margin", margin)
         self._margin = pg.Vector2(margin)
 
         self.offset = offset
@@ -277,17 +276,15 @@ class Widget:
         ``Vector2``, stores a copy as a ``Vector2``, so it can be changed in
         place, for example to animate the widget. Changes take effect at the
         next layout pass.
+
+        Assigning a single number, or a pair that contains a ``bool``, raises
+        ``TypeError``.
         """
         return self._offset
 
     @offset.setter
     def offset(self, value: Point) -> None:
-        if isinstance(value, (int, float)):
-            raise TypeError(
-                f"offset cannot be a single value, got {value!r}; "
-                "offset must be an (x, y) pair",
-            )
-
+        validate_pair("offset", value)
         self._offset = pg.Vector2(value)
 
     @property

@@ -12,6 +12,7 @@ from enum import Enum, auto, unique
 from pathlib import Path
 
 from puigame._layout.anchor import Anchor
+from puigame._validation import reject_bool_in_pair
 
 # a colour as (red, green, blue, alpha), each from 0 to 255
 RGBA = tuple[int, int, int, int]
@@ -125,11 +126,12 @@ class Style:
     A negative border thickness, corner radius, or halo thickness, or a font
     size of 0 or less, raises ``ValueError`` when the style is created. A
     negative swell is allowed. A halo fade profile that is not a
-    ``FadeProfile``, a text offset that is not a tuple, a typeface that is
-    neither a ``BundledTypeface`` nor a ``Path``, a text anchor or parent anchor
-    that is not an ``Anchor``, a text alignment that is not a ``TextAlign``, a
-    horizontal extent that is not a ``TextHorizontalExtent``, or a text margin
-    that is not a tuple, raises ``TypeError``.
+    ``FadeProfile``, a text offset that is not a tuple or contains a ``bool``, a
+    typeface that is neither a ``BundledTypeface`` nor a ``Path``, a text anchor
+    or parent anchor that is not an ``Anchor``, a text alignment that is not a
+    ``TextAlign``, a horizontal extent that is not a ``TextHorizontalExtent``,
+    or a text margin that is not a tuple or contains a ``bool``, raises
+    ``TypeError``.
 
     Attributes:
         body_colour: Colour of the body, the fill inside the border, as
@@ -212,11 +214,12 @@ class Style:
                 ``halo_thickness`` is negative, or if ``text_font_size`` is
                 not positive.
             TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, if
-                ``text_offset`` is not a tuple, if ``text_typeface`` is neither
-                a ``BundledTypeface`` nor a ``Path``, if ``text_anchor`` or
-                ``text_parent_anchor`` is not an ``Anchor``, if ``text_align``
-                is not a ``TextAlign``, if ``text_horizontal_extent`` is not a
-                ``TextHorizontalExtent``, or if ``text_margin`` is not a tuple.
+                ``text_offset`` is not a tuple or contains a ``bool``, if
+                ``text_typeface`` is neither a ``BundledTypeface`` nor a
+                ``Path``, if ``text_anchor`` or ``text_parent_anchor`` is not an
+                ``Anchor``, if ``text_align`` is not a ``TextAlign``, if
+                ``text_horizontal_extent`` is not a ``TextHorizontalExtent``, or
+                if ``text_margin`` is not a tuple or contains a ``bool``.
         """
         if self.border_thickness < 0:
             raise ValueError(
@@ -241,6 +244,7 @@ class Style:
 
         if not isinstance(self.text_offset, tuple):
             raise TypeError(f"text_offset must be a tuple, got {self.text_offset!r}")
+        reject_bool_in_pair("text_offset", self.text_offset)
 
         if not isinstance(self.text_typeface, (BundledTypeface, Path)):
             raise TypeError(
@@ -275,6 +279,7 @@ class Style:
 
         if not isinstance(self.text_margin, tuple):
             raise TypeError(f"text_margin must be a tuple, got {self.text_margin!r}")
+        reject_bool_in_pair("text_margin", self.text_margin)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -287,10 +292,10 @@ class StyleOverride:
     overrides are applied in order of precedence, so the higher-precedence
     state wins when two set the same field (see ``Theme``).
 
-    A negative border thickness or halo thickness raises ``ValueError`` when
-    the override is created. A negative swell is allowed. A halo fade profile
-    that is not a ``FadeProfile``, or a text offset that is not a tuple, raises
-    ``TypeError``.
+    A negative border thickness or halo thickness raises ``ValueError`` when the
+    override is created. A negative swell is allowed. A halo fade profile that
+    is not a ``FadeProfile``, or a text offset that is not a tuple or contains a
+    ``bool``, raises ``TypeError``.
 
     Attributes:
         body_colour: Colour of the body as RGBA, or ``None`` to keep it.
@@ -332,8 +337,8 @@ class StyleOverride:
         since a negative swell is valid and shrinks the widget.
 
         Raises:
-            TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, or
-                if ``text_offset`` is not a tuple.
+            TypeError: If ``halo_fade_profile`` is not a ``FadeProfile``, or if
+                ``text_offset`` is not a tuple or contains a ``bool``.
             ValueError: If ``border_thickness`` or ``halo_thickness`` is
                 negative.
         """
@@ -356,7 +361,9 @@ class StyleOverride:
                 f"halo_thickness cannot be negative, got {self.halo_thickness} px",
             )
 
-        if self.text_offset is not None and not isinstance(self.text_offset, tuple):
-            raise TypeError(
-                f"text_offset must be a tuple or None, got {self.text_offset!r}",
-            )
+        if self.text_offset is not None:
+            if not isinstance(self.text_offset, tuple):
+                raise TypeError(
+                    f"text_offset must be a tuple or None, got {self.text_offset!r}",
+                )
+            reject_bool_in_pair("text_offset", self.text_offset)

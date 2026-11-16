@@ -168,6 +168,13 @@ def test_style_non_tuple_text_margin_or_text_offset_raises(field_name, value):
         replace(ANY_STYLE, **{field_name: value})
 
 
+@pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
+@pytest.mark.parametrize("value", [(True, 3), (3, True)], ids=["bool x", "bool y"])
+def test_style_bool_in_text_margin_or_text_offset_raises(field_name, value):
+    with pytest.raises(TypeError):
+        replace(ANY_STYLE, **{field_name: value})
+
+
 @pytest.mark.parametrize(
     "text_offset",
     [
@@ -197,6 +204,16 @@ def test_style_override_text_offset_can_take_tuple_of_int_or_none(text_offset):
     ids=["int", "float", "list", "pg.Vector2"],
 )
 def test_style_override_non_tuple_text_offset_raises(text_offset):
+    with pytest.raises(TypeError):
+        StyleOverride(text_offset=text_offset)
+
+
+@pytest.mark.parametrize(
+    "text_offset",
+    [(True, 3), (3, True)],
+    ids=["bool x", "bool y"],
+)
+def test_style_override_bool_in_text_offset_raises(text_offset):
     with pytest.raises(TypeError):
         StyleOverride(text_offset=text_offset)
 
