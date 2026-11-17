@@ -17,7 +17,7 @@ from puigame._widgets.state import State
 
 if TYPE_CHECKING:
     from puigame._components.component import Component
-    from puigame._ui.ui_root import UIRoot
+    from puigame._ui.ui import UI
 
 
 class Widget:
@@ -28,8 +28,7 @@ class Widget:
     - a rect, sized on creation and placed against its parent's by its anchors,
       margin, and offset, on creation and by each layout pass
     - a parent to anchor against, fixed on creation, and its children
-    - a skin, fixed on creation, that draws its images in the theme held by
-      the tree's ``UIRoot``
+    - a skin, fixed on creation, that draws its images in the UI's theme
     - ``enabled`` and ``visible`` flags, with ``_in_tree`` versions that take
       its ancestors into account
     - a ``hit_testable`` flag, deciding whether hit-testing can stop on it, so
@@ -42,7 +41,7 @@ class Widget:
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         skin: Skin,
@@ -57,12 +56,13 @@ class Widget:
     ) -> None:
         """Create a widget as the last child of ``parent``.
 
-        The widget's images are built straight away, in the theme of the tree's
-        ``UIRoot``, and it is placed against its parent.
+        The widget's images are built straight away, in the UI's theme, and it
+        is placed against its parent.
 
         Args:
-            parent: Widget to anchor against and to be a child of. It cannot be
-                changed later.
+            parent: Widget or ``UI`` to anchor against and to be a child of. A
+                widget whose parent is the ``UI`` is a top-level widget. It
+                cannot be changed later.
             size: Width and height in pixels.
             skin: Skin that draws the widget's images.
             anchor: Point on this widget used for positioning. Fixed on
@@ -107,56 +107,15 @@ class Widget:
                 f"parent_anchor must be an Anchor or None, got {parent_anchor!r}",
             )
 
-        self._parent: Widget | None = parent
-        # parents are fixed, so a widget's root never changes
-        self._root: UIRoot = self._parent._root
+        self._parent: Widget | UI = parent
+        # parents are fixed, so a widget's UI never changes; it is set before
+        # the images are built below, since they read its theme
+        self._ui: UI
+        if isinstance(self._parent, Widget):
+            self._ui = self._parent._ui
+        else:
+            self._ui = self._parent
 
-        self._setup(
-            size=size,
-            skin=skin,
-            anchor=anchor,
-            parent_anchor=parent_anchor,
-            margin=margin,
-            offset=offset,
-            enabled=enabled,
-            visible=visible,
-            hit_testable=hit_testable,
-            components=components,
-        )
-
-        self._place()
-
-        # join the parent only once setup has succeeded, so that a widget whose
-        # setup raised is never left in the tree
-        self._parent._children.append(self)
-
-    def _setup(
-        self,
-        *,
-        size: Point,
-        skin: Skin,
-        anchor: Anchor = Anchor.CENTRE,
-        parent_anchor: Anchor | None = None,
-        margin: Point = (0, 0),
-        offset: Point = (0, 0),
-        enabled: bool = True,
-        visible: bool = True,
-        hit_testable: bool = True,
-        components: Iterable[Component] = (),
-    ) -> None:
-        """Set up everything that ``Widget`` and ``UIRoot`` share.
-
-        ``Widget.__init__()`` calls this after linking the widget to its parent,
-        and ``UIRoot.__init__()``, which has no parent, after setting up the
-        root and its theme. Either way, the theme must be reachable before this
-        runs, since the images are built at the end. The arguments are the same
-        as ``Widget.__init__()``'s.
-
-        Raises:
-            ValueError: If either dimension of ``size`` is negative.
-            TypeError: If ``size``, ``margin``, or ``offset`` is a single number
-                rather than an ``(x, y)`` pair or contains a ``bool``.
-        """
         validate_pair("size", size)
         if min(size[0], size[1]) < 0:
             raise ValueError(f"size cannot be negative, got {size!r} px")
@@ -188,6 +147,12 @@ class Widget:
         # needs the components above to render, and the flags to pick the image
         # for the current state
         self._rebuild_image_cache()
+
+        self._place()
+
+        # join the parent only once setup has succeeded, so that a widget whose
+        # setup raised is never left in the tree
+        self._parent._children.append(self)
 
     def __repr__(self) -> str:
         """Return a representation for debugging."""
@@ -247,8 +212,8 @@ class Widget:
         return self._skin
 
     @property
-    def parent(self) -> Widget | None:
-        """The widget this one is anchored against, or ``None`` for a ``UIRoot``.
+    def parent(self) -> Widget | UI:
+        """The widget or ``UI`` this one is anchored against.
 
         Set on creation and never changed, so it is read-only.
         """
@@ -264,8 +229,8 @@ class Widget:
 
     @property
     def theme(self) -> Theme:
-        """The theme the widget draws with, held by the tree's ``UIRoot``."""
-        return self._root.theme
+        """The theme the widget draws with, held by its ``UI``."""
+        return self._ui.theme
 
     @property
     def offset(self) -> pg.Vector2:
@@ -290,7 +255,7 @@ class Widget:
     @property
     def enabled_in_tree(self) -> bool:
         """Whether this widget and all of its ancestors are enabled."""
-        if self.parent is None:
+        if not isinstance(self.parent, Widget):
             return self.enabled
 
         return self.enabled and self.parent.enabled_in_tree
@@ -298,7 +263,7 @@ class Widget:
     @property
     def visible_in_tree(self) -> bool:
         """Whether this widget and all of its ancestors are visible."""
-        if self.parent is None:
+        if not isinstance(self.parent, Widget):
             return self.visible
 
         return self.visible and self.parent.visible_in_tree
@@ -318,9 +283,6 @@ class Widget:
         killed in turn. It can safely be called more than once. A killed widget
         keeps its link to its old parent, but should not be used again.
         """
-        # all widgets have a parent apart from UIRoot, which overrides kill()
-        assert self.parent is not None
-
         if self in self.parent._children:  # skip if an earlier kill() removed it
             self.parent._children.remove(self)
 
@@ -350,7 +312,7 @@ class Widget:
         a widget that is not ``visible`` is skipped along with everything below
         it. Only ``visible`` is read, not ``visible_in_tree``, so the walk
         ignores the starting widget's ancestors and each widget is checked
-        once. Started from the root, it yields exactly the widgets to draw.
+        once.
 
         Yields:
             Each visible widget, in depth-first pre-order.
@@ -433,12 +395,9 @@ class Widget:
         """Place the rect against the parent's from the anchors, margin, and offset.
 
         The rect is updated in place, in the coordinates of the surface the UI
-        draws on. The parent must already be placed, since its rect is read as
-        it is. ``UIRoot`` overrides this, since it has no parent.
+        draws on. The parent, a widget or the ``UI``, must already be placed,
+        since its rect is read as it is.
         """
-        # all widgets have a parent apart from UIRoot, which overrides _place()
-        assert self.parent is not None
-
         pos_from_anchor_match = get_pos_from_anchor_match(
             child_size=self.rect.size,
             child_anchor=self._anchor,

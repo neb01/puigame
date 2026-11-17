@@ -17,7 +17,7 @@ def main() -> None:
     ui = UI(size=screen.size)
 
     Button(
-        ui.root,
+        ui,
         size=(64, 30),
         skin=DrawnSkin(),
         text="QUIT",

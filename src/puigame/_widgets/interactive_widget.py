@@ -8,8 +8,10 @@ The UIManager recognises interactive widgets with ``isinstance()`` against this
 class, so it never imports the concrete widgets.
 """
 
+from __future__ import annotations
+
 from collections.abc import Iterable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from pygame.typing import Point
 
@@ -18,6 +20,9 @@ from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
+
+if TYPE_CHECKING:
+    from puigame._ui.ui import UI
 
 
 class InteractiveWidget(Widget):
@@ -39,7 +44,7 @@ class InteractiveWidget(Widget):
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         skin: Skin,
@@ -58,8 +63,8 @@ class InteractiveWidget(Widget):
         changes both as the mouse moves and clicks.
 
         Args:
-            parent: Widget to anchor against and to be a child of. It cannot be
-                changed later.
+            parent: Widget or ``UI`` to anchor against and to be a child of. It
+                cannot be changed later.
             size: Width and height in pixels.
             skin: Skin that draws the widget's images.
             anchor: Point on this widget used for positioning. Fixed on

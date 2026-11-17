@@ -261,7 +261,7 @@ def main() -> None:
 
     # title
     Label(
-        ui.root,
+        ui,
         size=(96, 54),
         text="JUMPING\nSTANDARD\nBERNARDS",
         anchor=Anchor.TOP_LEFT,
@@ -273,7 +273,7 @@ def main() -> None:
     lower_buttons_height = BUTTON_HEIGHT * 2 + GAP
 
     button_column = Container(
-        ui.root,
+        ui,
         size=(
             BUTTON_WIDTH,
             main_buttons_height + GROUP_GAP + lower_buttons_height,
@@ -375,7 +375,7 @@ def main() -> None:
 
     # bouncing squares
     bounce_container = Container(
-        ui.root,
+        ui,
         size=BOUNCE_CONTAINER_SIZE,
     )
 
@@ -424,7 +424,7 @@ def main() -> None:
 
     # Neb0Font specimen
     Label(
-        ui.root,
+        ui,
         size=FONT_SPECIMEN_SIZE,
         text=(
             "Neb0Font\n\n"

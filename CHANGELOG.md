@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Breaking:** `Style` now requires `text_align`.
 - **Breaking:** the mouse wheel is consumed over hit-testable widgets, as clicks are, so scrolling over a panel no longer reaches the game. Both `MOUSEWHEEL` and the wheel's button 4 and 5 events are consumed. Mouse motion and window events still are not.
 - **Breaking:** an `(x, y)` pair that contains a `bool` raises `TypeError`: a widget's `size`, `margin`, and `offset`, the `UI`'s `size`, `Style.text_offset` and `text_margin`, and `StyleOverride.text_offset`. pygame reads `True` as 1, so a mistyped flag there was silently accepted.
+- **Breaking:** `UIRoot` and `ui.root` are removed, and a top-level widget is created with the `UI` itself as its parent: `Button(ui, ...)` rather than `Button(ui.root, ...)`. A top-level widget's `parent` is now the `UI`, so `parent` is never `None`. The `UI` gains what games used from the root: `rect`, `offset` (to move the whole UI, for example to shake it), `children`, and `theme`. The `UI` is not a widget, so it has no `kill()`, `image`, or flags.
 - Trailing whitespace at the end of each line is no longer drawn, so it no longer widens the text's image or moves aligned lines. Text made only of whitespace and newlines now gives a 0x0 image, as empty text does.
 
 ## [0.1.0] - 2026-11-06

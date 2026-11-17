@@ -1,10 +1,17 @@
 """Container, an invisible widget that holds and positions children."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from pygame.typing import Point
 
 from puigame._components.skin import NoSkin
 from puigame._layout.anchor import Anchor
 from puigame._widgets.widget import Widget
+
+if TYPE_CHECKING:
+    from puigame._ui.ui import UI
 
 
 class Container(Widget):
@@ -17,7 +24,7 @@ class Container(Widget):
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         anchor: Anchor = Anchor.CENTRE,
@@ -31,8 +38,8 @@ class Container(Widget):
         """Create a container as the last child of ``parent``.
 
         Args:
-            parent: Widget to anchor against and to be a child of. It cannot be
-                changed later.
+            parent: Widget or ``UI`` to anchor against and to be a child of. It
+                cannot be changed later.
             size: Width and height in pixels.
             anchor: Point on this container used for positioning. Defaults to
                 ``Anchor.CENTRE``.

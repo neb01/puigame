@@ -1,1 +1,1 @@
-"""UI: running a widget tree, with its root, mouse input, and per-frame steps."""
+"""UI: running a widget tree, with its mouse input and per-frame steps."""

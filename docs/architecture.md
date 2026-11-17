@@ -36,16 +36,16 @@ Out of scope: event buses, scene management, game key bindings, and game-specifi
 
 ## Integration
 
-A game uses puigame through a `UI` object. Each `UI` combines two parts:
+A game uses puigame through a `UI` object. The `UI` is the top of its widget tree, but not a widget itself:
 
-- **`ui.root`**: a `UIRoot`, the widget at the top of the UI's tree. It covers the surface the UI draws on, at `(0, 0)` moved by its `offset`, instead of anchoring to a parent; it has no parent itself, and holds the UI's theme. A UI that covers only part of the surface is a top-level `Container` anchored inside the root, and changing the root's `offset` moves the whole UI, for example to shake it. Every widget in the UI is its child, directly or further down the tree.
+- **The tree's top.** The UI's top-level widgets are its `children`, and are created with the `UI` as their parent. Its `rect` covers the surface the UI draws on, at `(0, 0)` moved by its `offset`, and top-level widgets anchor against it. A UI that covers only part of the surface is a top-level `Container` anchored inside it, and changing `ui.offset` moves the whole UI, for example to shake it. It holds the UI's `theme`. Every widget in the UI is below it, directly or further down the tree.
 - **A manager**: a private `UIManager` that handles the UI's input: which events the UI consumes, the highlight, and presses (see [Input](#input)). It has no public API of its own yet, so it is not exposed as an attribute.
 
-`UI` passes the calls through, so a game uses `ui.root` and the `UI`'s own methods. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with `ui.root` as its parent.
+`UI` passes the input calls through to the manager. It is not a `Widget`, since most of a widget's API (anchors, margin, a skin and image, `enabled`, `visible`, `hit_testable`, and `kill()`) would mean nothing on it. Every widget is created with its parent as the first argument, so a widget at the top level of a UI is created with the `UI` as its parent.
 
 ```python
 ui = puigame.UI(size=(640, 360))
-puigame.Button(ui.root, ..., text="Back", on_click=go_back)
+puigame.Button(ui, ..., text="Back", on_click=go_back)
 
 while running:
     for event in pygame.event.get():
@@ -97,7 +97,6 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 
 ```
 Widget                  rect, anchor, fixed parent, children, flags, skin, per-state image cache
-├── UIRoot              top of a UI's tree: covers the draw surface, holds the theme, has no parent
 ├── Container           invisible group of children (NoSkin)
 ├── Panel               group of children with a background (skin given on creation)
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
@@ -108,7 +107,7 @@ Widget                  rect, anchor, fixed parent, children, flags, skin, per-s
     └── TextBox         (planned) + editable Text, editing mode (no PRESSED state)
 
 Exclusive group         (planned, name open) helper: mutual exclusion between toggle buttons or checkboxes (radio behaviour)
-UI                      composes root (a UIRoot, which holds the theme) and manager; draws the tree
+UI                      top of the tree (not a Widget): covers the draw surface, holds the theme and manager; draws the tree
 UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
 
@@ -128,17 +127,15 @@ Games can still check collisions against a widget's `rect`, with `Rect` methods 
 
 ### Parents and children
 
-Every widget except a `UIRoot` is created with its `parent` as the first argument, and keeps that parent for its whole life: widgets cannot be moved to a new parent. This keeps the tree simple, and guarantees that every widget can reach its UI's theme from the moment it is created. Construction is therefore top-down: a parent exists before its children.
+Every widget is created with its `parent`, a widget or the `UI`, as the first argument, and keeps that parent for its whole life: widgets cannot be moved to a new parent. This keeps the tree simple, and guarantees that every widget can reach its UI's theme from the moment it is created. Construction is therefore top-down: a parent exists before its children.
 
 - `parent` and `children` are read-only. `children` returns a tuple of the widget's children in the order they were created, so it cannot be appended to or replaced.
 - A new widget joins its parent's children only once the rest of its setup has succeeded, so a widget whose creation raised is never left in the tree.
-- A widget at the top level of a UI is created with `ui.root` as its parent. Every widget in a UI therefore has a parent, except the root itself.
-- Each widget keeps a reference to the `UIRoot` at the top of its tree, copied from its parent. Parents never change, so neither does the root, and the reference cannot go out of date.
+- A widget at the top level of a UI is created with the `UI` as its parent. Every widget therefore has a parent, and `parent` is never `None`. `enabled_in_tree` and `visible_in_tree` stop at the `UI`, which has no flags of its own.
+- Each widget keeps a private reference to its `UI`, copied from its parent, or the parent itself for a top-level widget. Parents never change, so neither does the UI, and the reference cannot go out of date. Through it, the widget reads the UI's theme.
 - To move a widget, kill it and create a new one under the new parent. Moving widgets directly is a later feature.
 
-`kill()` removes a widget for good: the widget leaves its parent's children, and each of its children is killed in turn. It can safely be called more than once. A killed widget keeps its link to its old parent, but should not be used again. `UIRoot.kill()` raises `TypeError`: to remove a whole UI, the game drops every reference to it.
-
-`UIRoot` is created differently from other widgets, since it has no parent. It sets up its root reference and its theme itself, then runs the setup that every widget shares, without calling `Widget.__init__()`.
+`kill()` removes a widget for good: the widget leaves its parent's children, and each of its children is killed in turn. It can safely be called more than once. A killed widget keeps its link to its old parent, but should not be used again. A `UI` has no `kill()`: to remove a whole UI, the game drops every reference to it.
 
 ### Flags
 
@@ -161,7 +158,7 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 
 | Component | Held by | Job |
 |---|---|---|
-| **`Skin`** | Every `Widget` (required; `Container` and `UIRoot` use `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
+| **`Skin`** | Every `Widget` (required; `Container` uses `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
 | **`Text`** | Widgets that display text, such as `Label`, `Button`, and the planned `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; keeps no reference to its owner, so the owner rebuilds its images when it changes the text |
 
 A `Text` component is **not** a child widget: it is not in the tree, receives no input, and is drawn into its owner's image rather than on its own.
@@ -178,7 +175,7 @@ A skin turns a size and a style into a surface. Skins hold no per-widget data an
 
 ![Drawing a skin surface at rect.topleft plus pos](images/skin_offset.svg)
 
-- **`NoSkin`**: a 0x0 surface, whatever the size and style. For widgets with no appearance at all, such as `Container` and `UIRoot`, so their images cost almost nothing to store or draw, and for widgets with content but no background, such as a bare label, whose image is then the size of its content. It is public, so any widget can go without a background, such as a clear button; its hitbox is still its `rect`. A widget with `NoSkin` shows changes of state only through its components' styles, such as text colour and text offset. `Label` always uses it: for text on a background, place a `Label` in a `Panel`. A 0x0 surface is the one exception to the size rules above.
+- **`NoSkin`**: a 0x0 surface, whatever the size and style. For widgets with no appearance at all, such as `Container`, so their images cost almost nothing to store or draw, and for widgets with content but no background, such as a bare label, whose image is then the size of its content. It is public, so any widget can go without a background, such as a clear button; its hitbox is still its `rect`. A widget with `NoSkin` shows changes of state only through its components' styles, such as text colour and text offset. `Label` always uses it: for text on a background, place a `Label` in a `Panel`. A 0x0 surface is the one exception to the size rules above.
 - **`DrawnSkin`**: built in code from the theme's style for each state: body and border colours, border thickness, corner radius, halo, and swell. Works with no art at all and draws cleanly at any size. See [DrawnSkin layers](#drawnskin-layers).
 - **`ImageSkin`** (planned): one image per state, scaled with **nine-slice** so corners stay crisp at any size. A `pixel_art` option would switch to nearest-neighbour scaling to keep hard pixel edges. It would accept a `pygame.Surface` or a path.
 - Custom skins subclass `Skin` and implement `render()`.
@@ -232,7 +229,7 @@ The private `theme._style_for(state)` returns a complete `Style` for any combina
 - Overrides combine best when each state changes its own fields: for example, highlighting adds a halo, checking thickens the border, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the higher-precedence flag wins. If checking and disabling both change the body colour, for example, a disabled toggle button looks the same whether it is checked or not.
 - Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. A text margin or offset that is not a tuple, a typeface that is neither a `BundledTypeface` nor a `Path`, or a horizontal extent that is not a `TextHorizontalExtent`, raises `TypeError`. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
 - Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
-- The theme lives on the UI's **`UIRoot`**, and every widget reaches it through the root of its tree, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
+- The theme lives on the **`UI`**, and every widget reaches it through its UI, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
 - puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games. It uses Neb0Font (`BundledTypeface.NEB0FONT`) at size 18, three times its 6-pixel grid, with `TextHorizontalExtent.INK`, so text is centred exactly at any size with a `text_offset` of `(0, 0)`; pressed text moves down 1 pixel. Its `CHECKED` look is a thicker green border, set with `border_colour` and `border_thickness`. No other state sets the border thickness, so a checked toggle button looks different from an unchecked one in every state, including disabled, where the border turns grey but stays thick.
 - **Later:** individual widgets, or whole subtrees, could have a different theme from the UI's. An earlier attempt, with themes inherited down the tree, is kept at the tag `archive/per-widget-themes`.
 
@@ -240,7 +237,7 @@ The private `theme._style_for(state)` returns a complete `Style` for any combina
 
 Positions are set with a nine-point `Anchor` (`CENTRE`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `MID_LEFT`, `MID_RIGHT`, `MID_TOP`, `MID_BOTTOM`) plus a margin.
 
-- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A top-level widget is created with `ui.root` as its parent, so it is anchored to the surface the UI draws on.
+- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A top-level widget is created with the `UI` as its parent, so it is anchored to the UI's rect, which covers the surface the UI draws on.
 - A `Text` component is anchored relative to its **owner widget's rect**.
 
 ### Anchor points
@@ -325,9 +322,9 @@ The anchors and margin are fixed on creation and private: they are given to the 
 
 ### Layout pass
 
-Layout runs once per frame, before drawing, as a single pass down the tree from the root: the root is placed first, then every widget below it, parents before children, so each widget is placed against its parent's up-to-date rect. Each widget is also placed once when it is created.
+Layout runs once per frame, before drawing, as a single pass down the tree from the `UI`: the UI's rect is placed first, then every widget, parents before children, so each widget is placed against its parent's up-to-date rect. Each widget is also placed once when it is created.
 
-Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset are combined, so a fractional offset rounds the same way on every widget, the root included.
+Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset are combined, so a fractional offset rounds the same way on every widget and on the UI.
 
 ## State
 
@@ -433,9 +430,9 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 ### Hit-testing
 
 - Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count, and nor does swell: a negative swell still hits across the whole rect, including the band where nothing is drawn.
-- Hit-testing is clipped to the draw surface, from `(0, 0)` to the UI's `size`, because nothing is drawn beyond it: a position off the surface hits nothing, even where a widget's rect extends past the edge (a panel sliding in, a tooltip at the edge, or a shaking root). This matters when a game scales up a smaller render surface and maps clicks in the letterbox into its coordinates. The boundary is the surface, not `UIRoot.rect`, so the root's offset does not move it. Widgets are not clipped to their parents, for hit-testing or drawing, so a child outside its parent, such as a tooltip, can still be clicked.
+- Hit-testing is clipped to the draw surface, from `(0, 0)` to the UI's `size`, because nothing is drawn beyond it: a position off the surface hits nothing, even where a widget's rect extends past the edge (a panel sliding in, a tooltip at the edge, or a shaking UI). This matters when a game scales up a smaller render surface and maps clicks in the letterbox into its coordinates. The boundary is the surface, not `ui.rect`, so the UI's offset does not move it. Widgets are not clipped to their parents, for hit-testing or drawing, so a child outside its parent, such as a tooltip, can still be clicked.
 - The walk goes in reverse drawing order (see [Tree order](#tree-order)), so the widget drawn on top is found first. Hidden subtrees are skipped. Disabled widgets still count, so a disabled panel still blocks what is below it.
-- Each widget has a `hit_testable` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `Label`, and `UIRoot`: a `Label` on a `Button` must not block the button, HUD text should not block clicks meant for the game, and clicks on empty space reach the game.
+- Each widget has a `hit_testable` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container` and `Label`: a `Label` on a `Button` must not block the button, and HUD text should not block clicks meant for the game. The `UI` is not a widget, so it is never hit, and clicks on empty space reach the game.
 - Mask hit-testing, so that non-rectangular widgets respond only where they are drawn, is not in v0.1.
 
 ### Consuming
@@ -550,8 +547,7 @@ src/puigame/
 ├── _ui/                       running a widget tree
 │   ├── __init__.py
 │   ├── ui.py                  UI
-│   ├── ui_manager.py          UIManager
-│   └── ui_root.py             UIRoot
+│   └── ui_manager.py          UIManager
 ├── _widgets/                  base classes, states, and concrete widgets
 │   ├── __init__.py
 │   ├── button.py              Button
@@ -588,7 +584,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
-- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
+- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
 - **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
 - **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.
@@ -602,12 +598,12 @@ Each layer imports only from the layers above it:
 2. `_styling/style`
 3. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
 4. `_widgets/widget`
-5. `_widgets/interactive_widget`, `_ui/ui_root`
+5. `_widgets/interactive_widget`
 6. `_widgets/button`, `_widgets/container`, `_widgets/label`, `_widgets/panel`
 7. `_ui/ui_manager`
 8. `_ui/ui`
 
-`_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets/widget` imports `UIRoot` from `_ui` for type checking only. `UIManager` and `UI` need only `Widget`, `InteractiveWidget`, and `UIRoot`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
+`_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets` imports `UI` from `_ui` for type checking only, and `_ui/ui_manager` imports `UI` the same way, since `_ui/ui` imports both; that is why `Widget` tests whether its parent is a `Widget` rather than a `UI`. `UIManager` and `UI` need only `Widget` and `InteractiveWidget`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
 
 ## v0.1 scope
 

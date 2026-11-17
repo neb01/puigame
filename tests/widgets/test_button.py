@@ -19,7 +19,6 @@ from puigame import (
     TextHorizontalExtent,
     Theme,
 )
-from puigame._ui.ui_root import UIRoot
 from stubs import BodyColourLayer
 
 # region --- Constants --------------------------------------------------------
@@ -117,9 +116,9 @@ def state_colour_ui() -> UI:
         ("hit_testable", False),
     ],
 )
-def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
+def test_forwards_arguments_stored_as_attributes(ui: UI, field_name, value):
     button = Button(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         **{field_name: value},
@@ -129,9 +128,9 @@ def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, va
 
 
 def test_forwards_placement_arguments():
-    ui_root = UIRoot(size=(20, 30), theme=ANY_THEME)
+    ui = UI(size=(20, 30), theme=ANY_THEME)
     button = Button(
-        ui_root,
+        ui,
         size=(3, 5),
         skin=ANY_SKIN,
         anchor=Anchor.BOTTOM_RIGHT,
@@ -142,8 +141,8 @@ def test_forwards_placement_arguments():
     assert button.rect.topleft == (-5, 21)
 
 
-def test_hit_testable_true_by_default(ui_root: UIRoot):
-    button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_hit_testable_true_by_default(ui: UI):
+    button = Button(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert button.hit_testable
 
@@ -154,14 +153,14 @@ def test_hit_testable_true_by_default(ui_root: UIRoot):
 # region --- text -------------------------------------------------------------
 
 
-def test_text_getter_returns_given_text(ui_root: UIRoot):
-    button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN, text="sheep")
+def test_text_getter_returns_given_text(ui: UI):
+    button = Button(ui, size=ANY_SIZE, skin=ANY_SKIN, text="sheep")
 
     assert button.text == "sheep"
 
 
-def test_text_defaults_to_empty_string(ui_root: UIRoot):
-    button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_text_defaults_to_empty_string(ui: UI):
+    button = Button(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert button.text == ""
 
@@ -173,7 +172,7 @@ def test_text_defaults_to_empty_string(ui_root: UIRoot):
 
 
 def test_text_setter_updates_image(ui: UI):
-    button = Button(ui.root, size=ANY_SIZE, skin=NoSkin(), text="")
+    button = Button(ui, size=ANY_SIZE, skin=NoSkin(), text="")
 
     ui.update()
 
@@ -186,7 +185,7 @@ def test_text_setter_updates_image(ui: UI):
 
 
 def test_text_setter_with_current_text_keeps_image(ui: UI):
-    button = Button(ui.root, size=ANY_SIZE, skin=ANY_SKIN, text="cranium")
+    button = Button(ui, size=ANY_SIZE, skin=ANY_SKIN, text="cranium")
 
     ui.update()
     image = button.image
@@ -217,7 +216,7 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
     ui = UI(size=(300, 200), theme=theme)
 
     Button(
-        ui.root,
+        ui,
         size=(30, 30),
         skin=NoSkin(),
         text="I",
@@ -252,7 +251,7 @@ def test_text_drawn_in_highlighted_style_when_button_is_highlighted():
 
 def test_press_held_on_button_shows_pressed_colour(state_colour_ui: UI):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -272,7 +271,7 @@ def test_press_held_on_button_shows_pressed_colour(state_colour_ui: UI):
 
 def test_press_and_drag_off_button_shows_base_colour(state_colour_ui: UI):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -297,7 +296,7 @@ def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(
     state_colour_ui: UI,
 ):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -323,7 +322,7 @@ def test_press_and_drag_off_and_back_on_button_shows_pressed_colour(
 
 def test_click_and_keep_mouse_on_button_shows_highlighted_colour(state_colour_ui: UI):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -348,7 +347,7 @@ def test_release_off_button_then_move_back_on_shows_highlighted_colour(
     state_colour_ui: UI,
 ):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -374,7 +373,7 @@ def test_release_off_button_then_move_back_on_shows_highlighted_colour(
 
 def test_disabled_during_press_shows_disabled_colour(state_colour_ui: UI):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -397,7 +396,7 @@ def test_disabled_during_press_shows_disabled_colour(state_colour_ui: UI):
 
 def test_focus_lost_during_press_shows_highlighted_colour(state_colour_ui: UI):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -421,7 +420,7 @@ def test_focus_lost_during_press_shows_highlighted_colour(state_colour_ui: UI):
 
 def test_right_press_held_on_button_shows_highlighted_colour(state_colour_ui: UI):
     button = Button(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -455,7 +454,7 @@ def test_pressed_keeps_highlighted_fields_that_it_does_not_override():
     ui = UI(size=(300, 200), theme=theme)
 
     button = Button(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -483,7 +482,7 @@ def test_on_click_is_called_once_with_button_as_argument(ui: UI):
     on_click_calls = []
 
     button = Button(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         on_click=on_click_calls.append,
@@ -505,7 +504,7 @@ def test_press_alone_does_not_call_on_click(ui: UI):
     on_click_calls = []
 
     Button(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         on_click=on_click_calls.append,
@@ -525,7 +524,7 @@ def test_press_alone_does_not_call_on_click(ui: UI):
 
 def test_click_on_button_with_no_on_click_does_not_raise(ui: UI):
     Button(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         on_click=None,
@@ -543,7 +542,7 @@ def test_click_on_button_with_no_on_click_does_not_raise(ui: UI):
 
 def test_exceptions_propagate(ui: UI):
     Button(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         on_click=on_click_error,
@@ -573,11 +572,11 @@ def test_exceptions_propagate(ui: UI):
     [5, 6.7, b"bytes object", None],
     ids=["int", "float", "bytes", "None"],
 )
-def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
+def test_constructor_with_non_string_text_raises(ui: UI, text):
     with pytest.raises(TypeError):
-        Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN, text=text)
+        Button(ui, size=ANY_SIZE, skin=ANY_SKIN, text=text)
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 @pytest.mark.parametrize(
@@ -585,8 +584,8 @@ def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
     [5, 6.7, b"bytes object", None],
     ids=["int", "float", "bytes", "None"],
 )
-def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
-    button = Button(ui_root, size=ANY_SIZE, skin=ANY_SKIN, text="corndog")
+def test_text_setter_with_non_string_text_raises(ui: UI, text):
+    button = Button(ui, size=ANY_SIZE, skin=ANY_SKIN, text="corndog")
 
     with pytest.raises(TypeError):
         button.text = text
@@ -602,13 +601,13 @@ def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
 def test_constructor_with_non_callable_on_click_raises(ui: UI, on_click):
     with pytest.raises(TypeError):
         Button(
-            ui.root,
+            ui,
             size=ANY_SIZE,
             skin=ANY_SKIN,
             on_click=on_click,
         )
 
-    assert ui.root.children == ()
+    assert ui.children == ()
 
 
 # endregion

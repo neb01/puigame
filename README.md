@@ -33,7 +33,7 @@ def main() -> None:
     ui = UI(size=screen.size)
 
     Button(
-        ui.root,
+        ui,
         size=(64, 30),
         skin=DrawnSkin(),
         text="QUIT",
@@ -96,7 +96,7 @@ For a display opened with `pg.SCALED`, create the UI with the display's own size
 - `Panel`: a background for its children, which by default stops clicks reaching the widgets and game below it.
 - `Container`: an invisible widget that groups and places its children.
 
-Each widget is created with its parent, `ui.root` for a top-level widget, and placed against it: `anchor` is the point on the widget, `parent_anchor` the point on the parent it is matched to (the same point by default), and `margin` and `offset` move it from there. To place a group of widgets together, create them under a `Container` (or a `Panel`, for a background) that is itself under `ui.root`; a `UI` always covers its whole surface. Buttons and panels take a skin: `DrawnSkin()` draws them in the theme's style, and `NoSkin()` draws nothing.
+Each widget is created with its parent, the `UI` itself for a top-level widget, and placed against it: `anchor` is the point on the widget, `parent_anchor` the point on the parent it is matched to (the same point by default), and `margin` and `offset` move it from there. To place a group of widgets together, create them under a `Container` (or a `Panel`, for a background) that is itself under the `UI`; a `UI` always covers its whole surface. Buttons and panels take a skin: `DrawnSkin()` draws them in the theme's style, and `NoSkin()` draws nothing.
 
 ## Responding to clicks
 
@@ -106,7 +106,7 @@ A button's `on_click` is called with the button, from inside `handle_event()`. T
 TOGGLE_PAUSE = pg.event.custom_type()
 
 Button(
-    ui.root,
+    ui,
     size=(96, 30),
     skin=DrawnSkin(),
     text="PAUSE",

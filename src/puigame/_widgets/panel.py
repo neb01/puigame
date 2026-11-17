@@ -1,10 +1,17 @@
 """Panel, a widget with a skin that gives its children a visible background."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from pygame.typing import Point
 
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor
 from puigame._widgets.widget import Widget
+
+if TYPE_CHECKING:
+    from puigame._ui.ui import UI
 
 
 class Panel(Widget):
@@ -17,7 +24,7 @@ class Panel(Widget):
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         skin: Skin,
@@ -32,8 +39,8 @@ class Panel(Widget):
         """Create a panel as the last child of ``parent``.
 
         Args:
-            parent: Widget to anchor against and to be a child of. It cannot be
-                changed later.
+            parent: Widget or ``UI`` to anchor against and to be a child of. It
+                cannot be changed later.
             size: Width and height in pixels.
             skin: Skin that draws the panel's images. It cannot be changed
                 later. For no background, use a ``Container``.

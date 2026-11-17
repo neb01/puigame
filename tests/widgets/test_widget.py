@@ -21,7 +21,6 @@ from puigame import (
 )
 from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import Skin
-from puigame._ui.ui_root import UIRoot
 from stubs import BodyColourLayer, FixedLayer
 
 # region --- Constants --------------------------------------------------------
@@ -104,24 +103,24 @@ def state_colour_ui() -> UI:
 
 
 @pytest.fixture
-def widget(ui_root: UIRoot) -> Widget:
-    """Return a widget under ``ui_root`` with ``ANY_SIZE`` and ``ANY_SKIN``."""
-    return Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def widget(ui: UI) -> Widget:
+    """Return a widget under ``ui`` with ``ANY_SIZE`` and ``ANY_SKIN``."""
+    return Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
 
 @pytest.fixture
-def parent_and_child(ui_root: UIRoot) -> tuple[Widget, Widget]:
-    """Return a widget under ``ui_root`` and its child, in that order."""
-    parent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def parent_and_child(ui: UI) -> tuple[Widget, Widget]:
+    """Return a widget under ``ui`` and its child, in that order."""
+    parent = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
     child = Widget(parent, size=ANY_SIZE, skin=ANY_SKIN)
 
     return parent, child
 
 
 @pytest.fixture
-def family(ui_root: UIRoot) -> tuple[Widget, Widget, Widget]:
-    """Return a widget under ``ui_root``, its child, and its grandchild, in order."""
-    grandparent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def family(ui: UI) -> tuple[Widget, Widget, Widget]:
+    """Return a widget under ``ui``, its child, and its grandchild, in order."""
+    grandparent = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
     parent = Widget(grandparent, size=ANY_SIZE, skin=ANY_SKIN)
     child = Widget(parent, size=ANY_SIZE, skin=ANY_SKIN)
 
@@ -134,14 +133,14 @@ def family(ui_root: UIRoot) -> tuple[Widget, Widget, Widget]:
 # region --- Construction -----------------------------------------------------
 
 
-def test_rect_has_given_size(ui_root: UIRoot):
-    widget = Widget(ui_root, size=(10, 20), skin=ANY_SKIN)
+def test_rect_has_given_size(ui: UI):
+    widget = Widget(ui, size=(10, 20), skin=ANY_SKIN)
 
     assert widget.rect.size == (10, 20)
 
 
-def test_hit_testable_true_by_default(ui_root: UIRoot):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_hit_testable_true_by_default(ui: UI):
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert widget.hit_testable
 
@@ -152,8 +151,8 @@ def test_hit_testable_true_by_default(ui_root: UIRoot):
 # region --- Validation -------------------------------------------------------
 
 
-def test_zero_size_gives_empty_rect(ui_root: UIRoot):
-    widget = Widget(ui_root, size=(0, 0), skin=ANY_SKIN)
+def test_zero_size_gives_empty_rect(ui: UI):
+    widget = Widget(ui, size=(0, 0), skin=ANY_SKIN)
 
     assert widget.rect.size == (0, 0)
 
@@ -163,11 +162,11 @@ def test_zero_size_gives_empty_rect(ui_root: UIRoot):
     [(-1, 0), (0, -1), (-1, -1), (0, -0.01)],
     ids=["negative width", "negative height", "both negative", "negative float"],
 )
-def test_constructor_with_negative_size_raises(ui_root: UIRoot, size):
+def test_constructor_with_negative_size_raises(ui: UI, size):
     with pytest.raises(ValueError):
-        Widget(ui_root, size=size, skin=ANY_SKIN)
+        Widget(ui, size=size, skin=ANY_SKIN)
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 @pytest.mark.parametrize(
@@ -179,13 +178,9 @@ def test_constructor_with_negative_size_raises(ui_root: UIRoot, size):
     ],
     ids=["tuple", "list", "pg.Vector2"],
 )
-def test_margin_places_rect_on_correct_axes(
-    ui_root: UIRoot,
-    margin,
-    expected_topleft,
-):
+def test_margin_places_rect_on_correct_axes(ui: UI, margin, expected_topleft):
     widget = Widget(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -206,12 +201,8 @@ def test_margin_places_rect_on_correct_axes(
     ],
     ids=["tuple", "list", "pg.Vector2"],
 )
-def test_offset_converts_to_vector2_on_correct_axes(
-    ui_root: UIRoot,
-    offset,
-    expected_offset,
-):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
+def test_offset_converts_to_vector2_on_correct_axes(ui: UI, offset, expected_offset):
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, offset=offset)
 
     assert isinstance(widget.offset, pg.Vector2)
     assert widget.offset == expected_offset
@@ -220,27 +211,27 @@ def test_offset_converts_to_vector2_on_correct_axes(
 @pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
 @pytest.mark.parametrize("value", [1, 2.0], ids=["int", "float"])
 def test_constructor_with_single_value_size_margin_or_offset_raises(
-    ui_root: UIRoot,
+    ui: UI,
     field_name,
     value,
 ):
     with pytest.raises(TypeError):
-        Widget(ui_root, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
+        Widget(ui, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 @pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
 @pytest.mark.parametrize("value", [(True, 3), (3, True)], ids=["bool x", "bool y"])
 def test_constructor_with_bool_in_size_margin_or_offset_raises(
-    ui_root: UIRoot,
+    ui: UI,
     field_name,
     value,
 ):
     with pytest.raises(TypeError):
-        Widget(ui_root, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
+        Widget(ui, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 @pytest.mark.parametrize(
@@ -248,11 +239,8 @@ def test_constructor_with_bool_in_size_margin_or_offset_raises(
     [2, (3, True)],
     ids=["single value", "bool in pair"],
 )
-def test_assigning_single_value_or_pair_with_bool_to_offset_raises(
-    ui_root: UIRoot,
-    offset,
-):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, offset=(2, 3))
+def test_assigning_single_value_or_pair_with_bool_to_offset_raises(ui: UI, offset):
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, offset=(2, 3))
 
     with pytest.raises(TypeError):
         widget.offset = offset
@@ -261,10 +249,10 @@ def test_assigning_single_value_or_pair_with_bool_to_offset_raises(
 
 
 @pytest.mark.parametrize("anchor", [*Anchor])
-def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+def test_constructor_anchor_can_take_any_member(ui: UI, anchor):
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
 
-    assert ui_root.children == (widget,)
+    assert ui.children == (widget,)
 
 
 @pytest.mark.parametrize(
@@ -272,21 +260,18 @@ def test_constructor_anchor_can_take_any_member(ui_root: UIRoot, anchor):
     ["centre", (0.5, 0.5), None],
     ids=["str", "tuple", "None"],
 )
-def test_constructor_with_str_tuple_or_none_anchor_raises(ui_root: UIRoot, anchor):
+def test_constructor_with_str_tuple_or_none_anchor_raises(ui: UI, anchor):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
+        Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, anchor=anchor)
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 @pytest.mark.parametrize("parent_anchor", [*Anchor, pytest.param(None, id="None")])
-def test_constructor_parent_anchor_can_take_any_member_or_none(
-    ui_root: UIRoot,
-    parent_anchor,
-):
-    widget = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+def test_constructor_parent_anchor_can_take_any_member_or_none(ui: UI, parent_anchor):
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
 
-    assert ui_root.children == (widget,)
+    assert ui.children == (widget,)
 
 
 @pytest.mark.parametrize(
@@ -294,14 +279,11 @@ def test_constructor_parent_anchor_can_take_any_member_or_none(
     ["centre", (0.5, 0.5)],
     ids=["str", "tuple"],
 )
-def test_constructor_with_str_or_tuple_parent_anchor_raises(
-    ui_root: UIRoot,
-    parent_anchor,
-):
+def test_constructor_with_str_or_tuple_parent_anchor_raises(ui: UI, parent_anchor):
     with pytest.raises(TypeError):
-        Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+        Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 # endregion
@@ -331,10 +313,10 @@ def test_rect_can_change_in_place(widget: Widget):
 
 
 def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
-    ui_root = UIRoot(size=ANY_SIZE, theme=ANY_THEME)
+    ui = UI(size=ANY_SIZE, theme=ANY_THEME)
 
     parent = Widget(
-        ui_root,
+        ui,
         size=(10, 20),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -356,8 +338,8 @@ def test_rect_is_placed_against_parent_from_anchors_margin_and_offset():
 
 
 def test_parent_anchor_defaults_to_anchor():
-    ui_root = UIRoot(size=(10, 12), theme=ANY_THEME)
-    widget = Widget(ui_root, size=(5, 10), skin=ANY_SKIN, anchor=Anchor.BOTTOM_RIGHT)
+    ui = UI(size=(10, 12), theme=ANY_THEME)
+    widget = Widget(ui, size=(5, 10), skin=ANY_SKIN, anchor=Anchor.BOTTOM_RIGHT)
 
     assert widget.rect.topleft == (5, 2)
 
@@ -368,25 +350,23 @@ def test_parent_anchor_defaults_to_anchor():
 # region --- Tree -------------------------------------------------------------
 
 
-def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(
-    ui_root: UIRoot,
-):
-    child_1 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    child_2 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(ui: UI):
+    child_1 = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+    child_2 = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
-    assert ui_root.children == (child_1, child_2)
+    assert ui.children == (child_1, child_2)
     for child in (child_1, child_2):
-        assert child.parent is ui_root
+        assert child.parent is ui
 
 
-def test_child_and_grandchild_return_root_theme():
+def test_child_and_grandchild_return_ui_theme():
     theme = Theme(
         base_style=replace(ANY_STYLE, body_colour=BLUE),
         style_overrides={},
     )
-    ui_root = UIRoot(size=ANY_SIZE, theme=theme)
+    ui = UI(size=ANY_SIZE, theme=theme)
 
-    child = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+    child = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
     grandchild = Widget(child, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert child.theme is theme
@@ -414,9 +394,9 @@ def test_assigning_to_skin_raises(widget: Widget):
         widget.skin = ANY_SKIN  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def test_assigning_to_parent_raises(ui_root: UIRoot, widget: Widget):
+def test_assigning_to_parent_raises(ui: UI, widget: Widget):
     with pytest.raises(AttributeError):
-        widget.parent = ui_root  # pyright: ignore[reportAttributeAccessIssue]
+        widget.parent = ui  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_assigning_to_children_raises(widget: Widget):
@@ -430,8 +410,8 @@ def test_assigning_to_children_raises(widget: Widget):
 # region --- kill() -----------------------------------------------------------
 
 
-def test_killing_widget_kills_all_descendants(ui_root: UIRoot):
-    grandparent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_killing_widget_kills_all_descendants(ui: UI):
+    grandparent = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
     parent_1 = Widget(grandparent, size=ANY_SIZE, skin=ANY_SKIN)
     parent_2 = Widget(grandparent, size=ANY_SIZE, skin=ANY_SKIN)
 
@@ -441,7 +421,7 @@ def test_killing_widget_kills_all_descendants(ui_root: UIRoot):
 
     grandparent.kill()
 
-    assert ui_root.children == ()
+    assert ui.children == ()
     assert grandparent.children == ()
     assert parent_1.children == ()
     assert parent_2.children == ()
@@ -457,16 +437,16 @@ def test_killing_child_causes_it_to_leave_parents_children(
     assert parent.children == ()
 
 
-def test_killing_middle_sibling_does_not_affect_order(ui_root: UIRoot):
-    widget_1 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_2 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
-    widget_3 = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_killing_middle_sibling_does_not_affect_order(ui: UI):
+    widget_1 = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+    widget_2 = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+    widget_3 = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
-    assert ui_root.children == (widget_1, widget_2, widget_3)
+    assert ui.children == (widget_1, widget_2, widget_3)
 
     widget_2.kill()
 
-    assert ui_root.children == (widget_1, widget_3)
+    assert ui.children == (widget_1, widget_3)
 
 
 def test_killing_widget_twice_does_not_raise(widget: Widget):
@@ -691,7 +671,7 @@ def test_showing_parent_does_not_override_hidden_grandparent(
 
 def test_image_shows_base_style_when_enabled(state_colour_ui: UI):
     widget = Widget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(12, 10),
         skin=BodyColourLayer(),
         enabled=True,
@@ -703,7 +683,7 @@ def test_image_shows_base_style_when_enabled(state_colour_ui: UI):
 
 
 def test_image_shows_disabled_style_when_ancestor_is_disabled(state_colour_ui: UI):
-    parent = Widget(state_colour_ui.root, size=ANY_SIZE, skin=BodyColourLayer())
+    parent = Widget(state_colour_ui, size=ANY_SIZE, skin=BodyColourLayer())
     child = Widget(parent, size=(10, 12), skin=BodyColourLayer(), enabled=True)
 
     parent.enabled = False
@@ -725,7 +705,7 @@ def test_update_with_state_not_in_possible_states_raises():
         _possible_states: ClassVar[tuple[State, ...]] = (State.BASE,)
 
     ui = UI(size=ANY_SIZE, theme=ANY_THEME)
-    widget = WidgetWithoutDisabledState(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
+    widget = WidgetWithoutDisabledState(ui, size=ANY_SIZE, skin=ANY_SKIN)
     widget.enabled = False
 
     with pytest.raises(RuntimeError):
@@ -747,7 +727,7 @@ def test_image_cache_has_one_image_per_state(widget: Widget):
 
 def test_image_cache_reuses_object():
     ui = UI(size=ANY_SIZE, theme=ANY_THEME)
-    widget = Widget(ui.root, size=ANY_SIZE, skin=ANY_SKIN)
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     ui.update()
     original_base_image = widget.image
@@ -768,7 +748,7 @@ def test_image_cache_reuses_object():
 
 def test_image_without_components_gives_skin_image(ui: UI):
     widget = Widget(
-        ui.root,
+        ui,
         size=(10, 12),
         skin=FixedLayer(size=(5, 6), colour=BLUE, pos=(-3, 10)),
         components=[],
@@ -783,7 +763,7 @@ def test_image_without_components_gives_skin_image(ui: UI):
 
 def test_image_draws_components_over_skin_in_given_order(ui: UI):
     widget = Widget(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(9, 10), colour=WHITE, pos=(1, 0)),
         components=[
@@ -801,7 +781,7 @@ def test_image_draws_components_over_skin_in_given_order(ui: UI):
 
 def test_image_covers_all_layers(ui: UI):
     widget = Widget(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(10, 12), colour=WHITE, pos=(0, 0)),
         components=[
@@ -817,9 +797,9 @@ def test_image_covers_all_layers(ui: UI):
 
 
 def test_skin_receives_style_for_each_possible_state():
-    ui_root = UIRoot(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
+    ui = UI(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
     skin = RecordingLayer()
-    Widget(ui_root, size=ANY_SIZE, skin=skin)
+    Widget(ui, size=ANY_SIZE, skin=skin)
 
     assert set(skin.received_styles) == {
         replace(ANY_STYLE, body_colour=BASE_COLOUR),
@@ -830,11 +810,11 @@ def test_skin_receives_style_for_each_possible_state():
 
 
 def test_components_receive_rect_size_and_style_for_each_possible_state():
-    ui_root = UIRoot(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
+    ui = UI(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
     component = RecordingLayer()
 
     Widget(
-        ui_root,
+        ui,
         size=(10, 12),
         skin=ANY_SKIN,
         components=[component],
@@ -848,12 +828,12 @@ def test_components_receive_rect_size_and_style_for_each_possible_state():
     assert component.received_sizes == [(10, 12), (10, 12)]
 
 
-def test_image_keeps_components_given_as_generator(ui_root: UIRoot):
+def test_image_keeps_components_given_as_generator(ui: UI):
     single_use_components = (
         layer for layer in [FixedLayer(size=(5, 6), colour=RED, pos=(-3, 2))]
     )
     widget = Widget(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         components=single_use_components,
