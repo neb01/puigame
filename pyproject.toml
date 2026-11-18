@@ -57,6 +57,7 @@ lint.select = [
   "RET",    # flake8-return (return statement style)
   "RUF",    # Ruff-specific rules
   "SIM",    # flake8-simplify (simpler equivalent code)
+  "TC004",  # flake8-type-checking (import under TYPE_CHECKING used at runtime)
   "TID",    # flake8-tidy-imports (banned relative imports)
   "UP",     # pyupgrade (modern Python syntax)
   "W",      # pycodestyle warnings
