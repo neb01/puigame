@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- The bundled fonts load when puigame is imported from a zip archive, such as an app made with `zipapp`. They were opened by a path that does not exist inside an archive.
+
 ## [0.2.0] - 2026-11-18
 
 ### Added

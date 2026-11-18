@@ -1,5 +1,6 @@
 """Text, the component that displays text on a widget."""
 
+import io
 from functools import cache
 from importlib.resources import files
 from pathlib import Path
@@ -48,11 +49,13 @@ def _get_font(
         font = pg.Font(None, size)
 
     elif isinstance(typeface, BundledTypeface):
-        # files() returns a Traversable, which pg.Font's type hints do not accept;
-        # str() gives its filesystem path, which assumes puigame is installed
-        # as files on disk rather than imported from a zip archive
-        filepath = str(files("puigame") / "assets" / "fonts" / typeface.value)
-        font = pg.Font(filepath, size)
+        # read the font's bytes rather than its path, since a bundled font has no
+        # path when puigame is imported from a zip archive; each font gets its own
+        # stream, since SDL keeps seeking in it while the font is in use
+        font_bytes = (
+            files("puigame") / "assets" / "fonts" / typeface.value
+        ).read_bytes()
+        font = pg.Font(io.BytesIO(font_bytes), size)
 
     else:  # user-defined path
         font = pg.Font(typeface, size)

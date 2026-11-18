@@ -1,9 +1,14 @@
+import os
+import subprocess
+import sys
+import zipfile
 from dataclasses import replace
 from pathlib import Path
 
 import pygame as pg
 import pytest
 
+import puigame
 from puigame import (
     Anchor,
     BundledTypeface,
@@ -46,6 +51,30 @@ ANY_STYLE = Style(
     text_offset=(0, 0),
 )
 
+# run in a subprocess by the zip-import test: put the zip given as the first
+# argument first on sys.path, load the bundled typeface named by the second, and
+# print where puigame was imported from and the width of a rendered "H"
+ZIP_IMPORT_SCRIPT = """
+import sys
+
+sys.path.insert(0, sys.argv[1])
+
+import pygame as pg
+
+import puigame
+from puigame import BundledTypeface, TextAlign
+from puigame._components.text import _get_font
+
+pg.init()
+font = _get_font(
+    typeface=BundledTypeface[sys.argv[2]],
+    size=12,
+    text_align=TextAlign.LEFT,
+)
+print(puigame.__file__)
+print(font.render("H", False, "black").width)
+"""
+
 # endregion
 
 
@@ -77,6 +106,28 @@ def _centred_ink_rect(
     text = Text(content)
     placed_image = text.render(WIDGET_SIZE, style)
     return placed_image.image.get_bounding_rect().move(placed_image.pos)
+
+
+def _zip_puigame(zip_path: Path) -> Path:
+    """Write the puigame package under test into a zip archive.
+
+    The archive holds ``puigame/`` at its top level, with every file except
+    bytecode caches, so it can be imported by putting it on ``sys.path``.
+
+    Args:
+        zip_path: Path of the archive to write.
+
+    Returns:
+        ``zip_path``, for convenience.
+    """
+    package_dir = Path(puigame.__file__).parent
+
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        for path in package_dir.rglob("*"):
+            if path.is_file() and "__pycache__" not in path.parts:
+                archive.write(path, path.relative_to(package_dir.parent))
+
+    return zip_path
 
 
 # endregion
@@ -664,6 +715,33 @@ def test_render_missing_path_raises(tmp_path):
 
     with pytest.raises(FileNotFoundError):
         text.render((30, 40), style)
+
+
+# a subprocess, so that importing puigame from the zip cannot disturb the
+# puigame this test session has already imported
+@pytest.mark.parametrize(
+    "bundled_typeface",
+    [*BundledTypeface],
+    ids=[typeface.name for typeface in BundledTypeface],
+)
+def test_get_font_loads_bundled_fonts_when_puigame_is_imported_from_zip(
+    bundled_typeface, tmp_path
+):
+    zip_path = _zip_puigame(tmp_path / "puigame.zip")
+
+    result = subprocess.run(
+        [sys.executable, "-c", ZIP_IMPORT_SCRIPT, str(zip_path), bundled_typeface.name],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+        env={**os.environ, "PYGAME_HIDE_SUPPORT_PROMPT": "1"},
+    )
+
+    assert result.returncode == 0, result.stderr
+    imported_from, h_width = result.stdout.splitlines()
+    assert Path(imported_from).is_relative_to(zip_path)
+    assert int(h_width) != 0
 
 
 # endregion
