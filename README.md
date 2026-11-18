@@ -2,7 +2,7 @@
 
 ![The showcase example: buttons highlight and press as the cursor clicks them, pausing two bouncing squares, jostling a column of buttons, and hiding and disabling them, beside a specimen of the bundled Neb0Font](https://raw.githubusercontent.com/neb01/puigame/main/docs/images/showcase.gif)
 
-UI widgets for [pygame-ce](https://pyga.me/): buttons, labels, and panels, placed by anchors and styled by themes.
+UI widgets for [pygame-ce](https://pyga.me/): buttons, toggle buttons, labels, and panels, placed by anchors and styled by themes.
 
 > **Status:** alpha. The API may change in any 0.x release.
 
@@ -92,6 +92,7 @@ For a display opened with `pg.SCALED`, create the UI with the display's own size
 
 - `Button`: a clickable widget with text.
 - `ToggleButton`: a button that switches between checked and unchecked when clicked.
+- `ToggleGroup`: not a widget, but a set of toggle buttons of which at most one is checked, as radio buttons are.
 - `Label`: text.
 - `Panel`: a background for its children, which by default stops clicks reaching the widgets and game below it.
 - `Container`: an invisible widget that groups and places its children.
