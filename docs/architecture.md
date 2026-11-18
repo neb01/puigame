@@ -579,7 +579,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | Group | Names |
 | --- | --- |
 | Running a UI | `UI` |
-| Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button`, `ToggleButton` |
+| Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button`, `ToggleButton`, `ToggleGroup` |
 | Placement | `Anchor` |
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
