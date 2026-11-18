@@ -16,7 +16,6 @@ from puigame import (
     TextHorizontalExtent,
     Theme,
 )
-from puigame._ui.ui_root import UIRoot
 
 # use SDL's dummy drivers so tests run without a screen or sound device (needed
 # on CI); SDL reads these when pygame is initialised, not when it is imported,
@@ -24,7 +23,7 @@ from puigame._ui.ui_root import UIRoot
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 
-UIROOT_SIZE = (300, 200)
+UI_SIZE = (300, 200)
 
 BLACK = (0, 0, 0, 255)
 WHITE = (255, 255, 255, 255)
@@ -63,12 +62,6 @@ def pygame_session() -> Iterator[None]:
 
 
 @pytest.fixture
-def ui_root() -> UIRoot:
-    """Return a UIRoot that all test widgets can use as a parent."""
-    return UIRoot(size=UIROOT_SIZE, theme=ANY_THEME)
-
-
-@pytest.fixture
 def ui() -> UI:
     """Return a UI with a placeholder theme, for tests that ignore its look."""
-    return UI(size=UIROOT_SIZE, theme=ANY_THEME)
+    return UI(size=UI_SIZE, theme=ANY_THEME)

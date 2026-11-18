@@ -57,11 +57,10 @@ class Skin(ABC):
 class NoSkin(Skin):
     """Skin that renders a 0x0 surface, for widgets with no background.
 
-    Used by ``Container`` and ``UIRoot``, which draw nothing, so their images
-    cost almost nothing to store or draw. A widget with content but no
-    background, such as a bare label, uses it too: zero-size layers are
-    skipped when layers are combined, so its image is the size of its
-    content.
+    Used by ``Container``, which draws nothing, so its images cost almost
+    nothing to store or draw. A widget with content but no background, such as
+    a bare label, uses it too: zero-size layers are skipped when layers are
+    combined, so its image is the size of its content.
     """
 
     def render(self, size: Point, style: Style) -> PlacedImage:

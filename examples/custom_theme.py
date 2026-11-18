@@ -91,13 +91,13 @@ def main() -> None:
 
     # containers
     left_half_container = Container(
-        ui.root,
+        ui,
         size=HALF_CONTAINER_SIZE,
         anchor=Anchor.MID_LEFT,
     )
 
     right_half_container = Container(
-        ui.root,
+        ui,
         size=HALF_CONTAINER_SIZE,
         anchor=Anchor.MID_RIGHT,
     )

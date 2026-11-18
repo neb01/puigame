@@ -55,7 +55,59 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 # endregion
 
 
+# region --- Construction -----------------------------------------------------
+
+
+def test_rect_has_given_size():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+
+    assert ui.rect.size == (10, 20)
+
+
+def test_rect_is_at_origin_without_offset():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+
+    ui.update()
+
+    assert ui.rect.topleft == (0, 0)
+
+
+def test_offset_is_zero_by_default():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+
+    assert ui.offset == pg.Vector2(0, 0)
+
+
+def test_theme_is_given_theme():
+    theme = Theme(
+        base_style=replace(ANY_STYLE, body_colour=BLUE),
+        style_overrides={},
+    )
+    ui = UI(size=ANY_SIZE, theme=theme)
+
+    assert ui.theme is theme
+
+
+def test_children_are_empty_on_creation():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+
+    assert ui.children == ()
+
+
+# endregion
+
+
 # region --- Validation -------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "size",
+    [(-1, 0), (0, -1), (-1, -1), (0, -0.01)],
+    ids=["negative width", "negative height", "both negative", "negative float"],
+)
+def test_constructor_with_negative_size_raises(size):
+    with pytest.raises(ValueError):
+        UI(size=size, theme=ANY_THEME)
 
 
 @pytest.mark.parametrize(
@@ -68,16 +120,116 @@ def test_constructor_with_single_value_or_bool_in_size_raises(size):
         UI(size=size, theme=ANY_THEME)
 
 
+@pytest.mark.parametrize(
+    ("offset", "expected_offset"),
+    [
+        ((1, 2), pg.Vector2(1, 2)),
+        ([2, 3], pg.Vector2(2, 3)),
+        (pg.Vector2(4, 2), pg.Vector2(4, 2)),
+    ],
+    ids=["tuple", "list", "pg.Vector2"],
+)
+def test_offset_converts_to_vector2_on_correct_axes(ui: UI, offset, expected_offset):
+    ui.offset = offset
+
+    assert isinstance(ui.offset, pg.Vector2)
+    assert ui.offset == expected_offset
+
+
+@pytest.mark.parametrize(
+    "offset",
+    [2, (True, 3), (3, True)],
+    ids=["single value", "bool x", "bool y"],
+)
+def test_assigning_single_value_or_pair_with_bool_to_offset_raises(ui: UI, offset):
+    ui.offset = (2, 3)
+
+    with pytest.raises(TypeError):
+        ui.offset = offset
+
+    assert ui.offset == (2, 3)
+
+
+# endregion
+
+
+# region --- Layout -----------------------------------------------------------
+
+
+def test_given_offset_is_floored():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+
+    ui.offset = (-1.4, 2.5)
+    ui.update()
+
+    assert ui.rect.topleft == (-2, 2)
+
+
+def test_offset_moves_rect_only_on_update():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+
+    ui.offset = (3, 4)
+
+    assert ui.rect.topleft == (0, 0)
+
+
+# endregion
+
+
+# region --- Tree -------------------------------------------------------------
+
+
+def test_children_are_top_level_widgets_in_creation_order():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+    first = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+    grandchild = Widget(first, size=ANY_SIZE, skin=ANY_SKIN)
+    second = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert ui.children == (first, second)
+    assert grandchild not in ui.children
+
+
+def test_killing_top_level_widget_removes_it_from_children():
+    ui = UI(size=(10, 20), theme=ANY_THEME)
+    first = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+    second = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+
+    first.kill()
+
+    assert ui.children == (second,)
+
+
+# endregion
+
+
+# region --- Read-only properties ---------------------------------------------
+
+
+def test_assigning_to_rect_raises(ui: UI):
+    with pytest.raises(AttributeError):
+        ui.rect = pg.Rect((1, 2), (3, 4))  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def test_assigning_to_children_raises(ui: UI):
+    with pytest.raises(AttributeError):
+        ui.children = ()  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def test_assigning_to_theme_raises(ui: UI):
+    with pytest.raises(AttributeError):
+        ui.theme = ANY_THEME  # pyright: ignore[reportAttributeAccessIssue]
+
+
 # endregion
 
 
 # region --- update() ---------------------------------------------------------
 
 
-def test_update_applies_root_offset_to_descendants():
+def test_update_applies_ui_offset_to_descendants():
     ui = UI(size=(10, 20), theme=ANY_THEME)
     parent = Widget(
-        ui.root,
+        ui,
         size=(3, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -99,7 +251,7 @@ def test_update_applies_root_offset_to_descendants():
     assert parent.rect.topleft == (1, 3)
     assert child.rect.topleft == (2, 6)
 
-    ui.root.offset = (1, -2)
+    ui.offset = (1, -2)
     ui.update()
 
     assert parent.rect.topleft == (2, 1)
@@ -125,7 +277,7 @@ def test_update_refreshes_widget_image():
     )
 
     widget = Widget(
-        ui.root,
+        ui,
         size=(3, 5),
         skin=DrawnSkin(),
         anchor=Anchor.TOP_LEFT,
@@ -162,7 +314,7 @@ def test_draw_uses_widget_image_pos():
     ui = UI(size=(10, 20), theme=ANY_THEME)
 
     Widget(
-        ui.root,
+        ui,
         size=(3, 5),
         skin=FixedLayer(size=(3, 5), colour=BLUE, pos=(-2, -1)),
         anchor=Anchor.BOTTOM_RIGHT,
@@ -193,7 +345,7 @@ def test_draw_skips_hidden_subtree():
     ui = UI(size=(10, 20), theme=ANY_THEME)
 
     parent_1 = Widget(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(1, 2), colour=BLUE, pos=(0, 0)),
         anchor=Anchor.TOP_LEFT,
@@ -203,7 +355,7 @@ def test_draw_skips_hidden_subtree():
         visible=True,
     )
     parent_2 = Widget(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(1, 2), colour=BLUE, pos=(5, 6)),
         anchor=Anchor.TOP_LEFT,
@@ -248,7 +400,7 @@ def test_draw_blits_siblings_in_order():
     ui = UI(size=(10, 20), theme=ANY_THEME)
 
     parent_1 = Widget(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(3, 2), colour=BLUE, pos=(0, 0)),
         anchor=Anchor.TOP_LEFT,
@@ -267,7 +419,7 @@ def test_draw_blits_siblings_in_order():
         offset=(0, 0),
     )
     Widget(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(3, 2), colour=WHITE, pos=(0, 1)),
         anchor=Anchor.TOP_LEFT,

@@ -85,7 +85,7 @@ class RecordingWidget(InteractiveWidget):
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         skin: Skin,
@@ -148,7 +148,7 @@ def state_colour_ui() -> UI:
 )
 def test_hit_testable_widget_consumes_mouse_button_down(ui: UI, button):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -171,7 +171,7 @@ def test_hit_testable_widget_consumes_mouse_button_down(ui: UI, button):
 
 def test_hit_testable_widget_consumes_mouse_wheel(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -188,7 +188,7 @@ def test_hit_testable_widget_consumes_mouse_wheel(ui: UI):
 
 def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -205,7 +205,7 @@ def test_empty_space_does_not_consume_mouse_button_down(ui: UI):
 
 def test_empty_space_does_not_consume_mouse_wheel(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -226,7 +226,7 @@ def test_non_hit_testable_widget_does_not_consume_mouse_button_down(
     widget_class,
 ):
     widget_class(
-        ui.root,
+        ui,
         size=(4, 5),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
@@ -241,12 +241,9 @@ def test_non_hit_testable_widget_does_not_consume_mouse_button_down(
 
 
 @pytest.mark.parametrize("widget_class", [Container, Label])
-def test_non_hit_testable_widget_does_not_consume_mouse_wheel(
-    ui: UI,
-    widget_class,
-):
+def test_non_hit_testable_widget_does_not_consume_mouse_wheel(ui: UI, widget_class):
     widget_class(
-        ui.root,
+        ui,
         size=(4, 5),
         anchor=Anchor.TOP_LEFT,
         parent_anchor=Anchor.TOP_LEFT,
@@ -262,7 +259,7 @@ def test_non_hit_testable_widget_does_not_consume_mouse_wheel(
 
 def test_mouse_wheel_without_pos_is_not_consumed(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -281,7 +278,7 @@ def test_mouse_wheel_without_pos_is_not_consumed(ui: UI):
 
 def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -300,7 +297,7 @@ def test_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
 
 def test_wheel_button_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -331,7 +328,7 @@ def test_wheel_button_up_off_widget_is_consumed_if_its_down_was_consumed(ui: UI)
 
 def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -355,7 +352,7 @@ def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
 )
 def test_widget_does_not_consume_lone_up_event(ui: UI, pos):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -372,7 +369,7 @@ def test_widget_does_not_consume_lone_up_event(ui: UI, pos):
 
 def test_stale_down_event_is_cleared_by_non_consumed_down_of_same_button(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -395,7 +392,7 @@ def test_stale_down_event_is_cleared_by_non_consumed_down_of_same_button(ui: UI)
 
 def test_down_only_clears_record_of_own_button(ui: UI):
     Panel(
-        ui.root,
+        ui,
         size=(4, 5),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -445,7 +442,7 @@ def test_down_only_clears_record_of_own_button(ui: UI):
 )
 def test_non_button_events_are_not_consumed(ui: UI, event):
     Panel(
-        ui.root,
+        ui,
         size=(6, 7),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -468,7 +465,7 @@ def test_non_button_events_are_not_consumed(ui: UI, event):
 
 def test_hit_testable_widget_prevents_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -481,7 +478,7 @@ def test_hit_testable_widget_prevents_widget_below_activation(ui: UI):
     )
 
     Panel(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -500,7 +497,7 @@ def test_hit_testable_widget_prevents_widget_below_activation(ui: UI):
 
 def test_hidden_hit_testable_widget_allows_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -513,7 +510,7 @@ def test_hidden_hit_testable_widget_allows_widget_below_activation(ui: UI):
     )
 
     Panel(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -532,7 +529,7 @@ def test_hidden_hit_testable_widget_allows_widget_below_activation(ui: UI):
 
 def test_disabled_hit_testable_widget_prevents_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -545,7 +542,7 @@ def test_disabled_hit_testable_widget_prevents_widget_below_activation(ui: UI):
     )
 
     Panel(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -564,7 +561,7 @@ def test_disabled_hit_testable_widget_prevents_widget_below_activation(ui: UI):
 
 def test_non_hit_testable_widget_allows_widget_below_activation(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -577,7 +574,7 @@ def test_non_hit_testable_widget_allows_widget_below_activation(ui: UI):
     )
 
     Panel(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -610,7 +607,7 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
     consumed,
 ):
     Panel(
-        ui.root,
+        ui,
         size=(2, 3),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -653,7 +650,7 @@ def test_hit_test_uses_rect_not_drawn_shape(swell, halo_thickness, pos, consumed
     ui = UI(size=(200, 100), theme=theme)
 
     Panel(
-        ui.root,
+        ui,
         size=(10, 12),
         skin=DrawnSkin(),
         anchor=Anchor.TOP_LEFT,
@@ -670,7 +667,7 @@ def test_hit_test_uses_rect_not_drawn_shape(swell, halo_thickness, pos, consumed
 
 def test_top_hit_testable_widget_is_activated(ui: UI):
     recording_widget_1 = RecordingWidget(
-        ui.root,
+        ui,
         size=(6, 7),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -683,7 +680,7 @@ def test_top_hit_testable_widget_is_activated(ui: UI):
     )
 
     recording_widget_2 = RecordingWidget(
-        ui.root,
+        ui,
         size=(6, 7),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -719,7 +716,7 @@ def test_top_hit_testable_widget_is_activated(ui: UI):
 def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
     ui = UI(size=(200, 100), theme=ANY_THEME)
     Widget(
-        ui.root,
+        ui,
         size=(8, 10),
         skin=ANY_SKIN,
         anchor=Anchor.CENTRE,
@@ -755,7 +752,7 @@ def test_hit_test_excludes_positions_off_bottom_right_of_surface(
 ):
     ui = UI(size=(200, 100), theme=ANY_THEME)
     Widget(
-        ui.root,
+        ui,
         size=(8, 10),
         skin=ANY_SKIN,
         anchor=Anchor.CENTRE,
@@ -770,10 +767,10 @@ def test_hit_test_excludes_positions_off_bottom_right_of_surface(
     assert left_press(ui, pos=pos) is consumed
 
 
-def test_hit_test_includes_positions_on_surface_but_off_ui_root():
+def test_hit_test_includes_positions_on_surface_but_off_ui_rect():
     ui = UI(size=(200, 100), theme=ANY_THEME)
     Widget(
-        ui.root,
+        ui,
         size=(8, 10),
         skin=ANY_SKIN,
         anchor=Anchor.CENTRE,
@@ -785,7 +782,7 @@ def test_hit_test_includes_positions_on_surface_but_off_ui_root():
         hit_testable=True,
     )
 
-    ui.root.offset = (3, 4)
+    ui.offset = (3, 4)
     ui.update()
 
     assert left_press(ui, pos=(1, 2))
@@ -799,7 +796,7 @@ def test_hit_test_includes_positions_on_surface_but_off_ui_root():
 
 def test_click_on_widget_activates(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -818,7 +815,7 @@ def test_click_on_widget_activates(ui: UI):
 
 def test_click_release_off_widget_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -838,7 +835,7 @@ def test_click_release_off_widget_does_not_activate(ui: UI):
 
 def test_click_that_started_off_widget_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -858,7 +855,7 @@ def test_click_that_started_off_widget_does_not_activate(ui: UI):
 
 def test_right_click_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -889,7 +886,7 @@ def test_right_click_does_not_activate(ui: UI):
 
 def test_click_on_disabled_widget_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -908,7 +905,7 @@ def test_click_on_disabled_widget_does_not_activate(ui: UI):
 
 def test_click_on_widget_disabled_during_click_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -931,7 +928,7 @@ def test_click_on_widget_disabled_during_click_does_not_activate(ui: UI):
 
 def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -946,7 +943,7 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
     left_press(ui, pos=(3, 4))
 
     Panel(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -965,7 +962,7 @@ def test_click_on_widget_covered_during_click_does_not_activate(ui: UI):
 
 def test_click_on_widget_killed_during_click_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -988,7 +985,7 @@ def test_click_on_widget_killed_during_click_does_not_activate(ui: UI):
 
 def test_click_on_widget_moved_away_during_click_does_not_activate(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1012,7 +1009,7 @@ def test_click_on_widget_moved_away_during_click_does_not_activate(ui: UI):
 
 def test_click_on_widget_drag_off_then_back_on_during_click_activates(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1034,7 +1031,7 @@ def test_click_on_widget_drag_off_then_back_on_during_click_activates(ui: UI):
 
 def test_up_after_lost_up_does_not_activate_stale_widget(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1059,7 +1056,7 @@ def test_up_after_lost_up_does_not_activate_stale_widget(ui: UI):
 
 def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
     recording_widget_1 = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1072,7 +1069,7 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
     )
 
     recording_widget_2 = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1095,7 +1092,7 @@ def test_lost_up_does_not_interfere_with_click_on_separate_widget(ui: UI):
 
 def test_focus_lost_during_click_does_not_activate_but_does_consume_up(ui: UI):
     recording_widget = RecordingWidget(
-        ui.root,
+        ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1124,7 +1121,7 @@ def test_focus_lost_during_click_does_not_activate_but_does_consume_up(ui: UI):
 
 def test_initial_widget_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1141,7 +1138,7 @@ def test_initial_widget_shows_base_colour(state_colour_ui: UI):
 
 def test_mouse_on_widget_shows_highlighted_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1161,7 +1158,7 @@ def test_mouse_on_widget_shows_highlighted_colour(state_colour_ui: UI):
 
 def test_mouse_off_widget_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1186,7 +1183,7 @@ def test_mouse_on_widget_covered_by_hit_testable_widget_shows_base_colour(
     state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1199,7 +1196,7 @@ def test_mouse_on_widget_covered_by_hit_testable_widget_shows_base_colour(
     )
 
     Panel(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1219,7 +1216,7 @@ def test_mouse_on_widget_covered_by_hit_testable_widget_shows_base_colour(
 
 def test_mouse_leaving_window_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1243,7 +1240,7 @@ def test_mouse_leaving_window_shows_base_colour(state_colour_ui: UI):
 
 def test_focus_lost_shows_highlighted_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1267,7 +1264,7 @@ def test_focus_lost_shows_highlighted_colour(state_colour_ui: UI):
 
 def test_mouse_wheel_without_pos_shows_highlighted_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1291,7 +1288,7 @@ def test_mouse_wheel_without_pos_shows_highlighted_colour(state_colour_ui: UI):
 
 def test_mouse_wheel_off_widget_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1314,7 +1311,7 @@ def test_mouse_wheel_off_widget_shows_base_colour(state_colour_ui: UI):
 
 def test_widget_disabled_under_cursor_shows_disabled_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1339,7 +1336,7 @@ def test_widget_disabled_under_cursor_shows_disabled_colour(state_colour_ui: UI)
 
 def test_widget_moved_away_from_cursor_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1366,7 +1363,7 @@ def test_widget_covered_by_hidden_hit_testable_widget_shows_highlighted_colour(
     state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1379,7 +1376,7 @@ def test_widget_covered_by_hidden_hit_testable_widget_shows_highlighted_colour(
     )
 
     panel = Panel(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1406,7 +1403,7 @@ def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
     state_colour_ui: UI,
 ):
     InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -1419,7 +1416,7 @@ def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
     )
 
     widget_2 = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1440,11 +1437,9 @@ def test_press_and_drag_to_second_widget_shows_base_colour_on_second_widget(
     assert widget_2.image.get_at((1, 2)) == BASE_COLOUR
 
 
-def test_press_and_drag_off_widget_shows_base_colour(
-    state_colour_ui: UI,
-):
+def test_press_and_drag_off_widget_shows_base_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1469,7 +1464,7 @@ def test_press_and_drag_off_and_back_on_widget_shows_highlighted_colour(
     state_colour_ui: UI,
 ):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,
@@ -1493,11 +1488,9 @@ def test_press_and_drag_off_and_back_on_widget_shows_highlighted_colour(
     assert widget.image.get_at((1, 2)) == HIGHLIGHTED_COLOUR
 
 
-def test_click_and_keep_mouse_on_widget_shows_highlighted_colour(
-    state_colour_ui: UI,
-):
+def test_click_and_keep_mouse_on_widget_shows_highlighted_colour(state_colour_ui: UI):
     widget = InteractiveWidget(
-        state_colour_ui.root,
+        state_colour_ui,
         size=(5, 6),
         skin=BodyColourLayer(),
         anchor=Anchor.TOP_LEFT,

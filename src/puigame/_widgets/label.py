@@ -1,11 +1,18 @@
 """Label, a non-interactive widget that displays text."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from pygame.typing import Point
 
 from puigame._components.skin import NoSkin
 from puigame._components.text import Text
 from puigame._layout.anchor import Anchor
 from puigame._widgets.widget import Widget
+
+if TYPE_CHECKING:
+    from puigame._ui.ui import UI
 
 
 class Label(Widget):
@@ -21,7 +28,7 @@ class Label(Widget):
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         text: str = "",
@@ -36,8 +43,8 @@ class Label(Widget):
         """Create a label as the last child of ``parent``.
 
         Args:
-            parent: Widget to anchor against and to be a child of. It cannot be
-                changed later.
+            parent: Widget or ``UI`` to anchor against and to be a child of. It
+                cannot be changed later.
             size: Width and height in pixels. The text is placed against this
                 rect.
             text: The text to display. Defaults to an empty string, which draws

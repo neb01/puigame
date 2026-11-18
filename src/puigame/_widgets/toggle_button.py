@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from pygame.typing import Point
 
@@ -13,6 +13,9 @@ from puigame._widgets.button import Button
 from puigame._widgets.state import State
 from puigame._widgets.toggle_group import ToggleGroup
 from puigame._widgets.widget import Widget
+
+if TYPE_CHECKING:
+    from puigame._ui.ui import UI
 
 
 class ToggleButton(Button):
@@ -49,7 +52,7 @@ class ToggleButton(Button):
 
     def __init__(
         self,
-        parent: Widget,
+        parent: Widget | UI,
         *,
         size: Point,
         skin: Skin,
@@ -68,8 +71,8 @@ class ToggleButton(Button):
         """Create a toggle button as the last child of ``parent``.
 
         Args:
-            parent: Widget to anchor against and to be a child of. It cannot be
-                changed later.
+            parent: Widget or ``UI`` to anchor against and to be a child of. It
+                cannot be changed later.
             size: Width and height in pixels. The text is placed against this
                 rect.
             skin: Skin that draws the button's images. It cannot be changed

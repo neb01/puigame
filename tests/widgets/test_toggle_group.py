@@ -2,7 +2,6 @@ import pytest
 
 from mouse_helpers import left_click
 from puigame import UI, Anchor, NoSkin, ToggleButton, ToggleGroup, Widget
-from puigame._ui.ui_root import UIRoot
 from stubs import OnToggleError, on_toggle_error
 
 # region --- Constants --------------------------------------------------------
@@ -81,22 +80,22 @@ def test_new_group_has_no_checked_button():
     assert toggle_group.checked_button is None
 
 
-def test_buttons_lists_buttons_in_joining_order(ui_root: UIRoot):
+def test_buttons_lists_buttons_in_joining_order(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button_1 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
     )
     toggle_button_2 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
     )
     toggle_button_3 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -105,17 +104,17 @@ def test_buttons_lists_buttons_in_joining_order(ui_root: UIRoot):
     assert toggle_group.buttons == (toggle_button_1, toggle_button_2, toggle_button_3)
 
 
-def test_group_can_have_buttons_with_none_checked(ui_root: UIRoot):
+def test_group_can_have_buttons_with_none_checked(ui: UI):
     toggle_group = ToggleGroup()
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
         checked=False,
     )
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -125,10 +124,10 @@ def test_group_can_have_buttons_with_none_checked(ui_root: UIRoot):
     assert toggle_group.checked_button is None
 
 
-def test_first_button_created_checked_is_checked_button(ui_root: UIRoot):
+def test_first_button_created_checked_is_checked_button(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -138,10 +137,10 @@ def test_first_button_created_checked_is_checked_button(ui_root: UIRoot):
     assert toggle_group.checked_button is toggle_button
 
 
-def test_constructor_with_second_checked_button_raises(ui_root: UIRoot):
+def test_constructor_with_second_checked_button_raises(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -150,28 +149,28 @@ def test_constructor_with_second_checked_button_raises(ui_root: UIRoot):
 
     with pytest.raises(ValueError):
         ToggleButton(
-            ui_root,
+            ui,
             size=ANY_SIZE,
             skin=ANY_SKIN,
             group=toggle_group,
             checked=True,
         )
 
-    assert ui_root.children == (toggle_button,)
+    assert ui.children == (toggle_button,)
     assert toggle_group.buttons == (toggle_button,)
     assert toggle_group.checked_button is toggle_button
 
 
-def test_group_can_have_members_with_different_parents(ui_root: UIRoot):
+def test_group_can_have_members_with_different_parents(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button_1 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
     )
 
-    parent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+    parent = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
     toggle_button_2 = ToggleButton(
         parent,
         size=ANY_SIZE,
@@ -192,7 +191,7 @@ def test_group_can_have_members_with_different_parents(ui_root: UIRoot):
 def test_checking_member_makes_it_checked_button(ui: UI, check_function):
     toggle_group = ToggleGroup()
     ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -200,7 +199,7 @@ def test_checking_member_makes_it_checked_button(ui: UI, check_function):
     )
 
     toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=(9, 10),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -223,7 +222,7 @@ def test_checking_member_makes_it_checked_button(ui: UI, check_function):
 def test_checking_member_unchecks_checked_button(ui: UI, check_function):
     toggle_group = ToggleGroup()
     old_toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -231,7 +230,7 @@ def test_checking_member_unchecks_checked_button(ui: UI, check_function):
     )
 
     new_toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=(9, 10),
         skin=ANY_SKIN,
         anchor=Anchor.TOP_LEFT,
@@ -255,7 +254,7 @@ def test_checking_member_calls_old_then_new_on_toggle(ui: UI, check_function):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     old_toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -266,7 +265,7 @@ def test_checking_member_calls_old_then_new_on_toggle(ui: UI, check_function):
     )
 
     new_toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=(9, 10),
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -291,11 +290,11 @@ def test_checking_member_calls_old_then_new_on_toggle(ui: UI, check_function):
     ]
 
 
-def test_checking_member_with_nothing_checked_calls_only_its_on_toggle(ui_root: UIRoot):
+def test_checking_member_with_nothing_checked_calls_only_its_on_toggle(ui: UI):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -306,7 +305,7 @@ def test_checking_member_with_nothing_checked_calls_only_its_on_toggle(ui_root: 
     )
 
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -326,7 +325,7 @@ def test_old_on_toggle_raising_skips_new_on_toggle(ui: UI, check_function):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=on_toggle_error,
@@ -335,7 +334,7 @@ def test_old_on_toggle_raising_skips_new_on_toggle(ui: UI, check_function):
     )
 
     toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=(9, 10),
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -371,7 +370,7 @@ def test_unchecking_checked_member_by_code_leaves_nothing_checked(
 ):
     toggle_group = ToggleGroup(can_uncheck=False)
     ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -379,7 +378,7 @@ def test_unchecking_checked_member_by_code_leaves_nothing_checked(
     )
 
     toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -396,7 +395,7 @@ def test_unchecking_checked_member_calls_only_that_on_toggle(ui: UI, uncheck_fun
     on_toggle_calls = []
     toggle_group = ToggleGroup(can_uncheck=True)
     ToggleButton(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -407,7 +406,7 @@ def test_unchecking_checked_member_calls_only_that_on_toggle(ui: UI, uncheck_fun
     )
 
     toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=(9, 10),
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -433,7 +432,7 @@ def test_clicking_checked_member_in_default_group_does_nothing(ui: UI):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui.root,
+        ui,
         size=(9, 10),
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -462,13 +461,11 @@ def test_clicking_checked_member_in_default_group_does_nothing(ui: UI):
 # region --- checked_button ---------------------------------------------------
 
 
-def test_checked_button_setter_with_current_button_does_not_call_on_toggle(
-    ui_root: UIRoot,
-):
+def test_checked_button_setter_with_current_button_does_not_call_on_toggle(ui: UI):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -485,12 +482,12 @@ def test_checked_button_setter_with_current_button_does_not_call_on_toggle(
 
 
 def test_checked_button_setter_with_none_and_nothing_checked_does_not_call_on_toggle(
-    ui_root: UIRoot,
+    ui: UI,
 ):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -501,7 +498,7 @@ def test_checked_button_setter_with_none_and_nothing_checked_does_not_call_on_to
     )
 
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -522,13 +519,10 @@ def test_checked_button_setter_with_none_and_nothing_checked_does_not_call_on_to
     [ToggleGroup, lambda: None],
     ids=["button in another group", "button with no group"],
 )
-def test_checked_button_setter_with_non_member_button_raises(
-    ui_root: UIRoot,
-    group_factory,
-):
+def test_checked_button_setter_with_non_member_button_raises(ui: UI, group_factory):
     toggle_group = ToggleGroup()
     member_toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -536,7 +530,7 @@ def test_checked_button_setter_with_non_member_button_raises(
     )
 
     non_member_toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=group_factory(),
@@ -552,10 +546,10 @@ def test_checked_button_setter_with_non_member_button_raises(
 
 
 @pytest.mark.parametrize("checked_button", [5, "apple granny"], ids=["int", "str"])
-def test_checked_button_setter_with_non_button_raises(ui_root: UIRoot, checked_button):
+def test_checked_button_setter_with_non_button_raises(ui: UI, checked_button):
     toggle_group = ToggleGroup()
     member_toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -569,10 +563,10 @@ def test_checked_button_setter_with_non_button_raises(ui_root: UIRoot, checked_b
     assert toggle_group.buttons == (member_toggle_button,)
 
 
-def test_checked_button_setter_with_killed_member_raises(ui_root: UIRoot):
+def test_checked_button_setter_with_killed_member_raises(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -594,22 +588,22 @@ def test_checked_button_setter_with_killed_member_raises(ui_root: UIRoot):
 # region --- kill() -----------------------------------------------------------
 
 
-def test_killing_member_removes_it_from_buttons(ui_root: UIRoot):
+def test_killing_member_removes_it_from_buttons(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button_1 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
     )
     toggle_button_2 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
     )
     toggle_button_3 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -620,10 +614,10 @@ def test_killing_member_removes_it_from_buttons(ui_root: UIRoot):
     assert toggle_group.buttons == (toggle_button_1, toggle_button_3)
 
 
-def test_killing_member_sets_its_group_to_none(ui_root: UIRoot):
+def test_killing_member_sets_its_group_to_none(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -634,11 +628,11 @@ def test_killing_member_sets_its_group_to_none(ui_root: UIRoot):
     assert toggle_button.group is None
 
 
-def test_killing_checked_member_does_not_call_on_toggle(ui_root: UIRoot):
+def test_killing_checked_member_does_not_call_on_toggle(ui: UI):
     on_toggle_calls = []
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -649,7 +643,7 @@ def test_killing_checked_member_does_not_call_on_toggle(ui_root: UIRoot):
     )
 
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         on_toggle=lambda toggle_button, checked: on_toggle_calls.append(
@@ -664,10 +658,10 @@ def test_killing_checked_member_does_not_call_on_toggle(ui_root: UIRoot):
     assert on_toggle_calls == []
 
 
-def test_killing_checked_member_leaves_nothing_checked(ui_root: UIRoot):
+def test_killing_checked_member_leaves_nothing_checked(ui: UI):
     toggle_group = ToggleGroup()
     checked_toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -675,7 +669,7 @@ def test_killing_checked_member_leaves_nothing_checked(ui_root: UIRoot):
     )
 
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -683,7 +677,7 @@ def test_killing_checked_member_leaves_nothing_checked(ui_root: UIRoot):
     )
 
     ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -695,9 +689,9 @@ def test_killing_checked_member_leaves_nothing_checked(ui_root: UIRoot):
     assert toggle_group.checked_button is None
 
 
-def test_killing_parent_removes_member_from_buttons(ui_root: UIRoot):
+def test_killing_parent_removes_member_from_buttons(ui: UI):
     toggle_group = ToggleGroup()
-    parent = Widget(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+    parent = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
     toggle_button_1 = ToggleButton(
         parent,
         size=ANY_SIZE,
@@ -706,7 +700,7 @@ def test_killing_parent_removes_member_from_buttons(ui_root: UIRoot):
     )
 
     toggle_button_2 = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,
@@ -718,10 +712,10 @@ def test_killing_parent_removes_member_from_buttons(ui_root: UIRoot):
     assert toggle_button_1.group is None
 
 
-def test_killing_member_twice_does_not_raise(ui_root: UIRoot):
+def test_killing_member_twice_does_not_raise(ui: UI):
     toggle_group = ToggleGroup()
     toggle_button = ToggleButton(
-        ui_root,
+        ui,
         size=ANY_SIZE,
         skin=ANY_SKIN,
         group=toggle_group,

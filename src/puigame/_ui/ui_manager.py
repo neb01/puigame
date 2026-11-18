@@ -5,12 +5,18 @@ ones the UI consumes, and tracks the highlighted widget and any press in
 progress. Games reach it through ``UI``, which passes the calls through.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pygame as pg
 from pygame.typing import Point
 
-from puigame._ui.ui_root import UIRoot
 from puigame._widgets.interactive_widget import InteractiveWidget
 from puigame._widgets.widget import Widget
+
+if TYPE_CHECKING:
+    from puigame._ui.ui import UI
 
 
 class UIManager:
@@ -23,13 +29,13 @@ class UIManager:
     for events or the mouse position, so it sees only the events it is given.
     """
 
-    def __init__(self, *, root: UIRoot) -> None:
-        """Create a manager for the widget tree under ``root``.
+    def __init__(self, *, ui: UI) -> None:
+        """Create a manager for the widgets in ``ui``.
 
         Args:
-            root: Root of the widget tree whose input the manager handles.
+            ui: UI whose input the manager handles.
         """
-        self._root = root
+        self._ui = ui
         self._mouse_pos: tuple[int, int] | None = None
         self._buttons_down: set[int] = set()
         self._pressed_widget: InteractiveWidget | None = None
@@ -263,7 +269,7 @@ class UIManager:
         rect left undrawn by a negative swell does. A position off the draw
         surface hits nothing, since no widget is drawn there, even if a
         widget's rect extends past the surface's edge. The surface is fixed at
-        ``(0, 0)``, so the root's offset does not move this boundary.
+        ``(0, 0)``, so the UI's offset does not move this boundary.
 
         Args:
             pos: Position to test, in the coordinates of the UI's draw surface.
@@ -271,13 +277,13 @@ class UIManager:
         Returns:
             The topmost such widget, or ``None`` if there is none.
         """
-        # nothing is drawn off the surface, so nothing there can be hit; the root's
+        # nothing is drawn off the surface, so nothing there can be hit; the UI's
         # rect can't stand in for the surface, since an offset moves it
-        surface_rect = pg.Rect((0, 0), self._root.rect.size)
+        surface_rect = pg.Rect((0, 0), self._ui.rect.size)
         if not surface_rect.collidepoint(pos):
             return None
 
-        for widget in reversed(list(self._root._iter_visible_subtree())):
+        for widget in reversed(list(self._ui._iter_visible_descendants())):
             if widget.rect.collidepoint(pos) and widget.hit_testable:
                 return widget
 

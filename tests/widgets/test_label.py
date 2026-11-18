@@ -11,7 +11,6 @@ from puigame import (
     TextHorizontalExtent,
     Theme,
 )
-from puigame._ui.ui_root import UIRoot
 
 # region --- Constants --------------------------------------------------------
 
@@ -58,16 +57,16 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
         ("hit_testable", True),
     ],
 )
-def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
-    label = Label(ui_root, size=ANY_SIZE, **{field_name: value})
+def test_forwards_arguments_stored_as_attributes(ui: UI, field_name, value):
+    label = Label(ui, size=ANY_SIZE, **{field_name: value})
 
     assert getattr(label, field_name) == value
 
 
 def test_forwards_placement_arguments():
-    ui_root = UIRoot(size=(20, 30), theme=ANY_THEME)
+    ui = UI(size=(20, 30), theme=ANY_THEME)
     label = Label(
-        ui_root,
+        ui,
         size=(3, 5),
         anchor=Anchor.BOTTOM_RIGHT,
         parent_anchor=Anchor.BOTTOM_LEFT,
@@ -77,8 +76,8 @@ def test_forwards_placement_arguments():
     assert label.rect.topleft == (-5, 21)
 
 
-def test_hit_testable_false_by_default(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE)
+def test_hit_testable_false_by_default(ui: UI):
+    label = Label(ui, size=ANY_SIZE)
 
     assert not label.hit_testable
 
@@ -89,14 +88,14 @@ def test_hit_testable_false_by_default(ui_root: UIRoot):
 # region --- text -------------------------------------------------------------
 
 
-def test_text_getter_returns_given_text(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE, text="schmip")
+def test_text_getter_returns_given_text(ui: UI):
+    label = Label(ui, size=ANY_SIZE, text="schmip")
 
     assert label.text == "schmip"
 
 
-def test_text_defaults_to_empty_string(ui_root: UIRoot):
-    label = Label(ui_root, size=ANY_SIZE)
+def test_text_defaults_to_empty_string(ui: UI):
+    label = Label(ui, size=ANY_SIZE)
 
     assert label.text == ""
 
@@ -108,7 +107,7 @@ def test_text_defaults_to_empty_string(ui_root: UIRoot):
 
 
 def test_label_with_text_has_non_zero_size_image(ui: UI):
-    label = Label(ui.root, size=ANY_SIZE, text="coracle")
+    label = Label(ui, size=ANY_SIZE, text="coracle")
 
     ui.update()
 
@@ -116,7 +115,7 @@ def test_label_with_text_has_non_zero_size_image(ui: UI):
 
 
 def test_label_without_text_has_zero_size_image(ui: UI):
-    label = Label(ui.root, size=ANY_SIZE, text="")
+    label = Label(ui, size=ANY_SIZE, text="")
 
     ui.update()
 
@@ -124,7 +123,7 @@ def test_label_without_text_has_zero_size_image(ui: UI):
 
 
 def test_text_setter_updates_image(ui: UI):
-    label = Label(ui.root, size=ANY_SIZE, text="")
+    label = Label(ui, size=ANY_SIZE, text="")
 
     ui.update()
 
@@ -137,7 +136,7 @@ def test_text_setter_updates_image(ui: UI):
 
 
 def test_text_setter_with_current_text_keeps_image(ui: UI):
-    label = Label(ui.root, size=ANY_SIZE, text="calcium")
+    label = Label(ui, size=ANY_SIZE, text="calcium")
 
     ui.update()
     image = label.image
@@ -159,11 +158,11 @@ def test_text_setter_with_current_text_keeps_image(ui: UI):
     [5, 6.7, b"bytes object", None],
     ids=["int", "float", "bytes", "None"],
 )
-def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
+def test_constructor_with_non_string_text_raises(ui: UI, text):
     with pytest.raises(TypeError):
-        Label(ui_root, size=ANY_SIZE, text=text)
+        Label(ui, size=ANY_SIZE, text=text)
 
-    assert ui_root.children == ()
+    assert ui.children == ()
 
 
 @pytest.mark.parametrize(
@@ -171,8 +170,8 @@ def test_constructor_with_non_string_text_raises(ui_root: UIRoot, text):
     [5, 6.7, b"bytes object", None],
     ids=["int", "float", "bytes", "None"],
 )
-def test_text_setter_with_non_string_text_raises(ui_root: UIRoot, text):
-    label = Label(ui_root, size=ANY_SIZE, text="vociferous")
+def test_text_setter_with_non_string_text_raises(ui: UI, text):
+    label = Label(ui, size=ANY_SIZE, text="vociferous")
 
     with pytest.raises(TypeError):
         label.text = text

@@ -12,7 +12,6 @@ from puigame import (
     TextHorizontalExtent,
     Theme,
 )
-from puigame._ui.ui_root import UIRoot
 from stubs import FixedLayer
 
 # region --- Constants --------------------------------------------------------
@@ -55,7 +54,7 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 def test_image_comes_from_skin(ui: UI):
     panel = Panel(
-        ui.root,
+        ui,
         size=ANY_SIZE,
         skin=FixedLayer(size=(2, 3), colour=BLUE, pos=(10, 12)),
     )
@@ -66,9 +65,9 @@ def test_image_comes_from_skin(ui: UI):
     assert panel.image_pos == (10, 12)
 
 
-def test_rect_has_given_size(ui_root: UIRoot):
+def test_rect_has_given_size(ui: UI):
     panel = Panel(
-        ui_root,
+        ui,
         size=(4, 5),
         skin=FixedLayer(size=ANY_SIZE, colour=BLUE, pos=ANY_POS),
     )
@@ -85,16 +84,16 @@ def test_rect_has_given_size(ui_root: UIRoot):
         ("hit_testable", False),
     ],
 )
-def test_forwards_arguments_stored_as_attributes(ui_root: UIRoot, field_name, value):
-    panel = Panel(ui_root, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
+def test_forwards_arguments_stored_as_attributes(ui: UI, field_name, value):
+    panel = Panel(ui, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
 
     assert getattr(panel, field_name) == value
 
 
 def test_forwards_placement_field_names():
-    ui_root = UIRoot(size=(20, 30), theme=ANY_THEME)
+    ui = UI(size=(20, 30), theme=ANY_THEME)
     panel = Panel(
-        ui_root,
+        ui,
         size=(3, 5),
         skin=ANY_SKIN,
         anchor=Anchor.BOTTOM_RIGHT,
@@ -105,8 +104,8 @@ def test_forwards_placement_field_names():
     assert panel.rect.topleft == (-5, 21)
 
 
-def test_hit_testable_true_by_default(ui_root: UIRoot):
-    panel = Panel(ui_root, size=ANY_SIZE, skin=ANY_SKIN)
+def test_hit_testable_true_by_default(ui: UI):
+    panel = Panel(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert panel.hit_testable
 
