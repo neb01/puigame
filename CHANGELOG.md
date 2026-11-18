@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-18
+
 ### Fixed
 
 - The bundled fonts load when puigame is imported from a zip archive, such as an app made with `zipapp`. They were opened by a path that does not exist inside an archive.
@@ -44,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Inline type hints (`py.typed`).
 - Examples: `minimal.py`, `custom_theme.py`, and `showcase.py`.
 
-[Unreleased]: https://github.com/neb01/puigame/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/neb01/puigame/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/neb01/puigame/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/neb01/puigame/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/neb01/puigame/releases/tag/v0.1.0
