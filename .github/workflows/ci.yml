@@ -33,9 +33,17 @@ jobs:
     timeout-minutes: 10
     strategy:
       fail-fast: false
+      # every Python version on Linux, but only the oldest and newest on Windows and
+      # macOS: platform bugs rarely depend on the Python version, and GitHub runs
+      # few macOS jobs at once, so a full macOS matrix queues behind itself
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        include:
+          - { os: windows-latest, python-version: "3.11" }
+          - { os: windows-latest, python-version: "3.15" }
+          - { os: macos-latest, python-version: "3.11" }
+          - { os: macos-latest, python-version: "3.15" }
     env:
       UV_PYTHON: ${{ matrix.python-version }}
     steps:
