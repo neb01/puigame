@@ -1,1 +1,7 @@
 * text=auto eol=lf
+
+# Binary files: never convert line endings or diff as text.
+*.aseprite binary
+*.gif binary
+*.png binary
+*.ttf binary
