@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-18
+
 ### Added
 
 - `ToggleButton`, a button that switches between checked and unchecked when clicked. It calls `on_toggle` with the button and its new value on every change, from a click, from `toggle()`, or from assigning `checked`. While checked, it adds `State.CHECKED` on top of its other states, including disabled.
@@ -38,5 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Inline type hints (`py.typed`).
 - Examples: `minimal.py`, `custom_theme.py`, and `showcase.py`.
 
-[Unreleased]: https://github.com/neb01/puigame/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/neb01/puigame/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/neb01/puigame/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/neb01/puigame/releases/tag/v0.1.0
