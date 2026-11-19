@@ -160,10 +160,9 @@ Text is centred on its capitals. It is placed by a box that runs from the top of
 
 `text_offset` is for deliberate nudges, such as moving pressed text down 1 pixel.
 
-## Limitations in v0.1
+## Limitations
 
 - **Neb0Font and NebMon0Font cover printable ASCII only.** Other characters, such as `£` or `é`, are drawn as a placeholder box; use `BundledTypeface.PYGAME_DEFAULT` or a font file of your own for them. Both are pixel fonts, crisp only at sizes that are multiples of 6: Neb0Font (`NEB0FONT`) is proportional with tabular digits, and NebMon0Font (`NEBMON0FONT`) is its monospace version.
-- **Multi-line text is left-aligned.**
 - **Subclassing widgets is not supported.** Compose them instead.
 - **The first click on an unfocused window is dropped.** By default, SDL uses the click that focuses a window and does not pass it on, so the first click after switching to the game does not reach a button. To pass it on, set the hint before creating the window: `os.environ["SDL_MOUSE_FOCUS_CLICKTHROUGH"] = "1"`. puigame leaves this choice to the game. This is untested on Windows.
 
