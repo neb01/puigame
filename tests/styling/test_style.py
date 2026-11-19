@@ -27,6 +27,7 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
+    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -50,9 +51,9 @@ ANY_STYLE = Style(
 
 @pytest.mark.parametrize(
     "field_name",
-    ["border_thickness", "corner_radius", "halo_thickness"],
+    ["border_thickness", "corner_radius", "box_gap", "halo_thickness"],
 )
-def test_style_thickness_or_radius_can_be_zero(field_name):
+def test_style_thickness_radius_or_gap_can_be_zero(field_name):
     style = replace(ANY_STYLE, **{field_name: 0})
 
     assert getattr(style, field_name) == 0
@@ -60,9 +61,9 @@ def test_style_thickness_or_radius_can_be_zero(field_name):
 
 @pytest.mark.parametrize(
     "field_name",
-    ["border_thickness", "corner_radius", "halo_thickness"],
+    ["border_thickness", "corner_radius", "box_gap", "halo_thickness"],
 )
-def test_style_negative_thickness_or_radius_raises(field_name):
+def test_style_negative_thickness_radius_or_gap_raises(field_name):
     with pytest.raises(ValueError):
         replace(ANY_STYLE, **{field_name: -5})
 

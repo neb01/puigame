@@ -7,6 +7,7 @@ layout may change in any release.
 
 from puigame._components.skin import DrawnSkin, NoSkin
 from puigame._layout.anchor import Anchor
+from puigame._layout.box_align import BoxAlign
 from puigame._styling.style import (
     BundledTypeface,
     FadeProfile,
@@ -17,6 +18,7 @@ from puigame._styling.style import (
 )
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui import UI
+from puigame._widgets.box import HBox, VBox
 from puigame._widgets.button import Button
 from puigame._widgets.container import Container
 from puigame._widgets.label import Label
@@ -30,11 +32,13 @@ __all__ = [
     "DEFAULT_THEME",
     "UI",
     "Anchor",
+    "BoxAlign",
     "BundledTypeface",
     "Button",
     "Container",
     "DrawnSkin",
     "FadeProfile",
+    "HBox",
     "Label",
     "NoSkin",
     "Panel",
@@ -46,5 +50,6 @@ __all__ = [
     "Theme",
     "ToggleButton",
     "ToggleGroup",
+    "VBox",
     "Widget",
 ]

@@ -63,8 +63,10 @@ class Container(Widget):
                 ``margin``, or ``offset`` is a single number rather than an
                 ``(x, y)`` pair or contains a ``bool``. The container is not
                 added to ``parent``.
-            ValueError: If either dimension of ``size`` is negative. The
-                container is not added to ``parent``.
+            ValueError: If either dimension of ``size`` is negative, or if
+                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
+                ``margin`` is not its default. The container is not added to
+                ``parent``.
         """
         super().__init__(
             parent,

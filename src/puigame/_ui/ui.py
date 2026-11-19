@@ -144,10 +144,12 @@ class UI:
 
         Call once per frame, after handling events and before ``draw()``.
         Changes made to widgets since the last update, such as a new offset or
-        flag, take effect here: the layout pass places every widget against its
-        parent, the highlight moves to the widget under the cursor, then each
-        widget shows its image for its current state.
+        flag, take effect here: the layout pass sizes every box to its children
+        and places every widget against its parent, the highlight moves to the
+        widget under the cursor, then each widget shows its image for its
+        current state.
         """
+        self._measure_tree()
         self._place_tree()
         self._manager._update_highlight()
         self._update_tree()
@@ -174,12 +176,23 @@ class UI:
                 ),
             )
 
+    def _measure_tree(self) -> None:
+        """Measure every widget in the UI, children before parents.
+
+        This is the first step of the layout pass, before ``_place_tree()``.
+        Each widget's size is set from its contents before any widget is
+        placed, so a box sizes itself from its children's current sizes.
+        """
+        for widget in self._iter_descendants_post_order():
+            widget._measure()
+
     def _place_tree(self) -> None:
         """Place the UI's rect, then every widget, parents before children.
 
-        This is the layout pass. It runs once per frame, before drawing, so
-        that changes to any offset, the UI's included, take effect. Setting an
-        offset moves nothing until the pass runs.
+        This is the second step of the layout pass, after ``_measure_tree()``.
+        It runs once per frame, before drawing, so that changes to any offset,
+        the UI's included, take effect. Setting an offset moves nothing until
+        the pass runs.
         """
         self._place()
 
@@ -234,6 +247,37 @@ class UI:
         """
         for child in self.children:
             yield from child._iter_visible_subtree()
+
+    def _iter_descendants_post_order(self) -> Iterator[Widget]:
+        """Yield every widget in the UI, children first.
+
+        The order is depth-first post-order: each top-level widget's
+        descendants, then the widget itself, before the next one, so every
+        widget comes after all of its descendants. The UI is not a widget, so
+        it is not yielded itself. The tree is read as it is walked, so take a
+        ``list()`` first if the walk will kill widgets.
+
+        Yields:
+            Each widget, in depth-first post-order.
+        """
+        for child in self.children:
+            yield from child._iter_subtree_post_order()
+
+    def _get_child_pos(self, child: Widget) -> tuple[int, int]:
+        """Return where top-level ``child`` goes, from the UI's top-left corner.
+
+        A top-level widget is placed by its own anchors, margin, and offset.
+        ``child._place()`` calls this, including once while ``child`` is being
+        created, before it has joined.
+
+        Args:
+            child: The widget being placed, whose parent is the UI.
+
+        Returns:
+            ``(x, y)`` position of the child's top-left corner, in whole pixels
+            from the UI's top-left corner.
+        """
+        return child._anchored_pos
 
     def _before_child_added(self, child: Widget) -> None:
         """Check that ``child`` can join the UI's children.

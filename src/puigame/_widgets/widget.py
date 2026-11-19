@@ -96,8 +96,10 @@ class Widget:
                 ``margin``, or ``offset`` is a single number rather than an
                 ``(x, y)`` pair or contains a ``bool``. The widget is not added
                 to ``parent``.
-            ValueError: If either dimension of ``size`` is negative. The widget
-                is not added to ``parent``.
+            ValueError: If either dimension of ``size`` is negative, or if
+                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
+                ``margin`` is not its default. The widget is not added to
+                ``parent``.
         """
         if not isinstance(anchor, Anchor):
             raise TypeError(f"anchor must be an Anchor, got {anchor!r}")
@@ -268,6 +270,16 @@ class Widget:
 
         return self.visible and self.parent.visible_in_tree
 
+    def _measure(self) -> None:
+        """Set the widget's size from its contents, before it is placed.
+
+        ``UI.update()`` calls this for every widget each frame, children before
+        parents, so every descendant has already been measured. The default
+        does nothing, since a fixed size never changes and a widget that fits
+        its text measures itself when the text is set, so overrides need not
+        call ``super()``.
+        """
+
     def _update(self) -> None:
         """Refresh ``image`` and ``image_pos`` from the current state.
 
@@ -323,6 +335,22 @@ class Widget:
 
         for child in self.children:
             yield from child._iter_visible_subtree()
+
+    def _iter_subtree_post_order(self) -> Iterator[Widget]:
+        """Yield every widget below this one, then this widget, children first.
+
+        The order is depth-first post-order: each child's whole subtree in
+        turn, then the widget itself, so every widget comes after all of its
+        descendants. The tree is read as it is walked, so take a ``list()``
+        first if the walk will kill widgets.
+
+        Yields:
+            Each descendant, then this widget, in depth-first post-order.
+        """
+        for child in self.children:
+            yield from child._iter_subtree_post_order()
+
+        yield self
 
     def _rebuild_image_cache(self) -> None:
         """Render every state in ``_possible_states`` and cache the results.
@@ -391,13 +419,25 @@ class Widget:
         return state
 
     def _place(self) -> None:
-        """Place the rect against the parent's from the anchors, margin, and offset.
+        """Place the rect where the parent's ``_get_child_pos()`` puts it.
 
-        The rect is updated in place, in the coordinates of the surface the UI
-        draws on. The parent, a widget or the ``UI``, must already be placed,
-        since its rect is read as it is.
+        Most parents place the widget by its own anchors, margin, and offset;
+        a box stacks its children. The rect is updated in place, in the
+        coordinates of the surface the UI draws on. The parent, a widget or the
+        ``UI``, must already be placed, since its rect is read as it is.
         """
-        pos_from_anchor_match = get_pos_from_anchor_match(
+        self.rect.topleft = self.parent.rect.topleft
+        self.rect.move_ip(self.parent._get_child_pos(self))
+
+    @property
+    def _anchored_pos(self) -> tuple[int, int]:
+        """The position the anchors, margin, and offset give against the parent.
+
+        Measured from the parent's top-left corner, with ``+x`` to the right
+        and ``+y`` down, in whole pixels, rounded down once after the offset is
+        added.
+        """
+        return get_pos_from_anchor_match(
             child_size=self.rect.size,
             child_anchor=self._anchor,
             parent_size=self.parent.rect.size,
@@ -406,8 +446,23 @@ class Widget:
             offset=self.offset,
         )
 
-        self.rect.topleft = self.parent.rect.topleft
-        self.rect.move_ip(pos_from_anchor_match)
+    def _get_child_pos(self, child: Widget) -> tuple[int, int]:
+        """Return where ``child`` goes, from this widget's top-left corner.
+
+        The default places ``child`` by its own anchors, margin, and offset.
+        A widget that arranges its children, such as a box, overrides this.
+        ``child._place()`` calls it, including once while ``child`` is being
+        created, before it has joined, so an override must handle a child it
+        does not hold yet.
+
+        Args:
+            child: The widget being placed, whose parent is this widget.
+
+        Returns:
+            ``(x, y)`` position of the child's top-left corner, in whole pixels
+            from this widget's top-left corner.
+        """
+        return child._anchored_pos
 
     def _before_child_added(self, child: Widget) -> None:
         """Check that ``child`` can join this widget's children.
