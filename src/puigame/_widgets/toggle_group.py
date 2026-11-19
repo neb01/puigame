@@ -78,23 +78,36 @@ class ToggleGroup:
 
         value.checked = True
 
-    def _can_add(self, button: ToggleButton) -> bool:
-        """Return whether ``button`` can join without a second checked button.
+    def _before_button_added(self, button: ToggleButton) -> None:
+        """Check that ``button`` can join without a second checked button.
 
         ``ToggleButton.__init__`` calls this before the button joins its
         parent, so a button that cannot join raises before it changes
-        anything.
+        anything. It changes nothing itself, so a refused button leaves the
+        group as it was.
+
+        Args:
+            button: The button about to join, with its ``checked`` already
+                set.
+
+        Raises:
+            ValueError: If ``button`` is checked and the group already has a
+                checked button.
         """
-        return self.checked_button is None or not button.checked
+        if self.checked_button is not None and button.checked:
+            raise ValueError(
+                "checked cannot be True when group already has a checked button",
+            )
 
     def _add(self, button: ToggleButton) -> None:
         """Add ``button`` to the group, and set the button's ``group`` to it.
 
         ``ToggleButton.__init__`` calls this once the button has joined its
-        parent, after ``_can_add()`` has allowed it, so nothing here can fail.
-        Both ends of the link are set here and cleared in ``_remove()``.
+        parent, after ``_before_button_added()`` has allowed it, so nothing
+        here can fail. Both ends of the link are set here and cleared in
+        ``_remove()``.
         """
-        # ToggleButton.__init__ checked this with _can_add()
+        # ToggleButton.__init__ checked this with _before_button_added()
         assert not button.checked or self.checked_button is None
 
         self._buttons.append(button)

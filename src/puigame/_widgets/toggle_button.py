@@ -137,10 +137,7 @@ class ToggleButton(Button):
             if not isinstance(group, ToggleGroup):
                 raise TypeError(f"group must be a ToggleGroup or None, got {group!r}")
 
-            if not group._can_add(self):
-                raise ValueError(
-                    "checked cannot be True when group already has a checked button",
-                )
+            group._before_button_added(self)
 
         self._group: ToggleGroup | None = None
 
