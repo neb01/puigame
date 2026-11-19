@@ -90,6 +90,18 @@ class RecordingLayer(Skin):
         )
 
 
+class ChildRefusedError(Exception):
+    """Error raised by ``RefusingWidget``, distinct from any built-in error."""
+
+
+class RefusingWidget(Widget):
+    """Widget whose ``_before_child_added()`` refuses every child."""
+
+    def _before_child_added(self, child: Widget) -> None:
+        """Raise ``ChildRefusedError``, whatever the child."""
+        raise ChildRefusedError
+
+
 # endregion
 
 
@@ -371,6 +383,15 @@ def test_child_and_grandchild_return_ui_theme():
 
     assert child.theme is theme
     assert grandchild.theme is theme
+
+
+def test_constructor_with_refusing_parent_raises(ui: UI):
+    refusing_widget = RefusingWidget(ui, size=ANY_SIZE, skin=ANY_SKIN)
+
+    with pytest.raises(ChildRefusedError):
+        Widget(refusing_widget, size=ANY_SIZE, skin=ANY_SKIN)
+
+    assert refusing_widget.children == ()
 
 
 # endregion

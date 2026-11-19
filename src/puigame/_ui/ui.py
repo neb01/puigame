@@ -234,3 +234,43 @@ class UI:
         """
         for child in self.children:
             yield from child._iter_visible_subtree()
+
+    def _before_child_added(self, child: Widget) -> None:
+        """Check that ``child`` can join the UI's children.
+
+        ``_add_child()`` calls this just before ``child`` joins. An override
+        raises to refuse the child, and must change nothing first, since a
+        refused child never joins. The default accepts every child and does
+        nothing, so overrides need not call ``super()``.
+
+        Args:
+            child: The widget about to join, already set up.
+        """
+
+    def _add_child(self, child: Widget) -> None:
+        """Add ``child`` as the last of the UI's children, if allowed.
+
+        ``_before_child_added()`` runs first, and if it raises, ``child`` is not
+        added. ``child``'s own ``__init__`` calls this once, as the last step of
+        its setup.
+
+        Args:
+            child: The new widget, whose parent is the UI.
+        """
+        # called once, from the new child's own __init__
+        assert child not in self._children
+
+        self._before_child_added(child)
+        self._children.append(child)
+
+    def _remove_child(self, child: Widget) -> None:
+        """Remove ``child`` from the UI's children, if it is still there.
+
+        ``child.kill()`` calls this. A child that an earlier ``kill()`` already
+        removed is ignored, so ``kill()`` can safely be called more than once.
+
+        Args:
+            child: The widget leaving, whose parent is the UI.
+        """
+        if child in self._children:
+            self._children.remove(child)

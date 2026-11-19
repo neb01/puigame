@@ -152,7 +152,7 @@ class Widget:
 
         # join the parent only once setup has succeeded, so that a widget whose
         # setup raised is never left in the tree
-        self._parent._children.append(self)
+        self._parent._add_child(self)
 
     def __repr__(self) -> str:
         """Return a representation for debugging."""
@@ -283,8 +283,7 @@ class Widget:
         killed in turn. It can safely be called more than once. A killed widget
         keeps its link to its old parent, but should not be used again.
         """
-        if self in self.parent._children:  # skip if an earlier kill() removed it
-            self.parent._children.remove(self)
+        self.parent._remove_child(self)
 
         for child in self.children:
             child.kill()
@@ -409,3 +408,43 @@ class Widget:
 
         self.rect.topleft = self.parent.rect.topleft
         self.rect.move_ip(pos_from_anchor_match)
+
+    def _before_child_added(self, child: Widget) -> None:
+        """Check that ``child`` can join this widget's children.
+
+        ``_add_child()`` calls this just before ``child`` joins. An override
+        raises to refuse the child, and must change nothing first, since a
+        refused child never joins. The default accepts every child and does
+        nothing, so overrides need not call ``super()``.
+
+        Args:
+            child: The widget about to join, already set up.
+        """
+
+    def _add_child(self, child: Widget) -> None:
+        """Add ``child`` as the last of this widget's children, if allowed.
+
+        ``_before_child_added()`` runs first, and if it raises, ``child`` is not
+        added. ``child``'s own ``__init__`` calls this once, as the last step of
+        its setup.
+
+        Args:
+            child: The new widget, whose parent is this widget.
+        """
+        # called once, from the new child's own __init__
+        assert child not in self._children
+
+        self._before_child_added(child)
+        self._children.append(child)
+
+    def _remove_child(self, child: Widget) -> None:
+        """Remove ``child`` from this widget's children, if it is still there.
+
+        ``child.kill()`` calls this. A child that an earlier ``kill()`` already
+        removed is ignored, so ``kill()`` can safely be called more than once.
+
+        Args:
+            child: The widget leaving, whose parent is this widget.
+        """
+        if child in self._children:
+            self._children.remove(child)
