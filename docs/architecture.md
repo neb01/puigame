@@ -106,7 +106,7 @@ Widget                  rect, anchor, fixed parent, children, flags, skin, per-s
     ├── Checkbox        (planned) box-and-tick indicator beside a label, with checked
     └── TextBox         (planned) + editable Text, editing mode (no PRESSED state)
 
-Exclusive group         (planned, name open) helper: mutual exclusion between toggle buttons or checkboxes (radio behaviour)
+ToggleGroup             helper: keeps at most one of its toggle buttons checked (radio behaviour)
 UI                      top of the tree (not a Widget): covers the draw surface, holds the theme and manager; draws the tree
 UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
@@ -557,6 +557,7 @@ src/puigame/
 │   ├── panel.py               Panel
 │   ├── state.py               State
 │   ├── toggle_button.py       ToggleButton
+│   ├── toggle_group.py        ToggleGroup
 │   └── widget.py              Widget
 ├── assets/
 │   └── fonts/
@@ -594,16 +595,17 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 Each layer imports only from the layers above it:
 
-1. `_components/placed_image`, `_layout/anchor`, `_widgets/state`
+1. `_components/placed_image`, `_layout/anchor`, `_widgets/state`, `_widgets/toggle_group`
 2. `_styling/style`
 3. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
 4. `_widgets/widget`
 5. `_widgets/interactive_widget`
 6. `_widgets/button`, `_widgets/container`, `_widgets/label`, `_widgets/panel`
-7. `_ui/ui_manager`
-8. `_ui/ui`
+7. `_widgets/toggle_button`
+8. `_ui/ui_manager`
+9. `_ui/ui`
 
-`_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets` imports `UI` from `_ui` for type checking only, and `_ui/ui_manager` imports `UI` the same way, since `_ui/ui` imports both; that is why `Widget` tests whether its parent is a `Widget` rather than a `UI`. `UIManager` and `UI` need only `Widget` and `InteractiveWidget`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
+`_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets` imports `UI` from `_ui` for type checking only, `_widgets/toggle_group` imports `ToggleButton` the same way, and `_ui/ui_manager` imports `UI` the same way, since `_ui/ui` imports both; that is why `Widget` tests whether its parent is a `Widget` rather than a `UI`. `UIManager` and `UI` need only `Widget` and `InteractiveWidget`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
 
 ## v0.1 scope
 
