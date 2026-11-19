@@ -132,6 +132,7 @@ DEFAULT_THEME = Theme(
         border_colour=_OFF_WHITE,
         border_thickness=2,
         corner_radius=5,
+        box_gap=3,
         halo_colour=_TRANSPARENT,
         halo_fade_profile=FadeProfile.SOLID,
         halo_thickness=0,

@@ -123,9 +123,9 @@ class Style:
     for any combination of state flags from it. Only the fields that
     ``StyleOverride`` also has can change between states.
 
-    A negative border thickness, corner radius, or halo thickness, or a font
-    size of 0 or less, raises ``ValueError`` when the style is created. A
-    negative swell is allowed. A halo fade profile that is not a
+    A negative border thickness, corner radius, box gap, or halo thickness, or
+    a font size of 0 or less, raises ``ValueError`` when the style is created.
+    A negative swell is allowed. A halo fade profile that is not a
     ``FadeProfile``, a text offset that is not a tuple or contains a ``bool``, a
     typeface that is neither a ``BundledTypeface`` nor a ``Path``, a text anchor
     or parent anchor that is not an ``Anchor``, a text alignment that is not a
@@ -146,6 +146,10 @@ class Style:
             concentric. Each layer's radius is kept between 0 and half that
             layer's shorter side, so a radius that would be larger gives a
             pill shape, and one that would be negative gives square corners.
+        box_gap: Space in pixels between neighbouring children of a ``VBox``
+            or ``HBox``, with none before the first child or after the last.
+            The same in every state, so a box never changes size with its
+            children's states.
         halo_colour: Halo colour as RGBA.
         halo_fade_profile: How the halo's alpha falls from ``halo_colour``'s
             alpha at its inner edge to transparent just past its outer edge.
@@ -181,6 +185,7 @@ class Style:
 
     # general appearance options (state-agnostic)
     corner_radius: int  # outer edge; halo, border, and body radii derive from it
+    box_gap: int
 
     # effect options
     halo_colour: RGBA
@@ -229,6 +234,11 @@ class Style:
         if self.corner_radius < 0:
             raise ValueError(
                 f"corner_radius cannot be negative, got {self.corner_radius} px",
+            )
+
+        if self.box_gap < 0:
+            raise ValueError(
+                f"box_gap cannot be negative, got {self.box_gap} px",
             )
 
         if not isinstance(self.halo_fade_profile, FadeProfile):

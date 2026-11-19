@@ -123,9 +123,11 @@ class ToggleButton(Button):
                 than an ``(x, y)`` pair or contains a ``bool``, or if ``group``
                 is neither a ``ToggleGroup`` nor ``None``. The button is not
                 added to ``parent`` or ``group``.
-            ValueError: If either dimension of ``size`` is negative, or if
+            ValueError: If either dimension of ``size`` is negative, if
                 ``checked`` is ``True`` and ``group`` already has a checked
-                button. The button is not added to ``parent`` or ``group``.
+                button, or if ``parent`` is a box and ``anchor``,
+                ``parent_anchor``, or ``margin`` is not its default. The button
+                is not added to ``parent`` or ``group``.
         """
         if on_toggle is not None and not callable(on_toggle):
             raise TypeError(f"on_toggle must be callable, got {on_toggle!r}")

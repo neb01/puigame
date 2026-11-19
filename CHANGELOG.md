@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `VBox` and `HBox`, invisible widgets that stack their children in a column or a row and size themselves to fit them, with the theme's `box_gap` between neighbours. Hidden children take no space. `align`, a `BoxAlign` (`START`, `CENTRE`, or `END`), places children narrower than the box. A box places its children, so a child's `anchor`, `parent_anchor`, and `margin` must keep their defaults, and other values raise `ValueError`; its `offset` still applies. Sizes and positions are worked out by `ui.update()`.
+
+### Changed
+
+- **Breaking:** `Style` now requires `box_gap`, the space in pixels between neighbouring children of a `VBox` or `HBox`. `DEFAULT_THEME` uses 3. A negative gap raises `ValueError`.
+
 ### Fixed
 
 - The bundled fonts' underline and strikethrough positions follow the OpenType specification, which places each line by its top edge: the underline fills the descender row, and the strikethrough the middle row of the x-height. The underline was half a pixel low, and the strikethrough had no position. puigame draws neither, so this affects only programs that use the font files directly.

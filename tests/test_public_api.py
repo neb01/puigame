@@ -8,11 +8,13 @@ PUBLIC_NAMES = [
     "DEFAULT_THEME",
     "UI",
     "Anchor",
+    "BoxAlign",
     "BundledTypeface",
     "Button",
     "Container",
     "DrawnSkin",
     "FadeProfile",
+    "HBox",
     "Label",
     "NoSkin",
     "Panel",
@@ -24,6 +26,7 @@ PUBLIC_NAMES = [
     "Theme",
     "ToggleButton",
     "ToggleGroup",
+    "VBox",
     "Widget",
 ]
 

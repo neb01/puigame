@@ -71,8 +71,10 @@ class Label(Widget):
                 ``None``, or if ``size``, ``margin``, or ``offset`` is a single
                 number rather than an ``(x, y)`` pair or contains a ``bool``.
                 The label is not added to ``parent``.
-            ValueError: If either dimension of ``size`` is negative. The label
-                is not added to ``parent``.
+            ValueError: If either dimension of ``size`` is negative, or if
+                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
+                ``margin`` is not its default. The label is not added to
+                ``parent``.
         """
         # Widget.__init__() renders the components, so the text must exist first
         self._text = Text(text)

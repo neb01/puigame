@@ -98,6 +98,9 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 ```
 Widget                  rect, anchor, fixed parent, children, flags, skin, per-state image cache
 ├── Container           invisible group of children (NoSkin)
+├── Box                 (internal) invisible group that stacks its visible children and fits them (NoSkin)
+│   ├── VBox            column, top to bottom
+│   └── HBox            row, left to right
 ├── Panel               group of children with a background (skin given on creation)
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + the highlight and activation behaviour interactive widgets share
@@ -115,6 +118,7 @@ Classes marked (planned) are designed but not built yet (see [v0.1 scope](#v01-s
 
 - **`InteractiveWidget` is a base class beside `Widget`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing the concrete widgets. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear, and differ only in appearance: a `Container` is invisible, and a `Panel` is drawn by the skin it is given. `Panel` extends `Widget`, not `Container`, since a `Container` promises to be invisible.
+- **`VBox` and `HBox` stack their children** in a column or a row, and size themselves to fit them (see [Boxes](#boxes)). They share an internal base, `Box`, and differ only in their main axis. `Box` extends `Widget`, not `Container`, since it places its children rather than letting them anchor themselves.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
 ### Widgets are not pygame Sprites
@@ -131,6 +135,7 @@ Every widget is created with its `parent`, a widget or the `UI`, as the first ar
 
 - `parent` and `children` are read-only. `children` returns a tuple of the widget's children in the order they were created, so it cannot be appended to or replaced.
 - A new widget joins its parent's children only once the rest of its setup has succeeded, so a widget whose creation raised is never left in the tree.
+- A parent can refuse a new child, as the last step of the child's setup: a box refuses one whose `anchor`, `parent_anchor`, or `margin` is not the default. The child's constructor raises, and the child is not added to its parent or to a `ToggleGroup`.
 - A widget at the top level of a UI is created with the `UI` as its parent. Every widget therefore has a parent, and `parent` is never `None`. `enabled_in_tree` and `visible_in_tree` stop at the `UI`, which has no flags of its own.
 - Each widget keeps a private reference to its `UI`, copied from its parent, or the parent itself for a top-level widget. Parents never change, so neither does the UI, and the reference cannot go out of date. Through it, the widget reads the UI's theme.
 - To move a widget, kill it and create a new one under the new parent. Moving widgets directly is a later feature.
@@ -237,7 +242,7 @@ The private `theme._style_for(state)` returns a complete `Style` for any combina
 
 Positions are set with a nine-point `Anchor` (`CENTRE`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `MID_LEFT`, `MID_RIGHT`, `MID_TOP`, `MID_BOTTOM`) plus a margin.
 
-- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A top-level widget is created with the `UI` as its parent, so it is anchored to the UI's rect, which covers the surface the UI draws on.
+- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A box's children are placed by the box instead (see [Boxes](#boxes)), and only their offset applies. A top-level widget is created with the `UI` as its parent, so it is anchored to the UI's rect, which covers the surface the UI draws on.
 - A `Text` component is anchored relative to its **owner widget's rect**.
 
 ### Anchor points
@@ -322,9 +327,26 @@ The anchors and margin are fixed on creation and private: they are given to the 
 
 ### Layout pass
 
-Layout runs once per frame, before drawing, as a single pass down the tree from the `UI`: the UI's rect is placed first, then every widget, parents before children, so each widget is placed against its parent's up-to-date rect. Each widget is also placed once when it is created.
+Layout runs once per frame, before drawing, in two walks over the tree from the `UI`:
 
-Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset are combined, so a fractional offset rounds the same way on every widget and on the UI.
+1. **Measure**, children before parents: each box sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing.
+2. **Place**, parents before children: the UI's rect is placed first, then every widget, so each widget is placed against its parent's up-to-date rect. A widget asks its parent where it goes. Most parents place it by its own anchors, margin, and offset; a box puts it in the slot the measure walk worked out.
+
+Each widget is also placed once when it is created. A box's new child starts at the box's top-left corner, moved by its offset, until the next pass.
+
+Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset (or a box's slot and the offset) are combined, so a fractional offset rounds the same way on every widget and on the UI.
+
+### Boxes
+
+`VBox` stacks its children in a column, top to bottom, and `HBox` in a row, left to right, in the order they were created. Along its **main axis** (down a `VBox`, across an `HBox`), a box is as long as its visible children plus the theme's `box_gap` between each pair of neighbours. Across it, on the **cross axis**, it is as wide as its widest visible child. The terms follow CSS flexbox and Flutter.
+
+- **Pure fit.** A box takes no `size`: it is 0x0 until the first layout pass, and 0x0 with no visible children. A fixed size, with the spare space spread between the children, can be added later without breaking anyone.
+- **Alignment.** `align`, a `BoxAlign` fixed on creation, places children narrower than the box across its main axis: `START` (the left edge in a `VBox`, the top in an `HBox`), `CENTRE` (the default), or `END`. There is no stretch. Slots are kept unrounded, so a centred child is rounded down once, after its offset is added, as anchored widgets are.
+- **Hidden children collapse**: they take no space and no gap, and sit at the box's top-left corner. Showing one makes room for it at the next layout pass.
+- **Children keep their default `anchor`, `parent_anchor`, and `margin`**, which the box would ignore, so any other value raises `ValueError` when the child is created. Their `offset` still applies, after the box has placed them, so a child can still be nudged or animated.
+- **`box_gap` is a `Style` field**, read from the theme's base style. It is not in `StyleOverride`, so a box never changes size with its children's states.
+- **Every pass measures every box**, with no dirty flags, so new, killed, shown, and hidden children take effect at the next `update()`.
+- Like a `Container`, a box has `NoSkin` and is not hit-testable by default. With `hit_testable=True`, clicks anywhere over it, including the gaps between its children, stop at it. A box has no background; to put one behind it, size a `Panel` by hand.
 
 ## State
 
@@ -369,7 +391,7 @@ Not every combination can occur, so each class lists the combinations it can be 
 
 | Class | `_possible_states` |
 |---|---|
-| `Widget`, `Container`, `Panel`, `Label` | `BASE`, `DISABLED` |
+| `Widget`, `Container`, `VBox`, `HBox`, `Panel`, `Label` | `BASE`, `DISABLED` |
 | `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
 | `ToggleButton` | Button's four, each with and without `CHECKED` (eight) |
 | `TextBox` (planned) | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
@@ -432,7 +454,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 - Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count, and nor does swell: a negative swell still hits across the whole rect, including the band where nothing is drawn.
 - Hit-testing is clipped to the draw surface, from `(0, 0)` to the UI's `size`, because nothing is drawn beyond it: a position off the surface hits nothing, even where a widget's rect extends past the edge (a panel sliding in, a tooltip at the edge, or a shaking UI). This matters when a game scales up a smaller render surface and maps clicks in the letterbox into its coordinates. The boundary is the surface, not `ui.rect`, so the UI's offset does not move it. Widgets are not clipped to their parents, for hit-testing or drawing, so a child outside its parent, such as a tooltip, can still be clicked.
 - The walk goes in reverse drawing order (see [Tree order](#tree-order)), so the widget drawn on top is found first. Hidden subtrees are skipped. Disabled widgets still count, so a disabled panel still blocks what is below it.
-- Each widget has a `hit_testable` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container` and `Label`: a `Label` on a `Button` must not block the button, and HUD text should not block clicks meant for the game. The `UI` is not a widget, so it is never hit, and clicks on empty space reach the game.
+- Each widget has a `hit_testable` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `VBox`, `HBox`, and `Label`: a `Label` on a `Button` must not block the button, and HUD text should not block clicks meant for the game. The `UI` is not a widget, so it is never hit, and clicks on empty space reach the game.
 - Mask hit-testing, so that non-rectangular widgets respond only where they are drawn, is not in v0.1.
 
 ### Consuming
@@ -539,7 +561,8 @@ src/puigame/
 │   └── text.py                Text and the font cache
 ├── _layout/                   anchors and placement
 │   ├── __init__.py
-│   └── anchor.py              Anchor, get_pos_from_anchor_match
+│   ├── anchor.py              Anchor, get_pos_from_anchor_match
+│   └── box_align.py           BoxAlign
 ├── _styling/                  styles and themes
 │   ├── __init__.py
 │   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
@@ -550,6 +573,7 @@ src/puigame/
 │   └── ui_manager.py          UIManager
 ├── _widgets/                  base classes, states, and concrete widgets
 │   ├── __init__.py
+│   ├── box.py                 Box, VBox, HBox, Axis
 │   ├── button.py              Button
 │   ├── container.py           Container
 │   ├── interactive_widget.py  InteractiveWidget
@@ -569,7 +593,7 @@ The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicO
 
 - **Subpackages are private.** The leading underscore marks everything below `puigame` as internal, so modules can move between releases without breaking games. Each subpackage's `__init__.py` holds only a docstring and imports nothing, so importing one module never pulls in the rest of its package.
 - **Base classes live with the concrete widgets.** `Widget`, `InteractiveWidget`, and `State` are in `_widgets`, as Qt and Kivy keep their base widget classes with the widgets.
-- **`_layout` is a package ahead of need**, so row, column, and grid layouts have a home when they arrive.
+- **`_layout` holds placement rules, not widgets**: `Anchor` and `BoxAlign`. `VBox` and `HBox` are widgets, so they live in `_widgets` with the rest.
 - **`_styling`**, not `themes` (a plural suggests a collection of themes) or `appearance` (which this document uses for skins).
 - Unfinished widgets live on branches and are not in the tree until they are built.
 
@@ -580,12 +604,12 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | Group | Names |
 | --- | --- |
 | Running a UI | `UI` |
-| Widgets | `Widget`, `Container`, `Panel`, `Label`, `Button`, `ToggleButton`, `ToggleGroup` |
-| Placement | `Anchor` |
+| Widgets | `Widget`, `Container`, `VBox`, `HBox`, `Panel`, `Label`, `Button`, `ToggleButton`, `ToggleGroup` |
+| Placement | `Anchor`, `BoxAlign` |
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
-- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
+- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIManager`, `InteractiveWidget`, `Box`, `Axis`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
 - **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
 - **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.
@@ -595,12 +619,12 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 Each layer imports only from the layers above it:
 
-1. `_components/placed_image`, `_layout/anchor`, `_widgets/state`, `_widgets/toggle_group`
+1. `_components/placed_image`, `_layout/anchor`, `_layout/box_align`, `_widgets/state`, `_widgets/toggle_group`
 2. `_styling/style`
 3. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
 4. `_widgets/widget`
 5. `_widgets/interactive_widget`
-6. `_widgets/button`, `_widgets/container`, `_widgets/label`, `_widgets/panel`
+6. `_widgets/box`, `_widgets/button`, `_widgets/container`, `_widgets/label`, `_widgets/panel`
 7. `_widgets/toggle_button`
 8. `_ui/ui_manager`
 9. `_ui/ui`
