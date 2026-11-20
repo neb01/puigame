@@ -14,6 +14,7 @@ PUBLIC_NAMES = [
     "Container",
     "DrawnSkin",
     "FadeProfile",
+    "FitSize",
     "HBox",
     "Label",
     "NoSkin",

@@ -113,10 +113,10 @@ def test_constructor_with_negative_size_raises(size):
 
 @pytest.mark.parametrize(
     "size",
-    [5, (True, 3), (3, True)],
-    ids=["single value", "bool x", "bool y"],
+    [5, None, (True, 3), (3, True), (None, 3), (3, None)],
+    ids=["single value", "None", "bool x", "bool y", "None x", "None y"],
 )
-def test_constructor_with_single_value_or_bool_in_size_raises(size):
+def test_constructor_with_size_that_is_not_a_pair_of_numbers_raises(size):
     with pytest.raises(TypeError):
         UI(size=size, theme=ANY_THEME)
 
@@ -139,10 +139,10 @@ def test_offset_converts_to_vector2_on_correct_axes(ui: UI, offset, expected_off
 
 @pytest.mark.parametrize(
     "offset",
-    [2, (True, 3), (3, True)],
-    ids=["single value", "bool x", "bool y"],
+    [2, None, (True, 3), (3, True), (None, 3), (3, None)],
+    ids=["single value", "None", "bool x", "bool y", "None x", "None y"],
 )
-def test_assigning_single_value_or_pair_with_bool_to_offset_raises(ui: UI, offset):
+def test_assigning_offset_that_is_not_a_pair_of_numbers_raises(ui: UI, offset):
     ui.offset = (2, 3)
 
     with pytest.raises(TypeError):

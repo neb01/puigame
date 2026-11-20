@@ -8,6 +8,7 @@ layout may change in any release.
 from puigame._components.skin import DrawnSkin, NoSkin
 from puigame._layout.anchor import Anchor
 from puigame._layout.box_align import BoxAlign
+from puigame._layout.fit_size import FitSize
 from puigame._styling.style import (
     BundledTypeface,
     FadeProfile,
@@ -38,6 +39,7 @@ __all__ = [
     "Container",
     "DrawnSkin",
     "FadeProfile",
+    "FitSize",
     "HBox",
     "Label",
     "NoSkin",

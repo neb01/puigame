@@ -60,7 +60,7 @@ Anything a tool already enforces is not repeated below.
 - **Validate where a mistake is plausible and would fail far from its cause**, not every possible misuse.
 - **Checks run in field declaration order**, and tests mirror that order. Optional values with one check use `x is not None and not isinstance(x, T)`; those with several nest them under one `if x is not None:`, so the `None` test is not repeated.
 - **Messages** start lowercase, name the exact parameter or field, and have no final full stop. Requirements use "must" and prohibitions use "cannot" (never "must not", which is easy to misread). The bad value follows ", got", shown with `!r`: `"style_overrides cannot use combined flags as a key, got <State.CHECKED|PRESSED: 5>"`. Numbers followed by a unit are the exception, since their `str` and `repr` match: `"border_thickness cannot be negative, got -2 px"`. Several values are written `name=value`, a second clause follows a semicolon, and class names appear as written.
-- **`(x, y)` pairs reject `bool` items**, using the checks in `_validation.py`: `bool` is a subclass of `int`, so pygame and Pyright both accept it silently.
+- **`(x, y)` pairs reject `bool` items**, using the checks in `_validation.py`: `bool` is a subclass of `int`, so pygame and Pyright both accept it silently. They also reject `None` items, except in a `FitSize`, where `None` means fit that axis, and a bare `None` or single number in place of the pair.
 - **Split messages** break after a space, so each line but the last ends with a space and the next starts with a word.
 
 ## Docstrings and comments
