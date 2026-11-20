@@ -64,9 +64,8 @@ class Panel(Widget):
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
                 is neither an ``Anchor`` nor ``None``, or if ``size``,
-                ``margin``, or ``offset`` is a single number rather than an
-                ``(x, y)`` pair or contains a ``bool``. The panel is not added
-                to ``parent``.
+                ``margin``, or ``offset`` is not an ``(x, y)`` pair of numbers.
+                The panel is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative, or if
                 ``parent`` is a box and ``anchor``, ``parent_anchor``, or
                 ``margin`` is not its default. The panel is not added to

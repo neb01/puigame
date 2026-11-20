@@ -222,34 +222,40 @@ def test_offset_converts_to_vector2_on_correct_axes(ui: UI, offset, expected_off
 
 
 @pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
-@pytest.mark.parametrize("value", [1, 2.0, None], ids=["int", "float", "None"])
-def test_constructor_with_single_value_size_margin_or_offset_raises(
-    ui: UI,
-    field_name,
-    value,
-):
-    with pytest.raises(TypeError):
-        Widget(ui, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
-
-    assert ui.children == ()
-
-
-@pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
-@pytest.mark.parametrize("value", [(True, 3), (3, True)], ids=["bool x", "bool y"])
-def test_constructor_with_bool_in_size_margin_or_offset_raises(
-    ui: UI,
-    field_name,
-    value,
-):
-    with pytest.raises(TypeError):
-        Widget(ui, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
-
-    assert ui.children == ()
-
-
-@pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
-@pytest.mark.parametrize("value", [(None, 3), (3, None)], ids=["None x", "None y"])
-def test_constructor_with_none_in_size_margin_or_offset_raises(
+@pytest.mark.parametrize(
+    "value",
+    [
+        1,
+        2.0,
+        "34",
+        (),
+        (3,),
+        (3, 4, 5),
+        (True, 3),
+        (3, True),
+        ("3", 4),
+        (None, 3),
+        (3, None),
+        {3, 4},
+        None,
+    ],
+    ids=[
+        "int",
+        "float",
+        "str",
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "None x",
+        "None y",
+        "set",
+        "None",
+    ],
+)
+def test_constructor_with_size_margin_or_offset_that_is_not_a_pair_of_numbers_raises(
     ui: UI,
     field_name,
     value,
@@ -262,8 +268,36 @@ def test_constructor_with_none_in_size_margin_or_offset_raises(
 
 @pytest.mark.parametrize(
     "offset",
-    [2, None, (3, True), (3, None)],
-    ids=["single value", "None", "bool in pair", "None in pair"],
+    [
+        1,
+        2.0,
+        "34",
+        (),
+        (3,),
+        (3, 4, 5),
+        (True, 3),
+        (3, True),
+        ("3", 4),
+        (None, 3),
+        (3, None),
+        {3, 4},
+        None,
+    ],
+    ids=[
+        "int",
+        "float",
+        "str",
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "None x",
+        "None y",
+        "set",
+        "None",
+    ],
 )
 def test_assigning_offset_that_is_not_a_pair_of_numbers_raises(ui: UI, offset):
     widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, offset=(2, 3))

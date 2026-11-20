@@ -68,9 +68,9 @@ class Label(Widget):
         Raises:
             TypeError: If ``text`` is not a string, if ``anchor`` is not an
                 ``Anchor``, if ``parent_anchor`` is neither an ``Anchor`` nor
-                ``None``, or if ``size``, ``margin``, or ``offset`` is a single
-                number rather than an ``(x, y)`` pair or contains a ``bool``.
-                The label is not added to ``parent``.
+                ``None``, or if ``size``, ``margin``, or ``offset`` is not an
+                ``(x, y)`` pair of numbers. The label is not added to
+                ``parent``.
             ValueError: If either dimension of ``size`` is negative, or if
                 ``parent`` is a box and ``anchor``, ``parent_anchor``, or
                 ``margin`` is not its default. The label is not added to

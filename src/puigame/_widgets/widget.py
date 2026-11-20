@@ -12,7 +12,7 @@ from puigame._components.placed_image import PlacedImage, compose_layers
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor, get_pos_from_anchor_match
 from puigame._styling.theme import Theme
-from puigame._validation import validate_pair
+from puigame._validation import reject_negative_in_pair, validate_pair
 from puigame._widgets.state import State
 
 if TYPE_CHECKING:
@@ -93,9 +93,8 @@ class Widget:
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
                 is neither an ``Anchor`` nor ``None``, or if ``size``,
-                ``margin``, or ``offset`` is a single number rather than an
-                ``(x, y)`` pair or contains a ``bool``. The widget is not added
-                to ``parent``.
+                ``margin``, or ``offset`` is not an ``(x, y)`` pair of numbers.
+                The widget is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative, or if
                 ``parent`` is a box and ``anchor``, ``parent_anchor``, or
                 ``margin`` is not its default. The widget is not added to
@@ -119,8 +118,7 @@ class Widget:
             self._ui = self._parent
 
         validate_pair("size", size)
-        if min(size[0], size[1]) < 0:
-            raise ValueError(f"size cannot be negative, got {size!r} px")
+        reject_negative_in_pair("size", size)
 
         self._rect = pg.Rect((0, 0), size)
         self._skin = skin
@@ -244,7 +242,7 @@ class Widget:
         place, for example to animate the widget. Changes take effect at the
         next layout pass.
 
-        Assigning a single number, or a pair that contains a ``bool``, raises
+        Assigning anything but an ``(x, y)`` pair of numbers raises
         ``TypeError``.
         """
         return self._offset

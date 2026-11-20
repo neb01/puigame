@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - The bundled fonts' underline and strikethrough positions follow the OpenType specification, which places each line by its top edge: the underline fills the descender row, and the strikethrough the middle row of the x-height. The underline was half a pixel low, and the strikethrough had no position. puigame draws neither, so this affects only programs that use the font files directly.
-- A `None` item in a widget's or UI's `size`, `margin`, or `offset` raises `TypeError` with a message naming the parameter. It raised pygame's `ValueError` for `margin` and `offset`, and a `TypeError` from a comparison for `size`.
+- An `(x, y)` pair that is not two numbers raises `TypeError` with a message naming the parameter. This covers a widget's or UI's `size`, `margin`, and `offset`, `Style.text_margin` and `Style.text_offset`, and `StyleOverride.text_offset`, and catches a pair of the wrong length, a `set`, and `None` or other non-number items. Widgets and the UI raised `IndexError`, pygame's `TypeError` or `ValueError`, or a `TypeError` from a comparison; a style accepted most of these, and pygame raised `ValueError` when a widget drew text in that style.
 
 ## [0.2.1] - 2026-11-18
 

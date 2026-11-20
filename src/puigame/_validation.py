@@ -1,57 +1,97 @@
 """Checks on ``(x, y)`` pairs and fit sizes that callers pass in."""
 
+from collections.abc import Sized
+
 from pygame.typing import Point
 
 from puigame._layout.fit_size import FitSize
 
 
-def reject_single_value(field_name: str, pair: FitSize) -> None:
-    """Reject a single value given where an ``(x, y)`` pair is expected.
+def _is_number(value: object) -> bool:
+    """Return whether a value is an ``int`` or ``float`` but not a ``bool``.
+
+    ``bool`` is a subclass of ``int``, so ``pg.Rect``, ``pg.Vector2``, and
+    Pyright all accept it as a number without complaint.
+
+    Args:
+        value: The value to check.
+
+    Returns:
+        ``True`` if ``value`` is an ``int`` or ``float`` and not a ``bool``.
+    """
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _is_pair(value: object) -> bool:
+    """Return whether a value is an indexable sequence of length 2.
+
+    This matches pygame's ``SequenceLike``, which needs ``__len__`` and
+    ``__getitem__``, so a ``tuple``, a ``list``, and a ``pg.Vector2`` pass
+    but a ``set`` fails. ``Sized`` is checked first, so ``len()`` never
+    raises.
+
+    Args:
+        value: The value to check.
+
+    Returns:
+        ``True`` if ``value`` has a length of 2 and can be indexed.
+    """
+    return (
+        isinstance(value, Sized) and len(value) == 2 and hasattr(value, "__getitem__")
+    )
+
+
+def reject_non_pair(field_name: str, pair: FitSize) -> None:
+    """Reject a value that is not an ``(x, y)`` pair.
+
+    Run this before the item checks, which index the value.
 
     Args:
         field_name: Name of the parameter or field, used in the message.
         pair: The value to check.
 
     Raises:
-        TypeError: If ``pair`` is ``None`` or a single ``int`` or ``float``,
-            including a ``bool``.
+        TypeError: If ``pair`` is not an indexable sequence of length 2, such
+            as ``None``, a single number, a ``set``, or a sequence of the
+            wrong length.
     """
-    if pair is None or isinstance(pair, (int, float)):
-        raise TypeError(f"{field_name} cannot be a single value, got {pair!r}")
+    if not _is_pair(pair):
+        raise TypeError(f"{field_name} must be a sequence of length 2, got {pair!r}")
 
 
-def reject_bool_in_pair(field_name: str, pair: FitSize) -> None:
-    """Reject an ``(x, y)`` pair that contains a ``bool``.
+def reject_non_number_in_pair(field_name: str, pair: FitSize) -> None:
+    """Reject an ``(x, y)`` pair with an item that is not a number.
 
-    ``bool`` is a subclass of ``int``, so ``pg.Rect``, ``pg.Vector2``, and
-    Pyright all accept it in a pair without complaint.
+    A ``bool`` is not a number here. Pyright rejects ``None`` in a ``Point``,
+    but code without a type checker can still pass one.
 
     Args:
         field_name: Name of the parameter or field, used in the message.
         pair: The ``(x, y)`` pair to check.
 
     Raises:
-        TypeError: If either item of ``pair`` is a ``bool``.
+        TypeError: If either item of ``pair`` is not an ``int`` or ``float``,
+            or is a ``bool``.
     """
-    if isinstance(pair[0], bool) or isinstance(pair[1], bool):
-        raise TypeError(f"{field_name} cannot contain a bool, got {pair!r}")
+    if any(not _is_number(item) for item in pair):
+        raise TypeError(f"{field_name} items must be numbers, got {pair!r}")
 
 
-def reject_none_in_pair(field_name: str, pair: FitSize) -> None:
-    """Reject an ``(x, y)`` pair that contains ``None``.
+def reject_non_number_in_fit_size(field_name: str, pair: FitSize) -> None:
+    """Reject a fit size with an item that is neither a number nor ``None``.
 
-    Only a fit size may contain ``None``. Pyright rejects ``None`` in a
-    ``Point``, but code without a type checker can still pass one.
+    A ``bool`` is not a number here. Only a fit size may contain ``None``.
 
     Args:
         field_name: Name of the parameter or field, used in the message.
         pair: The ``(x, y)`` pair to check.
 
     Raises:
-        TypeError: If either item of ``pair`` is ``None``.
+        TypeError: If either item of ``pair`` is neither ``None`` nor an
+            ``int`` or ``float``, or is a ``bool``.
     """
-    if pair[0] is None or pair[1] is None:
-        raise TypeError(f"{field_name} cannot contain None, got {pair!r}")
+    if any(item is not None and not _is_number(item) for item in pair):
+        raise TypeError(f"{field_name} items must be numbers or None, got {pair!r}")
 
 
 def reject_negative_in_pair(field_name: str, pair: FitSize) -> None:
@@ -67,46 +107,41 @@ def reject_negative_in_pair(field_name: str, pair: FitSize) -> None:
         ValueError: If either item of ``pair`` is a negative number.
     """
     if any(item is not None and item < 0 for item in pair):
-        raise ValueError(f"{field_name} cannot be negative, got {pair!r} px")
-
-
-def validate_fit_size(field_name: str, fit_size: FitSize) -> None:
-    """Check that a value is an ``(x, y)`` pair whose items may be ``None``.
-
-    ``None`` is allowed in either item, and means that axis fits the
-    widget's content. The single-value check runs first, since indexing a
-    single number or ``None`` would raise Python's own ``TypeError`` before
-    the item checks could.
-
-    Args:
-        field_name: Name of the parameter or field, used in the message.
-        fit_size: The value to check.
-
-    Raises:
-        TypeError: If ``fit_size`` is ``None`` or a single number, or if
-            either of its items is a ``bool``.
-        ValueError: If either of its items is negative.
-    """
-    reject_single_value(field_name, fit_size)
-    reject_bool_in_pair(field_name, fit_size)
-    reject_negative_in_pair(field_name, fit_size)
+        raise ValueError(f"{field_name} items cannot be negative, got {pair!r} px")
 
 
 def validate_pair(field_name: str, pair: Point) -> None:
-    """Check that a value is an ``(x, y)`` pair of numbers, none a ``bool``.
-
-    The single-value check runs first, since indexing a single number or
-    ``None`` would raise Python's own ``TypeError`` before the item checks
-    could.
+    """Check that a value is an ``(x, y)`` pair of numbers.
 
     Args:
         field_name: Name of the parameter or field, used in the message.
         pair: The value to check.
 
     Raises:
-        TypeError: If ``pair`` is ``None`` or a single number, or if either of
-            its items is a ``bool`` or ``None``.
+        TypeError: If ``pair`` is not an indexable sequence of length 2, or if
+            either of its items is not an ``int`` or ``float``, or is a
+            ``bool``.
     """
-    reject_single_value(field_name, pair)
-    reject_bool_in_pair(field_name, pair)
-    reject_none_in_pair(field_name, pair)
+    reject_non_pair(field_name, pair)
+    reject_non_number_in_pair(field_name, pair)
+
+
+def validate_fit_size(field_name: str, fit_size: FitSize) -> None:
+    """Check that a value is a fit size: an ``(x, y)`` pair of sizes.
+
+    Each item is a number, or ``None``, which means that axis fits the
+    widget's content.
+
+    Args:
+        field_name: Name of the parameter or field, used in the message.
+        fit_size: The value to check.
+
+    Raises:
+        TypeError: If ``fit_size`` is not an indexable sequence of length 2,
+            or if either of its items is neither ``None`` nor an ``int`` or
+            ``float``, or is a ``bool``.
+        ValueError: If either of its items is negative.
+    """
+    reject_non_pair(field_name, fit_size)
+    reject_non_number_in_fit_size(field_name, fit_size)
+    reject_negative_in_pair(field_name, fit_size)
