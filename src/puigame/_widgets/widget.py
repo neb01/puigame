@@ -171,55 +171,6 @@ class Widget:
         # setup raised is never left in the tree
         self._parent._add_child(self)
 
-    @staticmethod
-    def _resolve_size(
-        requested_size: FitSize,
-        components: tuple[Component, ...],
-        base_style: Style,
-    ) -> tuple[int, int]:
-        """Return the size to build a widget's rect from.
-
-        Each ``None`` axis of ``requested_size`` takes the largest preferred
-        size on that axis among ``components``, measured in ``base_style``.
-        Other axes are rounded down to whole pixels. The components are
-        measured only when an axis is fitted.
-
-        Args:
-            requested_size: Size the widget was given, already validated.
-            components: Components to fit the ``None`` axes to.
-            base_style: Style to measure the components in.
-
-        Returns:
-            ``(width, height)`` in whole pixels.
-
-        Raises:
-            ValueError: If either axis is ``None`` and there are no components.
-        """
-        width, height = requested_size
-        if width is not None and height is not None:
-            return (math.floor(width), math.floor(height))
-
-        if not components:
-            raise ValueError(
-                "size cannot have None on an axis of a widget with no components, "
-                f"got {requested_size!r}"
-            )
-
-        preferred_sizes = [
-            component.get_preferred_size(base_style) for component in components
-        ]
-        if width is None:
-            width = max(preferred_size[0] for preferred_size in preferred_sizes)
-        else:
-            width = math.floor(width)
-
-        if height is None:
-            height = max(preferred_size[1] for preferred_size in preferred_sizes)
-        else:
-            height = math.floor(height)
-
-        return (width, height)
-
     def __repr__(self) -> str:
         """Return a representation for debugging."""
         return f"<puigame widget: {type(self).__name__}, {self.rect}>"
@@ -345,6 +296,55 @@ class Widget:
 
         for child in self.children:
             child.kill()
+
+    @staticmethod
+    def _resolve_size(
+        requested_size: FitSize,
+        components: tuple[Component, ...],
+        base_style: Style,
+    ) -> tuple[int, int]:
+        """Return the size to build a widget's rect from.
+
+        Each ``None`` axis of ``requested_size`` takes the largest preferred
+        size on that axis among ``components``, measured in ``base_style``.
+        Other axes are rounded down to whole pixels. The components are
+        measured only when an axis is fitted.
+
+        Args:
+            requested_size: Size the widget was given, already validated.
+            components: Components to fit the ``None`` axes to.
+            base_style: Style to measure the components in.
+
+        Returns:
+            ``(width, height)`` in whole pixels.
+
+        Raises:
+            ValueError: If either axis is ``None`` and there are no components.
+        """
+        width, height = requested_size
+        if width is not None and height is not None:
+            return (math.floor(width), math.floor(height))
+
+        if not components:
+            raise ValueError(
+                "size cannot have None on an axis of a widget with no components, "
+                f"got {requested_size!r}"
+            )
+
+        preferred_sizes = [
+            component.get_preferred_size(base_style) for component in components
+        ]
+        if width is None:
+            width = max(preferred_size[0] for preferred_size in preferred_sizes)
+        else:
+            width = math.floor(width)
+
+        if height is None:
+            height = max(preferred_size[1] for preferred_size in preferred_sizes)
+        else:
+            height = math.floor(height)
+
+        return (width, height)
 
     def _measure(self) -> None:
         """Set the widget's size from its contents, before it is placed.
