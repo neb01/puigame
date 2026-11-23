@@ -62,10 +62,10 @@ class Container(Widget):
                 is neither an ``Anchor`` nor ``None``, or if ``size``,
                 ``margin``, or ``offset`` is not an ``(x, y)`` pair of numbers.
                 The container is not added to ``parent``.
-            ValueError: If either dimension of ``size`` is negative, or if
-                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
-                ``margin`` is not its default. The container is not added to
-                ``parent``.
+            ValueError: If either dimension of ``size`` is negative or
+                ``None``, or if ``parent`` is a box and ``anchor``,
+                ``parent_anchor``, or ``margin`` is not its default. The
+                container is not added to ``parent``.
         """
         super().__init__(
             parent,

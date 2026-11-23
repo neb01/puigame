@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, ClassVar, Never, NoReturn
 
@@ -11,8 +12,10 @@ from pygame.typing import Point
 from puigame._components.placed_image import PlacedImage, compose_layers
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor, get_pos_from_anchor_match
+from puigame._layout.fit_size import FitSize
+from puigame._styling.style import Style
 from puigame._styling.theme import Theme
-from puigame._validation import reject_negative_in_pair, validate_pair
+from puigame._validation import validate_fit_size, validate_pair
 from puigame._widgets.state import State
 
 if TYPE_CHECKING:
@@ -25,8 +28,9 @@ class Widget:
 
     A Widget provides:
 
-    - a rect, sized on creation and placed against its parent's by its anchors,
-      margin, and offset, on creation and by each layout pass
+    - a rect, sized on creation, either as given or fitted to its components,
+      and placed against its parent's by its anchors, margin, and offset, on
+      creation and by each layout pass
     - a parent to anchor against, fixed on creation, and its children
     - a skin, fixed on creation, that draws its images in the UI's theme
     - ``enabled`` and ``visible`` flags, with ``_in_tree`` versions that take
@@ -43,7 +47,7 @@ class Widget:
         self,
         parent: Widget | UI,
         *,
-        size: Point,
+        size: FitSize,
         skin: Skin,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
@@ -63,7 +67,10 @@ class Widget:
             parent: Widget or ``UI`` to anchor against and to be a child of. A
                 widget whose parent is the ``UI`` is a top-level widget. It
                 cannot be changed later.
-            size: Width and height in pixels.
+            size: Width and height in pixels. ``None`` on an axis fits that
+                axis to the largest preferred size among the widget's
+                components, measured in the theme's base style. Other values
+                are rounded down to whole pixels.
             skin: Skin that draws the widget's images.
             anchor: Point on this widget used for positioning. Fixed on
                 creation. Defaults to ``Anchor.CENTRE``.
@@ -86,17 +93,20 @@ class Widget:
                 ``hit_testable``. Defaults to ``True``.
             components: Parts drawn above the skin, in the order given, each
                 rendered at the widget's size in the theme's style for each
-                state. Fixed on creation. Internal: for puigame's own widgets,
+                state, and measured to fit any ``None`` axis of ``size``. Fixed
+                on creation. Internal: for puigame's own widgets,
                 since subclassing ``Widget`` is not yet supported. Defaults to
                 no components.
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
-                is neither an ``Anchor`` nor ``None``, or if ``size``,
-                ``margin``, or ``offset`` is not an ``(x, y)`` pair of numbers.
-                The widget is not added to ``parent``.
-            ValueError: If either dimension of ``size`` is negative, or if
-                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
+                is neither an ``Anchor`` nor ``None``, if ``size`` is not an
+                ``(x, y)`` pair of numbers or ``None``, or if ``margin`` or
+                ``offset`` is not an ``(x, y)`` pair of numbers. The widget is
+                not added to ``parent``.
+            ValueError: If either dimension of ``size`` is negative, if either
+                is ``None`` and the widget has no components, or if ``parent``
+                is a box and ``anchor``, ``parent_anchor``, or
                 ``margin`` is not its default. The widget is not added to
                 ``parent``.
         """
@@ -117,8 +127,17 @@ class Widget:
         else:
             self._ui = self._parent
 
-        validate_pair("size", size)
-        reject_negative_in_pair("size", size)
+        self._components = tuple(components)
+
+        validate_fit_size("size", size)
+        # copied, so that later changes to the caller's sequence cannot change
+        # what a re-fit reads
+        self._requested_size = (size[0], size[1])
+        size = self._resolve_size(
+            self._requested_size,
+            self._components,
+            self.theme.base_style,
+        )
 
         self._rect = pg.Rect((0, 0), size)
         self._skin = skin
@@ -140,8 +159,6 @@ class Widget:
         self.visible = visible
         self.hit_testable = hit_testable
 
-        self._components = tuple(components)
-
         self._placed_image_cache: dict[State, PlacedImage] = {}
         self._placed_image: PlacedImage
         # needs the components above to render, and the flags to pick the image
@@ -153,6 +170,55 @@ class Widget:
         # join the parent only once setup has succeeded, so that a widget whose
         # setup raised is never left in the tree
         self._parent._add_child(self)
+
+    @staticmethod
+    def _resolve_size(
+        requested_size: FitSize,
+        components: tuple[Component, ...],
+        base_style: Style,
+    ) -> tuple[int, int]:
+        """Return the size to build a widget's rect from.
+
+        Each ``None`` axis of ``requested_size`` takes the largest preferred
+        size on that axis among ``components``, measured in ``base_style``.
+        Other axes are rounded down to whole pixels. The components are
+        measured only when an axis is fitted.
+
+        Args:
+            requested_size: Size the widget was given, already validated.
+            components: Components to fit the ``None`` axes to.
+            base_style: Style to measure the components in.
+
+        Returns:
+            ``(width, height)`` in whole pixels.
+
+        Raises:
+            ValueError: If either axis is ``None`` and there are no components.
+        """
+        width, height = requested_size
+        if width is not None and height is not None:
+            return (math.floor(width), math.floor(height))
+
+        if not components:
+            raise ValueError(
+                "size cannot have None on an axis of a widget with no components, "
+                f"got {requested_size!r}"
+            )
+
+        preferred_sizes = [
+            component.get_preferred_size(base_style) for component in components
+        ]
+        if width is None:
+            width = max(preferred_size[0] for preferred_size in preferred_sizes)
+        else:
+            width = math.floor(width)
+
+        if height is None:
+            height = max(preferred_size[1] for preferred_size in preferred_sizes)
+        else:
+            height = math.floor(height)
+
+        return (width, height)
 
     def __repr__(self) -> str:
         """Return a representation for debugging."""
