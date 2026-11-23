@@ -15,6 +15,7 @@ from pygame.typing import Point
 from puigame._components.skin import NoSkin
 from puigame._layout.anchor import Anchor
 from puigame._layout.box_align import BoxAlign
+from puigame._layout.fit_size import FitSource
 from puigame._widgets.widget import Widget
 
 if TYPE_CHECKING:
@@ -94,6 +95,7 @@ class Box(Widget):
     default. It is not used directly: use ``VBox`` or ``HBox``.
     """
 
+    _fit_source = FitSource.CHILDREN
     _main_axis: ClassVar[Axis]
 
     def __init__(

@@ -9,13 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `VBox` and `HBox`, invisible widgets that stack their children in a column or a row and size themselves to fit them, with the theme's `box_gap` between neighbours. Hidden children take no space. `align`, a `BoxAlign` (`START`, `CENTRE`, or `END`), places children narrower than the box. A box places its children, so a child's `anchor`, `parent_anchor`, and `margin` must keep their defaults, and other values raise `ValueError`; its `offset` still applies. Sizes and positions are worked out by `ui.update()`.
-- Fit-to-text sizing. `Label`, `Button`, and `ToggleButton` accept `None` on either axis of `size`, which fits that axis to their text: the text's box, from the top of its capitals to its baseline, plus `text_margin` on each side, in the theme's base style. Their `size` now defaults to `(None, None)`, so it can be left out. Assigning `text` fits the `None` axes again; the new size applies at once, and the new position at the next `ui.update()`. Empty text counts as one line high and 0 wide. A `Container` or `Panel` has nothing to fit to, so `None` in its `size` raises `ValueError`.
+- Fit-to-text sizing. `Label`, `Button`, and `ToggleButton` accept `None` on either axis of `size`, which fits that axis to their text: the text's box, from the top of its capitals to its baseline, plus `text_margin` on each side, in the theme's base style. Their `size` now defaults to `(None, None)`, so it can be left out. Assigning `text` fits the `None` axes again; the new size applies at once, and the new position at the next `ui.update()`. Empty text counts as one line high and 0 wide. A `Container` has nothing to fit to, so `None` in its `size` raises `ValueError`.
 - `FitSize`, the type of a size that can fit its content, for annotations.
+- A `Panel` can fit its children. `None` on either axis of its `size` sizes that axis to its visible children whose `anchor` is the same as their `parent_anchor`: the largest child's size plus its margin on each side, floored at 0, or 0 with no such children. Children anchored elsewhere, such as one hanging off the panel's side, are not counted. The size is worked out by `ui.update()`, so a fitted axis is 0 until the first update.
 
 ### Changed
 
 - **Breaking:** `Style` now requires `box_gap`, the space in pixels between neighbouring children of a `VBox` or `HBox`. `DEFAULT_THEME` uses 3. A negative gap raises `ValueError`.
 - **Breaking:** `DEFAULT_THEME`'s `text_margin` is `(12, 8)`, not `(0, 0)`, so text fitted to its button keeps clear of the border in every state. Text in widgets of a fixed size looks the same, since the default `text_anchor` is `CENTRE` and a margin does not move centred text. A theme built from `DEFAULT_THEME.base_style` with a different `text_anchor` now places its text 12 pixels in from the side and 8 from the top or bottom; set `text_margin=(0, 0)` to keep the old placement.
+- `DrawnSkin` draws a widget of any size, flooring each layer's size at 0. A border thicker than half the widget leaves no body, so the widget is all border, and a swell that shrinks a layer past 0 leaves nothing of it to draw. `render()` raised `ValueError` when the body would have had a negative size.
 
 ### Fixed
 

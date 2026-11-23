@@ -21,6 +21,7 @@ from puigame import (
 )
 from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import Skin
+from puigame._layout.fit_size import FitSource
 from stubs import BodyColourLayer, FixedLayer
 
 # region --- Constants --------------------------------------------------------
@@ -117,6 +118,18 @@ class MeasuredLayer(Skin):
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Return a 0x0 image at (0, 0)."""
         return PlacedImage(pg.Surface((0, 0), pg.SRCALPHA), (0, 0))
+
+
+class ComponentFittedWidget(Widget):
+    """Widget whose ``None`` size axes fit its components, as a label's do."""
+
+    _fit_source = FitSource.COMPONENTS
+
+
+class ChildFittedWidget(Widget):
+    """Widget whose ``None`` size axes fit its children, as a panel's do."""
+
+    _fit_source = FitSource.CHILDREN
 
 
 class ChildRefusedError(Exception):
@@ -435,7 +448,7 @@ def test_constructor_with_str_or_tuple_parent_anchor_raises(ui: UI, parent_ancho
     ids=["width", "height", "both"],
 )
 def test_none_axis_fits_to_component_preferred_size(ui: UI, size, expected_size):
-    widget = Widget(
+    widget = ComponentFittedWidget(
         ui,
         size=size,
         skin=ANY_SKIN,
@@ -446,7 +459,7 @@ def test_none_axis_fits_to_component_preferred_size(ui: UI, size, expected_size)
 
 
 def test_fixed_axis_beside_none_axis_is_rounded_down(ui: UI):
-    widget = Widget(
+    widget = ComponentFittedWidget(
         ui,
         size=(None, 30.8),
         skin=ANY_SKIN,
@@ -457,7 +470,7 @@ def test_fixed_axis_beside_none_axis_is_rounded_down(ui: UI):
 
 
 def test_none_axes_fit_to_largest_preferred_size_on_each_axis(ui: UI):
-    widget = Widget(
+    widget = ComponentFittedWidget(
         ui,
         size=(None, None),
         skin=ANY_SKIN,
@@ -471,7 +484,7 @@ def test_none_axes_fit_to_largest_preferred_size_on_each_axis(ui: UI):
 
 
 def test_none_axis_fits_to_zero_preferred_size(ui: UI):
-    widget = Widget(
+    widget = ComponentFittedWidget(
         ui,
         size=(None, 30),
         skin=ANY_SKIN,
@@ -485,7 +498,7 @@ def test_components_are_measured_once_in_base_style():
     ui = UI(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
     component = MeasuredLayer(preferred_size=(12, 17))
 
-    Widget(ui, size=(None, None), skin=ANY_SKIN, components=[component])
+    ComponentFittedWidget(ui, size=(None, None), skin=ANY_SKIN, components=[component])
 
     assert component.measured_styles == [replace(ANY_STYLE, body_colour=BASE_COLOUR)]
 
@@ -493,7 +506,7 @@ def test_components_are_measured_once_in_base_style():
 def test_fixed_size_does_not_measure_components(ui: UI):
     component = MeasuredLayer(preferred_size=(12, 17))
 
-    Widget(ui, size=(10, 20), skin=ANY_SKIN, components=[component])
+    ComponentFittedWidget(ui, size=(10, 20), skin=ANY_SKIN, components=[component])
 
     assert component.measured_styles == []
 
@@ -505,9 +518,54 @@ def test_fixed_size_does_not_measure_components(ui: UI):
 )
 def test_constructor_with_none_axis_and_no_components_raises(ui: UI, size):
     with pytest.raises(ValueError):
-        Widget(ui, size=size, skin=ANY_SKIN, components=[])
+        ComponentFittedWidget(ui, size=size, skin=ANY_SKIN, components=[])
 
     assert ui.children == ()
+
+
+@pytest.mark.parametrize(
+    "size",
+    [(None, 30), (25, None), (None, None)],
+    ids=["width", "height", "both"],
+)
+def test_constructor_with_none_axis_on_widget_that_does_not_fit_raises(ui: UI, size):
+    with pytest.raises(ValueError):
+        Widget(
+            ui,
+            size=size,
+            skin=ANY_SKIN,
+            components=[MeasuredLayer(preferred_size=(12, 17))],
+        )
+
+    assert ui.children == ()
+
+
+@pytest.mark.parametrize(
+    ("size", "expected_size"),
+    [
+        ((None, 30.8), (0, 30)),
+        ((25.6, None), (25, 0)),
+        ((None, None), (0, 0)),
+    ],
+    ids=["width", "height", "both"],
+)
+def test_none_axis_of_child_fitted_widget_starts_at_zero(ui: UI, size, expected_size):
+    widget = ChildFittedWidget(
+        ui,
+        size=size,
+        skin=ANY_SKIN,
+        components=[MeasuredLayer(preferred_size=(12, 17))],
+    )
+
+    assert widget.rect.size == expected_size
+
+
+def test_child_fitted_widget_does_not_measure_components(ui: UI):
+    component = MeasuredLayer(preferred_size=(12, 17))
+
+    ChildFittedWidget(ui, size=(None, None), skin=ANY_SKIN, components=[component])
+
+    assert component.measured_styles == []
 
 
 # endregion
