@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-23
+
 ### Added
 
 - `VBox` and `HBox`, invisible widgets that stack their children in a column or a row and size themselves to fit them, with the theme's `box_gap` between neighbours. Hidden children take no space. `align`, a `BoxAlign` (`START`, `CENTRE`, or `END`), places children narrower than the box. A box places its children, so a child's `anchor`, `parent_anchor`, and `margin` must keep their defaults, and other values raise `ValueError`; its `offset` still applies. Sizes and positions are worked out by `ui.update()`.
@@ -64,7 +66,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Inline type hints (`py.typed`).
 - Examples: `minimal.py`, `custom_theme.py`, and `showcase.py`.
 
-[Unreleased]: https://github.com/neb01/puigame/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/neb01/puigame/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/neb01/puigame/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/neb01/puigame/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/neb01/puigame/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/neb01/puigame/releases/tag/v0.1.0
