@@ -14,7 +14,7 @@ The rules the code, tests, and docs follow, each with its reason. Tools enforce 
 
 ## Enforced by tools
 
-- **Ruff** checks and formats everything; the selected rules are in `pyproject.toml` (`B`, `D` with the Google convention, `E`, `F`, `I`, `N`, `RET`, `RUF`, `SIM`, `TC004`, `TID`, `UP`, `W`). Lines are at most 88 characters. Relative imports are banned.
+- **Ruff** checks and formats everything; the selected rules are in `pyproject.toml` (`B`, `D` with the Google convention, `E`, `F`, `I`, `N`, `RET`, `RUF`, `SIM`, `TC004`, `TID`, `UP`, `W`), except `SIM108`, so an `if`/`else` that assigns one of two values is never forced into a conditional expression. Lines are at most 88 characters. Relative imports are banned.
 - **Pyright** type-checks `src/`, `tests/`, and `examples/` in CI.
 - **pre-commit** runs the housekeeping hooks, Ruff, and pyproject-fmt on every commit. Pyright and pytest run only in CI.
 

@@ -61,6 +61,7 @@ lint.select = [
   "UP",    # pyupgrade (modern Python syntax)
   "W",     # pycodestyle warnings
 ]
+lint.ignore = [ "SIM108" ]  # if/else is kept for two-way assignments; ternaries are not required
 lint.per-file-ignores."tests/**/*.py" = [ "D100", "D103" ]  # test modules/functions don't need docstrings
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.pydocstyle.convention = "google"
