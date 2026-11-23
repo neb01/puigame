@@ -289,25 +289,6 @@ class UIManager:
 
         return None
 
-    def _set_pressed_widget(self, interactive_widget: InteractiveWidget) -> None:
-        """Record ``interactive_widget`` as pressed, ending any other press.
-
-        Args:
-            interactive_widget: Widget the press started on.
-        """
-        if interactive_widget is self._pressed_widget:
-            return
-
-        self._clear_pressed_widget()
-        self._pressed_widget = interactive_widget
-        interactive_widget._pressed = True
-
-    def _clear_pressed_widget(self) -> None:
-        """End the press in progress, if any, without activating anything."""
-        if self._pressed_widget is not None:
-            self._pressed_widget._pressed = False
-            self._pressed_widget = None
-
     def _set_highlighted_widget(self, interactive_widget: InteractiveWidget) -> None:
         """Highlight ``interactive_widget``, clearing any other highlight.
 
@@ -326,3 +307,22 @@ class UIManager:
         if self._highlighted_widget is not None:
             self._highlighted_widget._highlighted = False
             self._highlighted_widget = None
+
+    def _set_pressed_widget(self, interactive_widget: InteractiveWidget) -> None:
+        """Record ``interactive_widget`` as pressed, ending any other press.
+
+        Args:
+            interactive_widget: Widget the press started on.
+        """
+        if interactive_widget is self._pressed_widget:
+            return
+
+        self._clear_pressed_widget()
+        self._pressed_widget = interactive_widget
+        interactive_widget._pressed = True
+
+    def _clear_pressed_widget(self) -> None:
+        """End the press in progress, if any, without activating anything."""
+        if self._pressed_widget is not None:
+            self._pressed_widget._pressed = False
+            self._pressed_widget = None

@@ -206,20 +206,20 @@ class Widget:
         return self._placed_image.pos
 
     @property
-    def skin(self) -> Skin:
-        """The skin that draws the widget's images.
-
-        Set on creation and never changed, so it is read-only.
-        """
-        return self._skin
-
-    @property
     def parent(self) -> Widget | UI:
         """The widget or ``UI`` this one is anchored against.
 
         Set on creation and never changed, so it is read-only.
         """
         return self._parent
+
+    @property
+    def skin(self) -> Skin:
+        """The skin that draws the widget's images.
+
+        Set on creation and never changed, so it is read-only.
+        """
+        return self._skin
 
     @property
     def children(self) -> tuple[Widget, ...]:
@@ -270,24 +270,6 @@ class Widget:
 
         return self.visible and self.parent.visible_in_tree
 
-    def _measure(self) -> None:
-        """Set the widget's size from its contents, before it is placed.
-
-        ``UI.update()`` calls this for every widget each frame, children before
-        parents, so every descendant has already been measured. The default
-        does nothing, since a fixed size never changes and a widget that fits
-        its text measures itself when the text is set, so overrides need not
-        call ``super()``.
-        """
-
-    def _update(self) -> None:
-        """Refresh ``image`` and ``image_pos`` from the current state.
-
-        ``UI.update()`` calls this for every widget each frame, after the layout
-        pass.
-        """
-        self._refresh_current_placed_image()
-
     def kill(self) -> None:
         """Remove the widget and its descendants from the tree.
 
@@ -299,6 +281,52 @@ class Widget:
 
         for child in self.children:
             child.kill()
+
+    def _measure(self) -> None:
+        """Set the widget's size from its contents, before it is placed.
+
+        ``UI.update()`` calls this for every widget each frame, children before
+        parents, so every descendant has already been measured. The default
+        does nothing, since a fixed size never changes and a widget that fits
+        its text measures itself when the text is set, so overrides need not
+        call ``super()``.
+        """
+
+    def _place(self) -> None:
+        """Place the rect where the parent's ``_get_child_pos()`` puts it.
+
+        Most parents place the widget by its own anchors, margin, and offset;
+        a box stacks its children. The rect is updated in place, in the
+        coordinates of the surface the UI draws on. The parent, a widget or the
+        ``UI``, must already be placed, since its rect is read as it is.
+        """
+        self.rect.topleft = self.parent.rect.topleft
+        self.rect.move_ip(self.parent._get_child_pos(self))
+
+    @property
+    def _anchored_pos(self) -> tuple[int, int]:
+        """The position the anchors, margin, and offset give against the parent.
+
+        Measured from the parent's top-left corner, with ``+x`` to the right
+        and ``+y`` down, in whole pixels, rounded down once after the offset is
+        added.
+        """
+        return get_pos_from_anchor_match(
+            child_size=self.rect.size,
+            child_anchor=self._anchor,
+            parent_size=self.parent.rect.size,
+            parent_anchor=self._parent_anchor,
+            margin=self._margin,
+            offset=self.offset,
+        )
+
+    def _update(self) -> None:
+        """Refresh ``image`` and ``image_pos`` from the current state.
+
+        ``UI.update()`` calls this for every widget each frame, after the layout
+        pass.
+        """
+        self._refresh_current_placed_image()
 
     def _iter_subtree(self) -> Iterator[Widget]:
         """Yield this widget and every widget below it in the tree, parents first.
@@ -417,34 +445,6 @@ class Widget:
             state |= State.DISABLED
 
         return state
-
-    def _place(self) -> None:
-        """Place the rect where the parent's ``_get_child_pos()`` puts it.
-
-        Most parents place the widget by its own anchors, margin, and offset;
-        a box stacks its children. The rect is updated in place, in the
-        coordinates of the surface the UI draws on. The parent, a widget or the
-        ``UI``, must already be placed, since its rect is read as it is.
-        """
-        self.rect.topleft = self.parent.rect.topleft
-        self.rect.move_ip(self.parent._get_child_pos(self))
-
-    @property
-    def _anchored_pos(self) -> tuple[int, int]:
-        """The position the anchors, margin, and offset give against the parent.
-
-        Measured from the parent's top-left corner, with ``+x`` to the right
-        and ``+y`` down, in whole pixels, rounded down once after the offset is
-        added.
-        """
-        return get_pos_from_anchor_match(
-            child_size=self.rect.size,
-            child_anchor=self._anchor,
-            parent_size=self.parent.rect.size,
-            parent_anchor=self._parent_anchor,
-            margin=self._margin,
-            offset=self.offset,
-        )
 
     def _get_child_pos(self, child: Widget) -> tuple[int, int]:
         """Return where ``child`` goes, from this widget's top-left corner.
