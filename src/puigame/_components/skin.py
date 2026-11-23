@@ -127,6 +127,12 @@ class DrawnSkin(Skin):
         ring is drawn from the outermost in, with its alpha following the
         style's ``halo_fade_profile``.
 
+        Each layer's size is floored at 0 per axis, as in CSS: a border
+        thicker than half the widget leaves no body, so the widget is all
+        border, and a swell that shrinks a layer past 0 leaves nothing of it
+        to draw. Layout can give a widget any size, including 0x0, so every
+        size renders.
+
         Args:
             size: ``(width, height)`` of the widget's rect, in pixels.
             style: Complete style to draw with, as resolved by the widget's
@@ -135,19 +141,14 @@ class DrawnSkin(Skin):
         Returns:
             The drawn surface, at ``-(swell + halo_thickness)`` on each
             axis, so that the body lines up with the widget's rect.
-
-        Raises:
-            ValueError: If the swell and border thickness would give the body
-                a negative size. A body of size 0, where the widget is all
-                border, is allowed.
         """
         given_width = int(size[0])
         given_height = int(size[1])
 
-        # main inner body size and radius, and check for negative size
+        # main inner body size, floored at 0, and radius
         body_size = (
-            given_width + (style.swell - style.border_thickness) * 2,
-            given_height + (style.swell - style.border_thickness) * 2,
+            max(0, given_width + (style.swell - style.border_thickness) * 2),
+            max(0, given_height + (style.swell - style.border_thickness) * 2),
         )
 
         body_corner_radius = _clamp_radius(
@@ -155,18 +156,10 @@ class DrawnSkin(Skin):
             body_size,
         )
 
-        if min(body_size) < 0:
-            raise ValueError(
-                "border_thickness and swell cannot combine to make the "
-                f"body size negative, got body_size={body_size} px, size={size} px, "
-                f"border_thickness={style.border_thickness} px, "
-                f"swell={style.swell} px",
-            )
-
-        # border size and radius
+        # border size, floored at 0, and radius
         border_size = (
-            given_width + style.swell * 2,
-            given_height + style.swell * 2,
+            max(0, given_width + style.swell * 2),
+            max(0, given_height + style.swell * 2),
         )
 
         border_corner_radius = _clamp_radius(
@@ -174,10 +167,10 @@ class DrawnSkin(Skin):
             border_size,
         )
 
-        # outer surface size, sized for the outer edge of the halo
+        # outer surface size, for the outer edge of the halo, floored at 0
         surface_size = (
-            given_width + (style.swell + style.halo_thickness) * 2,
-            given_height + (style.swell + style.halo_thickness) * 2,
+            max(0, given_width + (style.swell + style.halo_thickness) * 2),
+            max(0, given_height + (style.swell + style.halo_thickness) * 2),
         )
 
         # calculated from border_corner_radius so that negative swell

@@ -9,7 +9,7 @@ from pygame.typing import Point
 from puigame._components.skin import NoSkin
 from puigame._components.text import Text
 from puigame._layout.anchor import Anchor
-from puigame._layout.fit_size import FitSize
+from puigame._layout.fit_size import FitSize, FitSource
 from puigame._widgets.widget import Widget
 
 if TYPE_CHECKING:
@@ -26,6 +26,8 @@ class Label(Widget):
     The text is styled and placed by the theme's style for the label's current
     state, relative to its rect, and is not clipped to the rect.
     """
+
+    _fit_source = FitSource.COMPONENTS
 
     def __init__(
         self,

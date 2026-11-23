@@ -199,6 +199,7 @@ def test_drawn_skin_body_size_can_be_zero(size):
         ((10, 2), 3, 0),
         ((10, 2), 0, -3),
         ((10, 2), 1, -2),
+        ((0, 0), 0, -1),
     ],
     ids=[
         "thick border",
@@ -210,17 +211,42 @@ def test_drawn_skin_body_size_can_be_zero(size):
         "thick border low height",
         "negative swell low height",
         "combined border swell low height",
+        "zero size negative swell",
     ],
 )
-def test_drawn_skin_negative_body_size_raises(size, border_thickness, swell):
+def test_drawn_skin_can_take_border_and_swell_larger_than_size(
+    size, border_thickness, swell
+):
     style = replace(
         ANY_STYLE,
         border_thickness=border_thickness,
         swell=swell,
     )
 
-    with pytest.raises(ValueError):
-        DrawnSkin().render(size, style)
+    DrawnSkin().render(size, style)  # body would be negative: clamped to 0
+
+
+@pytest.mark.parametrize(
+    "size",
+    [(2, 2), (2, 10), (10, 2)],
+    ids=["both axes", "width", "height"],
+)
+def test_drawn_skin_body_clamped_to_zero_leaves_only_border(size):
+    style = replace(
+        ANY_STYLE,
+        body_colour=WHITE,
+        border_colour=BLACK,
+        border_thickness=3,
+        corner_radius=0,
+        swell=0,
+    )
+
+    image = DrawnSkin().render(size, style).image
+
+    assert image.size == size
+    assert all(
+        image.get_at((x, y)) == BLACK for x in range(size[0]) for y in range(size[1])
+    )
 
 
 # endregion

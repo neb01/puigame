@@ -218,7 +218,7 @@ It draws three filled, rounded rectangles from largest to smallest: the halo (fi
 ![DrawnSkin layers for each combination of border and swell](images/skin_layers.svg)
 
 - A **fading halo** is drawn as one ring per pixel of thickness, from the outermost in. Each ring's alpha follows the style's `FadeProfile`: `SOLID`, `LINEAR`, or a soft or hard quadratic or cubic curve.
-- If the swell and border would give the body a **negative** size, `render()` raises `ValueError`, since the values contradict each other. A body of size 0 (a widget that is all border) is allowed.
+- Each layer's size is **floored at 0** per axis, as in CSS. A border thicker than half the widget leaves no body, so the widget is all border, and a swell that shrinks a layer past 0 leaves nothing of it to draw. Layout can give a widget any size, including 0x0 for an empty fitted panel, so every size renders. A style that worked before renders the same: the body is never larger than the border, so only a negative body size could make another layer negative, and that used to raise `ValueError`.
 
 ## Themes
 
@@ -232,7 +232,7 @@ The private `theme._style_for(state)` returns a complete `Style` for any combina
 - Themes are **immutable**: `Theme`, `Style`, and `StyleOverride` are frozen dataclasses, and `style_overrides` is stored as a read-only copy. Cached images therefore never go out of date because a theme changed. A variation is made with `dataclasses.replace()`.
 - `State.BASE` cannot be a key in `style_overrides`, because it is part of every state and its override would always apply. Combined flags, such as `State.HIGHLIGHTED | State.DISABLED`, cannot be keys either: a combination of states is styled by applying each flag's override in turn. Both raise `ValueError` when the theme is created.
 - Overrides combine best when each state changes its own fields: for example, highlighting adds a halo, checking thickens the border, and disabling greys out the colours. Overrides that set different fields always combine; where two set the same field, the higher-precedence flag wins. If checking and disabling both change the body colour, for example, a disabled toggle button looks the same whether it is checked or not.
-- Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. A text margin or offset that is not a tuple, a typeface that is neither a `BundledTypeface` nor a `Path`, or a horizontal extent that is not a `TextHorizontalExtent`, raises `TypeError`. Whether a negative swell leaves room for the body depends on the widget's size, so `DrawnSkin` checks that when it renders.
+- Styles reject values that cannot be drawn: a negative corner radius, border thickness, or halo thickness, or a font size of 0 or less, raises `ValueError` as soon as the `Style` or `StyleOverride` is created. A negative swell is allowed, since it shrinks the widget. A text margin or offset that is not a tuple, a typeface that is neither a `BundledTypeface` nor a `Path`, or a horizontal extent that is not a `TextHorizontalExtent`, raises `TypeError`. A swell that shrinks a layer past 0 leaves nothing of it to draw (see [DrawnSkin layers](#drawnskin-layers)).
 - Text is drawn in a **typeface**: a `BundledTypeface` member for a font shipped with puigame, or a `pathlib.Path` to a font file supplied by the game. Each member's value is the name of its file in `assets/fonts/`, and `PYGAME_DEFAULT` (value `None`) is pygame-ce's built-in font. Using two types keeps bundled fonts and game files apart, so nothing has to guess what a value means. Games cannot add members to `BundledTypeface`; a game that wants names for its own fonts defines them on its side, for example as `Path` constants.
 - The theme lives on the **`UI`**, and every widget reaches it through its UI, so every widget in a UI draws consistently. It is set when the UI is created and does not change.
 - puigame ships a default theme, `DEFAULT_THEME`. It is sized for a **640x360** render surface scaled up with `pg.SCALED`, which suits pixel-art games. It uses Neb0Font (`BundledTypeface.NEB0FONT`) at size 18, three times its 6-pixel grid, with `TextHorizontalExtent.INK`, so text is centred exactly at any size with a `text_offset` of `(0, 0)`; pressed text moves down 1 pixel. Its `CHECKED` look is a thicker green border, set with `border_colour` and `border_thickness`. No other state sets the border thickness, so a checked toggle button looks different from an unchecked one in every state, including disabled, where the border turns grey but stays thick.
@@ -329,7 +329,7 @@ The anchors and margin are fixed on creation and private: they are given to the 
 
 Layout runs once per frame, before drawing, in two walks over the tree from the `UI`:
 
-1. **Measure**, children before parents: each box sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing, and neither does one that fits its text, since it fits itself whenever its text changes (see [Fitting to text](#fitting-to-text)).
+1. **Measure**, children before parents: each box, and each panel that fits its children, sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing, and neither does one that fits its text, since it fits itself whenever its text changes (see [Fitting to text](#fitting-to-text)).
 2. **Place**, parents before children: the UI's rect is placed first, then every widget, so each widget is placed against its parent's up-to-date rect. A widget asks its parent where it goes. Most parents place it by its own anchors, margin, and offset; a box puts it in the slot the measure walk worked out.
 
 Each widget is also placed once when it is created. A box's new child starts at the box's top-left corner, moved by its offset, until the next pass.
@@ -345,8 +345,8 @@ A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` i
 - `text_anchor` has no visible effect on a fitted axis, since the box fills it.
 - **Empty text** fits to no width and one line's cap height, plus the margin on each side, so an empty label keeps its line.
 - **When**: on creation, and whenever `text` is assigned, rather than in the layout pass, since a widget's text depends on nothing else in the tree. The rect is resized in place at once, keeping its top-left corner, and the next layout pass places it by its anchors.
-- **Components report a preferred size**, which depends only on their content and the style. A fitted axis takes the largest preferred size among the widget's components, as Flutter's `Stack` and Android's `FrameLayout` do. A `Container` or `Panel` has no components to fit to, so `None` in its `size` raises `ValueError`.
-- Children never size a text widget. A `Panel` that fits its children is planned.
+- **Components report a preferred size**, which depends only on their content and the style. A fitted axis takes the largest preferred size among the widget's components, as Flutter's `Stack` and Android's `FrameLayout` do. A `Container` has nothing to fit to, so `None` in its `size` raises `ValueError`; a `Panel` fits its children instead (see [Fitted panels](#fitted-panels)).
+- Children never size a text widget.
 
 ### Boxes
 
@@ -358,7 +358,17 @@ A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` i
 - **Children keep their default `anchor`, `parent_anchor`, and `margin`**, which the box would ignore, so any other value raises `ValueError` when the child is created. Their `offset` still applies, after the box has placed them, so a child can still be nudged or animated.
 - **`box_gap` is a `Style` field**, read from the theme's base style. It is not in `StyleOverride`, so a box never changes size with its children's states.
 - **Every pass measures every box**, with no dirty flags, so new, killed, shown, and hidden children take effect at the next `update()`.
-- Like a `Container`, a box has `NoSkin` and is not hit-testable by default. With `hit_testable=True`, clicks anywhere over it, including the gaps between its children, stop at it. A box has no background; to put one behind it, size a `Panel` by hand.
+- Like a `Container`, a box has `NoSkin` and is not hit-testable by default. With `hit_testable=True`, clicks anywhere over it, including the gaps between its children, stop at it. A box has no background; to put one behind it, place it in a `Panel` that fits it (see [Fitted panels](#fitted-panels)).
+
+### Fitted panels
+
+A `Panel` can size itself to its children. Its `size` is a `FitSize` and is still required: `None` on an axis fits that axis, so `(None, None)` fits both and `(200, None)` fits only the height.
+
+- **Counted children**: visible children whose `anchor` is the same as their `parent_anchor`, so both axes agree. A child placed against an edge or corner it does not share, such as a tab hanging off the panel's side, is not counted on either axis, as Flutter's `Stack` leaves its `Positioned` children out when sizing itself. A counted child can sit anywhere in the panel, such as its top-left corner.
+- **Fitted size**, per axis: the largest counted child's size plus its margin on each side. A negative margin, which lets a child overlap the panel's edge, counts too, floored at 0, as `text_margin` is for text. The panel has no padding of its own, so a child's margin is what spaces it from the edge. With no counted children, a fitted axis is 0. A fixed axis keeps its size.
+- **When**: in the measure walk of every layout pass, after its children, so a panel holding a box fits the box's new size in the same `update()`. A fitted axis is 0 until the first pass. The panel's images are rendered again only when its size changes, since the walk runs every frame.
+- `DrawnSkin` floors each layer's size at 0, so a fitted panel renders at any size, including 0x0 (see [DrawnSkin layers](#drawnskin-layers)).
+- Each widget class says what `None` fits to with a private `FitSource`: nothing (`Widget`, `Container`), its components (`Label`, `Button`, `ToggleButton`), or its children (`Panel`, and the internal `Box`). A `Container` keeps a fixed size.
 
 ## State
 

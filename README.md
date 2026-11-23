@@ -94,7 +94,7 @@ For a display opened with `pg.SCALED`, create the UI with the display's own size
 - `ToggleButton`: a button that switches between checked and unchecked when clicked.
 - `ToggleGroup`: not a widget, but a set of toggle buttons of which at most one is checked, as radio buttons are.
 - `Label`: text.
-- `Panel`: a background for its children, which by default stops clicks reaching the widgets and game below it.
+- `Panel`: a background for its children, of a given size or fitted to them, which by default stops clicks reaching the widgets and game below it.
 - `Container`: an invisible widget that groups and places its children.
 - `VBox` and `HBox`: invisible widgets that stack their children in a column or a row, with the theme's `box_gap` between them, and size themselves to fit.
 

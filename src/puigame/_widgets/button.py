@@ -10,7 +10,7 @@ from pygame.typing import Point
 from puigame._components.skin import Skin
 from puigame._components.text import Text
 from puigame._layout.anchor import Anchor
-from puigame._layout.fit_size import FitSize
+from puigame._layout.fit_size import FitSize, FitSource
 from puigame._widgets.interactive_widget import InteractiveWidget
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
@@ -40,6 +40,8 @@ class Button(InteractiveWidget):
         State.HIGHLIGHTED | State.PRESSED,
         State.DISABLED,
     )
+
+    _fit_source = FitSource.COMPONENTS
 
     def __init__(
         self,
