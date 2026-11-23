@@ -80,6 +80,10 @@ class RecordingLayer(Skin):
         self.received_sizes: list[Point] = []
         self.received_styles: list[Style] = []
 
+    def get_preferred_size(self, style: Style) -> tuple[int, int]:
+        """Return ``(0, 0)``, since the layer fills whatever size it is given."""
+        return (0, 0)
+
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Record ``size`` and ``style``, and return a transparent image."""
         self.received_sizes.append(size)
