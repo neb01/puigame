@@ -174,7 +174,9 @@ class Style:
         text_horizontal_extent: How wide the text's placement box is. See
             ``TextHorizontalExtent``.
         text_margin: Distance in pixels that the text is moved from its anchor
-            point towards its own centre, as an ``(x, y)`` pair.
+            point towards its own centre, as an ``(x, y)`` pair. On an axis
+            where a widget fits its size to its text, it is also the space
+            left on each side of the text.
     """
 
     # general appearance options

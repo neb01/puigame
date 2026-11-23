@@ -1,4 +1,5 @@
 from dataclasses import replace
+from pathlib import Path
 
 import pygame as pg
 import pytest
@@ -26,6 +27,8 @@ from puigame._components.skin import Skin
 from stubs import OnToggleError, on_toggle_error
 
 # region --- Constants --------------------------------------------------------
+
+NEBMON0FONT_PATH = Path(__file__).parent.parent / "assets" / "fonts" / "nebmon0font.ttf"
 
 ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
@@ -100,6 +103,33 @@ class BodyAndBorderColourLayer(Skin):
         image.fill(style.border_colour, pg.Rect((0, 0), (size[0], 1)))
 
         return PlacedImage(image, (0, 0))
+
+
+# endregion
+
+
+# region --- Helpers ----------------------------------------------------------
+
+
+def _text_fitting_ui(*, font_size: int, text_margin: tuple[int, int]) -> UI:
+    """Return a 300x200 UI whose theme sets the text's font size and margin.
+
+    The text is in ``nebmon0font.ttf``, measured by its ink, and anchored
+    ``CENTRE`` to ``CENTRE`` with no offset. Tests that change any of these
+    build their own theme.
+    """
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=font_size,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=text_margin,
+        text_offset=(0, 0),
+    )
+
+    return UI(size=(300, 200), theme=Theme(base_style=style, style_overrides={}))
 
 
 # endregion
@@ -213,6 +243,19 @@ def test_text_defaults_to_empty_string(ui: UI):
     toggle_button = ToggleButton(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert toggle_button.text == ""
+
+
+# endregion
+
+
+# region --- Fitted size ------------------------------------------------------
+
+
+def test_size_defaults_to_fitting_both_axes_to_text():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    toggle_button = ToggleButton(ui, skin=NoSkin(), text="SPUD")
+
+    assert toggle_button.rect.size == (51, 22)
 
 
 # endregion

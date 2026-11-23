@@ -346,6 +346,28 @@ class Widget:
 
         return (width, height)
 
+    def _set_to_resolved_size(self) -> None:
+        """Resize the rect to fit the size the widget was created with.
+
+        Each ``None`` axis of the requested size is fitted again to the
+        components' current preferred sizes; a fixed axis keeps its size. The
+        rect is resized in place, keeping its top-left corner, and the next
+        layout pass places it again.
+        """
+        self._rect.size = self._resolve_size(
+            self._requested_size, self._components, self.theme.base_style
+        )
+
+    def _refresh_after_content_change(self) -> None:
+        """Re-fit the size and redraw the images after a component changes.
+
+        A widget calls this after changing what one of its components shows,
+        such as a label's text. The images are rebuilt after resizing, since
+        they are rendered at the rect's size.
+        """
+        self._set_to_resolved_size()
+        self._rebuild_image_cache()
+
     def _measure(self) -> None:
         """Set the widget's size from its contents, before it is placed.
 

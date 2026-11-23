@@ -10,6 +10,7 @@ from pygame.typing import Point
 from puigame._components.skin import Skin
 from puigame._components.text import Text
 from puigame._layout.anchor import Anchor
+from puigame._layout.fit_size import FitSize
 from puigame._widgets.interactive_widget import InteractiveWidget
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
@@ -44,7 +45,7 @@ class Button(InteractiveWidget):
         self,
         parent: Widget | UI,
         *,
-        size: Point,
+        size: FitSize = (None, None),
         skin: Skin,
         text: str = "",
         on_click: Callable[[Button], object] | None = None,
@@ -61,8 +62,14 @@ class Button(InteractiveWidget):
         Args:
             parent: Widget or ``UI`` to anchor against and to be a child of. It
                 cannot be changed later.
-            size: Width and height in pixels. The text is placed against this
-                rect.
+            size: Width and height in pixels. ``None`` on an axis fits that
+                axis to the text, measured in the theme's base style: the
+                text's placement box, from cap top to baseline, plus
+                ``text_margin`` on each side. Empty text's box is one line
+                high and 0 wide. Other values are rounded down to whole
+                pixels. The text is placed against this rect, so
+                ``text_anchor`` has no visible effect on a fitted axis.
+                Defaults to ``(None, None)``, which fits both axes.
             skin: Skin that draws the button's images. It cannot be changed
                 later. For a button with no background, use a ``NoSkin``.
             text: The text to display. Defaults to an empty string, which draws
@@ -95,9 +102,10 @@ class Button(InteractiveWidget):
         Raises:
             TypeError: If ``text`` is not a string, if ``on_click`` is neither
                 ``None`` nor callable, if ``anchor`` is not an ``Anchor``, if
-                ``parent_anchor`` is neither an ``Anchor`` nor ``None``, or if
-                ``size``, ``margin``, or ``offset`` is not an ``(x, y)`` pair
-                of numbers. The button is not added to ``parent``.
+                ``parent_anchor`` is neither an ``Anchor`` nor ``None``, if
+                ``size`` is not an ``(x, y)`` pair of numbers or ``None``, or
+                if ``margin`` or ``offset`` is not an ``(x, y)`` pair of
+                numbers. The button is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative, or if
                 ``parent`` is a box and ``anchor``, ``parent_anchor``, or
                 ``margin`` is not its default. The button is not added to
@@ -128,7 +136,9 @@ class Button(InteractiveWidget):
     def text(self) -> str:
         """The text the button displays.
 
-        Assigning new text redraws the button's images; assigning the text it
+        Assigning new text fits each axis of ``size`` given as ``None`` to it
+        again and redraws the button's images. The rect's size changes at once,
+        and its position at the next ``UI.update()``. Assigning the text it
         already has does nothing. Assigning a value that is not a string raises
         ``TypeError`` and leaves the text unchanged.
         """
@@ -140,7 +150,7 @@ class Button(InteractiveWidget):
             return
 
         self._text.content = value
-        self._rebuild_image_cache()
+        self._refresh_after_content_change()
 
     @property
     def _current_state(self) -> State:

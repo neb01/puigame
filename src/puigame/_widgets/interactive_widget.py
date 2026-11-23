@@ -18,6 +18,7 @@ from pygame.typing import Point
 from puigame._components.component import Component
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor
+from puigame._layout.fit_size import FitSize
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
 
@@ -46,7 +47,7 @@ class InteractiveWidget(Widget):
         self,
         parent: Widget | UI,
         *,
-        size: Point,
+        size: FitSize,
         skin: Skin,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
@@ -65,7 +66,9 @@ class InteractiveWidget(Widget):
         Args:
             parent: Widget or ``UI`` to anchor against and to be a child of. It
                 cannot be changed later.
-            size: Width and height in pixels.
+            size: Width and height in pixels. ``None`` on an axis fits that
+                axis to the widget's components, as for ``Widget``. Other
+                values are rounded down to whole pixels.
             skin: Skin that draws the widget's images.
             anchor: Point on this widget used for positioning. Fixed on
                 creation. Defaults to ``Anchor.CENTRE``.
@@ -95,13 +98,14 @@ class InteractiveWidget(Widget):
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
-                is neither an ``Anchor`` nor ``None``, or if ``size``,
-                ``margin``, or ``offset`` is not an ``(x, y)`` pair of numbers.
-                The widget is not added to ``parent``.
-            ValueError: If either dimension of ``size`` is negative, or if
-                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
-                ``margin`` is not its default. The widget is not added to
-                ``parent``.
+                is neither an ``Anchor`` nor ``None``, if ``size`` is not an
+                ``(x, y)`` pair of numbers or ``None``, or if ``margin`` or
+                ``offset`` is not an ``(x, y)`` pair of numbers. The widget is
+                not added to ``parent``.
+            ValueError: If either dimension of ``size`` is negative, if either
+                is ``None`` and the widget has no components, or if ``parent``
+                is a box and ``anchor``, ``parent_anchor``, or ``margin`` is
+                not its default. The widget is not added to ``parent``.
         """
         # set first, since super().__init__() picks the image through _current_state
         self._highlighted = False
