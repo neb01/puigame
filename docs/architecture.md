@@ -340,7 +340,7 @@ Rects are in the coordinates of the surface the UI draws on, which is the screen
 
 A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` is a `FitSize`: an `(x, y)` pair in which `None` on an axis fits that axis. It defaults to `(None, None)`, which fits both.
 
-- **Fitted size**, per axis: the text's placement box (see [Text](#text)) plus `text_margin` on each side, floored at 0. `text_offset` and the skin's border are not counted, so the theme's margin is what keeps the text clear of the border.
+- **Fitted size**, per axis: the text's placement box (see [Text](#text)) plus `text_margin` on each side, floored at 0. `text_offset` and the skin's border are not counted, so the theme's margin is what keeps the text clear of the border. `DEFAULT_THEME` uses `(12, 8)`, which clears its thickest border, the pressed swell and text offset, and the descenders that hang below the box.
 - **Measured in the theme's base style**, so a widget never changes size with its state.
 - `text_anchor` has no visible effect on a fitted axis, since the box fills it.
 - **Empty text** fits to no width and one line's cap height, plus the margin on each side, so an empty label keeps its line.

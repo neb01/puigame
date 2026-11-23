@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - **Breaking:** `Style` now requires `box_gap`, the space in pixels between neighbouring children of a `VBox` or `HBox`. `DEFAULT_THEME` uses 3. A negative gap raises `ValueError`.
+- **Breaking:** `DEFAULT_THEME`'s `text_margin` is `(12, 8)`, not `(0, 0)`, so text fitted to its button keeps clear of the border in every state. Text in widgets of a fixed size looks the same, since the default `text_anchor` is `CENTRE` and a margin does not move centred text. A theme built from `DEFAULT_THEME.base_style` with a different `text_anchor` now places its text 12 pixels in from the side and 8 from the top or bottom; set `text_margin=(0, 0)` to keep the old placement.
 
 ### Fixed
 
