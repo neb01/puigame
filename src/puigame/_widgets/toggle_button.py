@@ -162,18 +162,14 @@ class ToggleButton(Button):
             group._add(self)
 
     @property
-    def _current_state(self) -> State:
-        """The button's current State, adding ``CHECKED`` while checked.
+    def group(self) -> ToggleGroup | None:
+        """The group the button belongs to, or ``None`` if it has none.
 
-        ``CHECKED`` is added on top of every other state, including
-        ``DISABLED``, so a disabled button can still show its value.
+        Set on creation and never changed, so it is read-only, except that it
+        becomes ``None`` when the button is killed, since killing the button
+        removes it from its group.
         """
-        state = super()._current_state
-
-        if self.checked:
-            state |= State.CHECKED
-
-        return state
+        return self._group
 
     @property
     def checked(self) -> bool:
@@ -205,15 +201,41 @@ class ToggleButton(Button):
 
             self._call_on_toggle()
 
-    @property
-    def group(self) -> ToggleGroup | None:
-        """The group the button belongs to, or ``None`` if it has none.
+    def toggle(self) -> None:
+        """Switch the button between checked and unchecked.
 
-        Set on creation and never changed, so it is read-only, except that it
-        becomes ``None`` when the button is killed, since killing the button
-        removes it from its group.
+        The same as assigning ``not checked`` to ``checked``, so it calls
+        ``on_toggle`` with the new value. It works whether or not the button is
+        enabled, and, unlike a click, it can uncheck the checked button of a
+        group created with ``can_uncheck=False``.
         """
-        return self._group
+        self.checked = not self._checked
+
+    def kill(self) -> None:
+        """Remove the button from its group, if any, then from the tree.
+
+        Overrides ``Widget.kill()``. If the button was checked, its group is
+        left with no checked button, and no callbacks are called. Afterwards
+        ``group`` is ``None``.
+        """
+        if self._group is not None:
+            self._group._remove(self)
+
+        super().kill()
+
+    @property
+    def _current_state(self) -> State:
+        """The button's current State, adding ``CHECKED`` while checked.
+
+        ``CHECKED`` is added on top of every other state, including
+        ``DISABLED``, so a disabled button can still show its value.
+        """
+        state = super()._current_state
+
+        if self.checked:
+            state |= State.CHECKED
+
+        return state
 
     def _activate(self) -> None:
         """Toggle the button, unless its group stops clicks unchecking it.
@@ -237,25 +259,3 @@ class ToggleButton(Button):
         """
         if self._on_toggle is not None:
             self._on_toggle(self, self._checked)
-
-    def toggle(self) -> None:
-        """Switch the button between checked and unchecked.
-
-        The same as assigning ``not checked`` to ``checked``, so it calls
-        ``on_toggle`` with the new value. It works whether or not the button is
-        enabled, and, unlike a click, it can uncheck the checked button of a
-        group created with ``can_uncheck=False``.
-        """
-        self.checked = not self._checked
-
-    def kill(self) -> None:
-        """Remove the button from its group, if any, then from the tree.
-
-        Overrides ``Widget.kill()``. If the button was checked, its group is
-        left with no checked button, and no callbacks are called. Afterwards
-        ``group`` is ``None``.
-        """
-        if self._group is not None:
-            self._group._remove(self)
-
-        super().kill()
