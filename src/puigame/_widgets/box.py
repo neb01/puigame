@@ -140,8 +140,8 @@ class Box(Widget):
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
                 is neither an ``Anchor`` nor ``None``, or if ``margin`` or
-                ``offset`` is a single number rather than an ``(x, y)`` pair or
-                contains a ``bool``. The box is not added to ``parent``.
+                ``offset`` is not an ``(x, y)`` pair of numbers. The box is not
+                added to ``parent``.
             ValueError: If ``parent`` is a box and ``anchor``,
                 ``parent_anchor``, or ``margin`` is not its default. The box is
                 not added to ``parent``.

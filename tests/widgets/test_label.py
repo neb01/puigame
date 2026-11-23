@@ -1,3 +1,6 @@
+from dataclasses import replace
+from pathlib import Path
+
 import pytest
 
 from puigame import (
@@ -13,6 +16,8 @@ from puigame import (
 )
 
 # region --- Constants --------------------------------------------------------
+
+NEBMON0FONT_PATH = Path(__file__).parent.parent / "assets" / "fonts" / "nebmon0font.ttf"
 
 ANY_SIZE = (9, 10)
 ANY_STRING = "ordinary northumbrian spokeshaver's coracle"
@@ -42,6 +47,33 @@ ANY_STYLE = Style(
 )
 
 ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
+
+# endregion
+
+
+# region --- Helpers ----------------------------------------------------------
+
+
+def _text_fitting_ui(*, font_size: int, text_margin: tuple[int, int]) -> UI:
+    """Return a 300x200 UI whose theme sets the text's font size and margin.
+
+    The text is in ``nebmon0font.ttf``, measured by its ink, and anchored
+    ``CENTRE`` to ``CENTRE`` with no offset. Tests that change any of these
+    build their own theme.
+    """
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=font_size,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=text_margin,
+        text_offset=(0, 0),
+    )
+
+    return UI(size=(300, 200), theme=Theme(base_style=style, style_overrides={}))
+
 
 # endregion
 
@@ -99,6 +131,95 @@ def test_text_defaults_to_empty_string(ui: UI):
     label = Label(ui, size=ANY_SIZE)
 
     assert label.text == ""
+
+
+# endregion
+
+
+# region --- Fitted size ------------------------------------------------------
+
+
+def test_size_defaults_to_fitting_both_axes_to_text():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, text="SPUD")
+
+    assert label.rect.size == (51, 22)
+
+
+@pytest.mark.parametrize(
+    ("size", "expected_size"),
+    [((None, 40), (51, 40)), ((60, None), (60, 22))],
+    ids=["width fitted", "height fitted"],
+)
+def test_none_axis_fits_to_text_and_fixed_axis_keeps_its_size(size, expected_size):
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, size=size, text="SPUD")
+
+    assert label.rect.size == expected_size
+
+
+def test_empty_text_fits_to_margins_and_one_line_high():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, text="")
+
+    assert label.rect.size == (6, 22)
+
+
+@pytest.mark.parametrize(
+    ("size", "expected_size"),
+    [
+        ((None, None), (111, 40)),
+        ((None, 30), (111, 30)),
+        ((60, None), (60, 40)),
+        ((60, 30), (60, 30)),
+    ],
+    ids=["both fitted", "width fitted", "height fitted", "neither fitted"],
+)
+def test_text_setter_fits_none_axes_to_new_text(size, expected_size):
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, size=size, text="SPUD")
+
+    label.text = "SPUD SPUD\nSPUD"
+
+    assert label.rect.size == expected_size
+
+
+def test_text_setter_keeps_fixed_float_axis_rounded_down():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, size=(60.7, None), text="SPUD")
+
+    label.text = "SPUD SPUD\nSPUD"
+
+    assert label.rect.size == (60, 40)
+
+
+def test_text_setter_resizes_the_same_rect():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, text="SPUD")
+    rect = label.rect
+
+    label.text = "SPUD SPUD\nSPUD"
+
+    assert label.rect is rect
+
+
+def test_text_setter_keeps_rect_top_left_until_update():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, text="SPUD", anchor=Anchor.CENTRE, parent_anchor=Anchor.CENTRE)
+
+    label.text = "SPUD SPUD\nSPUD"
+
+    assert label.rect.topleft == (124, 89)
+
+
+def test_update_after_text_setter_places_refitted_rect():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    label = Label(ui, text="SPUD", anchor=Anchor.CENTRE, parent_anchor=Anchor.CENTRE)
+
+    label.text = "SPUD SPUD\nSPUD"
+    ui.update()
+
+    assert label.rect.topleft == (94, 80)
 
 
 # endregion

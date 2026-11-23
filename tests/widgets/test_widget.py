@@ -80,6 +80,10 @@ class RecordingLayer(Skin):
         self.received_sizes: list[Point] = []
         self.received_styles: list[Style] = []
 
+    def get_preferred_size(self, style: Style) -> tuple[int, int]:
+        """Return ``(0, 0)``, since the layer fills whatever size it is given."""
+        return (0, 0)
+
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Record ``size`` and ``style``, and return a transparent image."""
         self.received_sizes.append(size)
@@ -89,6 +93,30 @@ class RecordingLayer(Skin):
             pg.Surface(size, pg.SRCALPHA),
             (0, 0),
         )
+
+
+class MeasuredLayer(Skin):
+    """Component with a preferred size of its own that records each measure.
+
+    It draws nothing, so its preferred size shows only in the widget's rect.
+    """
+
+    def __init__(self, *, preferred_size: tuple[int, int]) -> None:
+        """Set up a layer that reports ``preferred_size``, with no measures yet."""
+        super().__init__()
+
+        self.preferred_size = preferred_size
+        self.measured_styles: list[Style] = []
+
+    def get_preferred_size(self, style: Style) -> tuple[int, int]:
+        """Record ``style``, and return the layer's preferred size."""
+        self.measured_styles.append(style)
+
+        return self.preferred_size
+
+    def render(self, size: Point, style: Style) -> PlacedImage:
+        """Return a 0x0 image at (0, 0)."""
+        return PlacedImage(pg.Surface((0, 0), pg.SRCALPHA), (0, 0))
 
 
 class ChildRefusedError(Exception):
@@ -182,6 +210,12 @@ def test_constructor_with_negative_size_raises(ui: UI, size):
     assert ui.children == ()
 
 
+def test_float_size_is_rounded_down(ui: UI):
+    widget = Widget(ui, size=(10.9, 20.5), skin=ANY_SKIN)
+
+    assert widget.rect.size == (10, 20)
+
+
 @pytest.mark.parametrize(
     ("margin", "expected_topleft"),
     [
@@ -221,22 +255,80 @@ def test_offset_converts_to_vector2_on_correct_axes(ui: UI, offset, expected_off
     assert widget.offset == expected_offset
 
 
-@pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
-@pytest.mark.parametrize("value", [1, 2.0], ids=["int", "float"])
-def test_constructor_with_single_value_size_margin_or_offset_raises(
+@pytest.mark.parametrize(
+    "size",
+    [
+        1,
+        2.0,
+        "34",
+        (),
+        (3,),
+        (3, 4, 5),
+        (True, 3),
+        (3, True),
+        ("3", 4),
+        {3, 4},
+        None,
+    ],
+    ids=[
+        "int",
+        "float",
+        "str",
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "set",
+        "None",
+    ],
+)
+def test_constructor_with_size_that_is_not_a_pair_of_numbers_or_none_raises(
     ui: UI,
-    field_name,
-    value,
+    size,
 ):
     with pytest.raises(TypeError):
-        Widget(ui, skin=ANY_SKIN, **{"size": ANY_SIZE, field_name: value})
+        Widget(ui, size=size, skin=ANY_SKIN)
 
     assert ui.children == ()
 
 
-@pytest.mark.parametrize("field_name", ["size", "margin", "offset"])
-@pytest.mark.parametrize("value", [(True, 3), (3, True)], ids=["bool x", "bool y"])
-def test_constructor_with_bool_in_size_margin_or_offset_raises(
+@pytest.mark.parametrize("field_name", ["margin", "offset"])
+@pytest.mark.parametrize(
+    "value",
+    [
+        1,
+        2.0,
+        "34",
+        (),
+        (3,),
+        (3, 4, 5),
+        (True, 3),
+        (3, True),
+        ("3", 4),
+        (None, 3),
+        (3, None),
+        {3, 4},
+        None,
+    ],
+    ids=[
+        "int",
+        "float",
+        "str",
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "None x",
+        "None y",
+        "set",
+        "None",
+    ],
+)
+def test_constructor_with_margin_or_offset_that_is_not_a_pair_of_numbers_raises(
     ui: UI,
     field_name,
     value,
@@ -249,10 +341,38 @@ def test_constructor_with_bool_in_size_margin_or_offset_raises(
 
 @pytest.mark.parametrize(
     "offset",
-    [2, (3, True)],
-    ids=["single value", "bool in pair"],
+    [
+        1,
+        2.0,
+        "34",
+        (),
+        (3,),
+        (3, 4, 5),
+        (True, 3),
+        (3, True),
+        ("3", 4),
+        (None, 3),
+        (3, None),
+        {3, 4},
+        None,
+    ],
+    ids=[
+        "int",
+        "float",
+        "str",
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "None x",
+        "None y",
+        "set",
+        "None",
+    ],
 )
-def test_assigning_single_value_or_pair_with_bool_to_offset_raises(ui: UI, offset):
+def test_assigning_offset_that_is_not_a_pair_of_numbers_raises(ui: UI, offset):
     widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, offset=(2, 3))
 
     with pytest.raises(TypeError):
@@ -295,6 +415,97 @@ def test_constructor_parent_anchor_can_take_any_member_or_none(ui: UI, parent_an
 def test_constructor_with_str_or_tuple_parent_anchor_raises(ui: UI, parent_anchor):
     with pytest.raises(TypeError):
         Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
+
+    assert ui.children == ()
+
+
+# endregion
+
+
+# region --- Fitted size ------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("size", "expected_size"),
+    [
+        ((None, 30), (12, 30)),
+        ((25, None), (25, 17)),
+        ((None, None), (12, 17)),
+    ],
+    ids=["width", "height", "both"],
+)
+def test_none_axis_fits_to_component_preferred_size(ui: UI, size, expected_size):
+    widget = Widget(
+        ui,
+        size=size,
+        skin=ANY_SKIN,
+        components=[MeasuredLayer(preferred_size=(12, 17))],
+    )
+
+    assert widget.rect.size == expected_size
+
+
+def test_fixed_axis_beside_none_axis_is_rounded_down(ui: UI):
+    widget = Widget(
+        ui,
+        size=(None, 30.8),
+        skin=ANY_SKIN,
+        components=[MeasuredLayer(preferred_size=(12, 17))],
+    )
+
+    assert widget.rect.size == (12, 30)
+
+
+def test_none_axes_fit_to_largest_preferred_size_on_each_axis(ui: UI):
+    widget = Widget(
+        ui,
+        size=(None, None),
+        skin=ANY_SKIN,
+        components=[
+            MeasuredLayer(preferred_size=(12, 5)),
+            MeasuredLayer(preferred_size=(7, 17)),
+        ],
+    )
+
+    assert widget.rect.size == (12, 17)
+
+
+def test_none_axis_fits_to_zero_preferred_size(ui: UI):
+    widget = Widget(
+        ui,
+        size=(None, 30),
+        skin=ANY_SKIN,
+        components=[MeasuredLayer(preferred_size=(0, 0))],
+    )
+
+    assert widget.rect.size == (0, 30)
+
+
+def test_components_are_measured_once_in_base_style():
+    ui = UI(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
+    component = MeasuredLayer(preferred_size=(12, 17))
+
+    Widget(ui, size=(None, None), skin=ANY_SKIN, components=[component])
+
+    assert component.measured_styles == [replace(ANY_STYLE, body_colour=BASE_COLOUR)]
+
+
+def test_fixed_size_does_not_measure_components(ui: UI):
+    component = MeasuredLayer(preferred_size=(12, 17))
+
+    Widget(ui, size=(10, 20), skin=ANY_SKIN, components=[component])
+
+    assert component.measured_styles == []
+
+
+@pytest.mark.parametrize(
+    "size",
+    [(None, 30), (25, None), (None, None)],
+    ids=["width", "height", "both"],
+)
+def test_constructor_with_none_axis_and_no_components_raises(ui: UI, size):
+    with pytest.raises(ValueError):
+        Widget(ui, size=size, skin=ANY_SKIN, components=[])
 
     assert ui.children == ()
 

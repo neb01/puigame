@@ -9,6 +9,7 @@ from pygame.typing import Point
 from puigame._components.skin import NoSkin
 from puigame._components.text import Text
 from puigame._layout.anchor import Anchor
+from puigame._layout.fit_size import FitSize
 from puigame._widgets.widget import Widget
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class Label(Widget):
         self,
         parent: Widget | UI,
         *,
-        size: Point,
+        size: FitSize = (None, None),
         text: str = "",
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
@@ -45,8 +46,14 @@ class Label(Widget):
         Args:
             parent: Widget or ``UI`` to anchor against and to be a child of. It
                 cannot be changed later.
-            size: Width and height in pixels. The text is placed against this
-                rect.
+            size: Width and height in pixels. ``None`` on an axis fits that
+                axis to the text, measured in the theme's base style: the
+                text's placement box, from cap top to baseline, plus
+                ``text_margin`` on each side. Empty text's box is one line
+                high and 0 wide. Other values are rounded down to whole
+                pixels. The text is placed against this rect, so
+                ``text_anchor`` has no visible effect on a fitted axis.
+                Defaults to ``(None, None)``, which fits both axes.
             text: The text to display. Defaults to an empty string, which draws
                 nothing.
             anchor: Point on this label used for positioning. Defaults to
@@ -68,9 +75,9 @@ class Label(Widget):
         Raises:
             TypeError: If ``text`` is not a string, if ``anchor`` is not an
                 ``Anchor``, if ``parent_anchor`` is neither an ``Anchor`` nor
-                ``None``, or if ``size``, ``margin``, or ``offset`` is a single
-                number rather than an ``(x, y)`` pair or contains a ``bool``.
-                The label is not added to ``parent``.
+                ``None``, if ``size`` is not an ``(x, y)`` pair of numbers or
+                ``None``, or if ``margin`` or ``offset`` is not an ``(x, y)``
+                pair of numbers. The label is not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative, or if
                 ``parent`` is a box and ``anchor``, ``parent_anchor``, or
                 ``margin`` is not its default. The label is not added to
@@ -97,7 +104,9 @@ class Label(Widget):
     def text(self) -> str:
         """The text the label displays.
 
-        Assigning new text redraws the label's images; assigning the text it
+        Assigning new text fits each axis of ``size`` given as ``None`` to it
+        again and redraws the label's images. The rect's size changes at once,
+        and its position at the next ``UI.update()``. Assigning the text it
         already has does nothing. Assigning a value that is not a string raises
         ``TypeError`` and leaves the text unchanged.
         """
@@ -109,4 +118,4 @@ class Label(Widget):
             return
 
         self._text.content = value
-        self._rebuild_image_cache()
+        self._refresh_after_content_change()

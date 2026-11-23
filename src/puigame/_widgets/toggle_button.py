@@ -9,6 +9,7 @@ from pygame.typing import Point
 
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor
+from puigame._layout.fit_size import FitSize
 from puigame._widgets.button import Button
 from puigame._widgets.state import State
 from puigame._widgets.toggle_group import ToggleGroup
@@ -54,7 +55,7 @@ class ToggleButton(Button):
         self,
         parent: Widget | UI,
         *,
-        size: Point,
+        size: FitSize = (None, None),
         skin: Skin,
         text: str = "",
         on_toggle: Callable[[ToggleButton, bool], object] | None = None,
@@ -73,8 +74,14 @@ class ToggleButton(Button):
         Args:
             parent: Widget or ``UI`` to anchor against and to be a child of. It
                 cannot be changed later.
-            size: Width and height in pixels. The text is placed against this
-                rect.
+            size: Width and height in pixels. ``None`` on an axis fits that
+                axis to the text, measured in the theme's base style: the
+                text's placement box, from cap top to baseline, plus
+                ``text_margin`` on each side. Empty text's box is one line
+                high and 0 wide. Other values are rounded down to whole
+                pixels. The text is placed against this rect, so
+                ``text_anchor`` has no visible effect on a fitted axis.
+                Defaults to ``(None, None)``, which fits both axes.
             skin: Skin that draws the button's images. It cannot be changed
                 later. For a button with no background, use a ``NoSkin``.
             text: The text to display. Defaults to an empty string, which draws
@@ -119,10 +126,10 @@ class ToggleButton(Button):
             TypeError: If ``text`` is not a string, if ``on_toggle`` is neither
                 ``None`` nor callable, if ``anchor`` is not an ``Anchor``, if
                 ``parent_anchor`` is neither an ``Anchor`` nor ``None``, if
-                ``size``, ``margin``, or ``offset`` is a single number rather
-                than an ``(x, y)`` pair or contains a ``bool``, or if ``group``
-                is neither a ``ToggleGroup`` nor ``None``. The button is not
-                added to ``parent`` or ``group``.
+                ``size`` is not an ``(x, y)`` pair of numbers or ``None``, if
+                ``margin`` or ``offset`` is not an ``(x, y)`` pair of numbers,
+                or if ``group`` is neither a ``ToggleGroup`` nor ``None``. The
+                button is not added to ``parent`` or ``group``.
             ValueError: If either dimension of ``size`` is negative, if
                 ``checked`` is ``True`` and ``group`` already has a checked
                 button, or if ``parent`` is a box and ``anchor``,

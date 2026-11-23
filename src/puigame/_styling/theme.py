@@ -146,7 +146,7 @@ DEFAULT_THEME = Theme(
         # Neb0Font's blank space is all after each glyph, so measuring the ink
         # centres it exactly, with no offset
         text_horizontal_extent=TextHorizontalExtent.INK,
-        text_margin=(0, 0),
+        text_margin=(12, 8),
         text_offset=(0, 0),
     ),
     style_overrides={

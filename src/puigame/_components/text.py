@@ -4,7 +4,7 @@ import io
 from functools import cache
 from importlib.resources import files
 from pathlib import Path
-from typing import assert_never
+from typing import NamedTuple, assert_never
 
 import pygame as pg
 from pygame.typing import Point
@@ -17,6 +17,26 @@ from puigame._styling.style import (
     TextAlign,
     TextHorizontalExtent,
 )
+
+
+class _PlacementBoxLayout(NamedTuple):
+    """Rendered text and its placement box, before the box is placed.
+
+    The placement box runs from the top of the first line's capitals to the
+    last line's baseline (see ``Text``). Nothing here depends on the widget,
+    so the text can be measured before the widget has a size.
+
+    Attributes:
+        image: The rendered text. Empty text gives a 0x0 surface.
+        box_size: ``(width, height)`` of the placement box, in pixels.
+        box_offset: Position of the placement box's top-left corner inside
+            ``image``, as ``(x, y)`` in pixels. Subtract it from the box's
+            anchored position to get where to draw ``image``.
+    """
+
+    image: pg.Surface
+    box_size: tuple[int, int]
+    box_offset: tuple[int, int]
 
 
 @cache
@@ -176,6 +196,34 @@ class Text:
 
         return "\n".join(line.rstrip() for line in self.content.split("\n"))
 
+    def get_preferred_size(self, style: Style) -> tuple[int, int]:
+        """Return the size a widget needs to fit the text in a style.
+
+        The size is the text's placement box (see ``Text``) plus the style's
+        ``text_margin`` on each side. The anchors and ``text_offset`` are not
+        counted, since they only move the text within the widget. Empty text,
+        or text that is only whitespace, is 0 wide and as tall as one line's
+        capitals, so a widget fitted to it keeps the height of a line. A
+        negative margin shrinks the size, so the text overhangs the widget,
+        but neither axis goes below 0.
+
+        Args:
+            style: Style to measure the text in.
+
+        Returns:
+            ``(width, height)`` in pixels.
+
+        Raises:
+            FileNotFoundError: If the style's typeface's font file does not
+                exist.
+        """
+        width, height = self._lay_out_placement_box(style).box_size
+
+        width = max(0, width + style.text_margin[0] * 2)
+        height = max(0, height + style.text_margin[1] * 2)
+
+        return (width, height)
+
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Render the text and place it for a widget's size and style.
 
@@ -198,11 +246,65 @@ class Text:
         if self.stripped_content == "":
             return PlacedImage.zero_size()
 
+        (
+            surface,
+            (placement_box_width, placement_box_height),
+            (pos_x_correction, pos_y_correction),
+        ) = self._lay_out_placement_box(style)
+
+        placement_box_pos = get_pos_from_anchor_match(
+            child_size=(placement_box_width, placement_box_height),
+            child_anchor=style.text_anchor,
+            parent_size=size,
+            parent_anchor=style.text_parent_anchor,
+            margin=style.text_margin,
+            offset=style.text_offset,
+        )
+
+        # move the surface so that the placement box, which starts inside
+        # it, lands where it was anchored
+        pos = (
+            placement_box_pos[0] - pos_x_correction,
+            placement_box_pos[1] - pos_y_correction,
+        )
+
+        return PlacedImage(surface, pos)
+
+    def _lay_out_placement_box(self, style: Style) -> _PlacementBoxLayout:
+        """Render the text and measure its placement box in a style.
+
+        Only the style's typeface, font size, colour, alignment, and
+        horizontal extent are used. The anchors, margin, and offset place the
+        box, so they are left to the caller.
+
+        Args:
+            style: Style to render the text in.
+
+        Returns:
+            The rendered text, its placement box's size, and the box's
+            position inside the rendered surface. Empty text, or text that is
+            only whitespace, gives a 0x0 surface and a box 0 wide and as tall
+            as one line's capitals, so text fitted to it keeps the height of
+            one line.
+
+        Raises:
+            FileNotFoundError: If the style's typeface's font file does not
+                exist.
+        """
         font = _get_font(
             typeface=style.text_typeface,
             size=style.text_font_size,
             text_align=style.text_align,
         )
+
+        cap_height = _get_cap_height(font=font)
+
+        if self.stripped_content == "":
+            return _PlacementBoxLayout(
+                image=pg.Surface((0, 0), pg.SRCALPHA),
+                box_size=(0, cap_height),
+                box_offset=(0, 0),
+            )
 
         surface = font.render(
             self.stripped_content,
@@ -234,23 +336,10 @@ class Text:
         # pygame-ce draws a final newline as a blank glyph, not a new line
         text_line_height = font.get_linesize()
         num_lines = surface.get_height() // text_line_height
-        cap_height = _get_cap_height(font=font)
         placement_box_height = cap_height + (num_lines - 1) * text_line_height
 
-        placement_box_pos = get_pos_from_anchor_match(
-            child_size=(placement_box_width, placement_box_height),
-            child_anchor=style.text_anchor,
-            parent_size=size,
-            parent_anchor=style.text_parent_anchor,
-            margin=style.text_margin,
-            offset=style.text_offset,
+        return _PlacementBoxLayout(
+            image=surface,
+            box_size=(placement_box_width, placement_box_height),
+            box_offset=(pos_x_correction, font.get_ascent() - cap_height),
         )
-
-        # move the surface so that the placement box, which starts inside
-        # it, lands where it was anchored
-        pos = (
-            placement_box_pos[0] - pos_x_correction,
-            placement_box_pos[1] - (font.get_ascent() - cap_height),
-        )
-
-        return PlacedImage(surface, pos)

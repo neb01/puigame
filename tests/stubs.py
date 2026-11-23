@@ -18,13 +18,19 @@ class FixedLayer(Skin):
     widget's rect.
     """
 
-    def __init__(self, *, size: Point, colour: RGBA, pos: tuple[int, int]) -> None:
+    def __init__(
+        self, *, size: tuple[int, int], colour: RGBA, pos: tuple[int, int]
+    ) -> None:
         """Set up a layer of ``size``, filled with ``colour``, placed at ``pos``."""
         super().__init__()
 
         self.size = size
         self.colour = colour
         self.pos = pos
+
+    def get_preferred_size(self, style: Style) -> tuple[int, int]:
+        """Return the layer's own size, whatever the style."""
+        return self.size
 
     def render(self, size: Point, style: Style) -> PlacedImage:
         """Return a new surface of the layer's colour and size at its position."""

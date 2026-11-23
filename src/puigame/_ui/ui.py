@@ -16,7 +16,7 @@ from pygame.typing import Point
 
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui_manager import UIManager
-from puigame._validation import validate_pair
+from puigame._validation import reject_negative_in_pair, validate_pair
 from puigame._widgets.widget import Widget
 
 
@@ -47,13 +47,11 @@ class UI:
             theme: Theme that every widget in the UI draws with.
 
         Raises:
-            TypeError: If ``size`` is a single number rather than an ``(x, y)``
-                pair or contains a ``bool``.
+            TypeError: If ``size`` is not an ``(x, y)`` pair of numbers.
             ValueError: If either dimension of ``size`` is negative.
         """
         validate_pair("size", size)
-        if min(size[0], size[1]) < 0:
-            raise ValueError(f"size cannot be negative, got {size!r} px")
+        reject_negative_in_pair("size", size)
 
         self._rect = pg.Rect((0, 0), size)
         self._theme = theme
@@ -101,7 +99,7 @@ class UI:
         move, so a position off the surface still hits nothing. Starts at
         ``(0, 0)``.
 
-        Assigning a single number, or a pair that contains a ``bool``, raises
+        Assigning anything but an ``(x, y)`` pair of numbers raises
         ``TypeError``.
         """
         return self._offset

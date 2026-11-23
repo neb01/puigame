@@ -164,7 +164,7 @@ Components are objects a widget **holds** as attributes, rather than classes it 
 | Component | Held by | Job |
 |---|---|---|
 | **`Skin`** | Every `Widget` (required; `Container` uses `NoSkin`) | Renders the widget's background surface for a given size and `Style` (see [Skins](#skins)) |
-| **`Text`** | Widgets that display text, such as `Label`, `Button`, and the planned `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); renders onto the owner's image; keeps no reference to its owner, so the owner rebuilds its images when it changes the text |
+| **`Text`** | Widgets that display text, such as `Label`, `Button`, and the planned `TextBox` (as many as the widget needs; widgets without text hold none) | Holds the string; is styled and positioned by the owner's `Style` (see [Text](#text)); reports the size it needs, for widgets that fit their text (see [Fitting to text](#fitting-to-text)); renders onto the owner's image; keeps no reference to its owner, so the owner re-fits and rebuilds its images when it changes the text |
 
 A `Text` component is **not** a child widget: it is not in the tree, receives no input, and is drawn into its owner's image rather than on its own.
 
@@ -329,12 +329,24 @@ The anchors and margin are fixed on creation and private: they are given to the 
 
 Layout runs once per frame, before drawing, in two walks over the tree from the `UI`:
 
-1. **Measure**, children before parents: each box sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing.
+1. **Measure**, children before parents: each box sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing, and neither does one that fits its text, since it fits itself whenever its text changes (see [Fitting to text](#fitting-to-text)).
 2. **Place**, parents before children: the UI's rect is placed first, then every widget, so each widget is placed against its parent's up-to-date rect. A widget asks its parent where it goes. Most parents place it by its own anchors, margin, and offset; a box puts it in the slot the measure walk worked out.
 
 Each widget is also placed once when it is created. A box's new child starts at the box's top-left corner, moved by its offset, until the next pass.
 
 Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset (or a box's slot and the offset) are combined, so a fractional offset rounds the same way on every widget and on the UI.
+
+### Fitting to text
+
+A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` is a `FitSize`: an `(x, y)` pair in which `None` on an axis fits that axis. It defaults to `(None, None)`, which fits both.
+
+- **Fitted size**, per axis: the text's placement box (see [Text](#text)) plus `text_margin` on each side, floored at 0. `text_offset` and the skin's border are not counted, so the theme's margin is what keeps the text clear of the border. `DEFAULT_THEME` uses `(12, 8)`, which clears its thickest border, the pressed swell and text offset, and the descenders that hang below the box.
+- **Measured in the theme's base style**, so a widget never changes size with its state.
+- `text_anchor` has no visible effect on a fitted axis, since the box fills it.
+- **Empty text** fits to no width and one line's cap height, plus the margin on each side, so an empty label keeps its line.
+- **When**: on creation, and whenever `text` is assigned, rather than in the layout pass, since a widget's text depends on nothing else in the tree. The rect is resized in place at once, keeping its top-left corner, and the next layout pass places it by its anchors.
+- **Components report a preferred size**, which depends only on their content and the style. A fitted axis takes the largest preferred size among the widget's components, as Flutter's `Stack` and Android's `FrameLayout` do. A `Container` or `Panel` has no components to fit to, so `None` in its `size` raises `ValueError`.
+- Children never size a text widget. A `Panel` that fits its children is planned.
 
 ### Boxes
 
@@ -605,7 +617,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | --- | --- |
 | Running a UI | `UI` |
 | Widgets | `Widget`, `Container`, `VBox`, `HBox`, `Panel`, `Label`, `Button`, `ToggleButton`, `ToggleGroup` |
-| Placement | `Anchor`, `BoxAlign` |
+| Placement | `Anchor`, `BoxAlign`, `FitSize` |
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
@@ -613,7 +625,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
 - **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
 - **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.
-- Positions use `Point` from `pygame.typing`, not a puigame type.
+- Positions use `Point` from `pygame.typing`, not a puigame type. Sizes that can fit their content use `FitSize`, which also allows `None` on either axis; it is public so that games can annotate their own sizes.
 
 ### Dependencies
 

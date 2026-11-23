@@ -170,8 +170,23 @@ def test_style_non_tuple_text_margin_or_text_offset_raises(field_name, value):
 
 
 @pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
-@pytest.mark.parametrize("value", [(True, 3), (3, True)], ids=["bool x", "bool y"])
-def test_style_bool_in_text_margin_or_text_offset_raises(field_name, value):
+@pytest.mark.parametrize(
+    "value",
+    [(), (3,), (3, 4, 5), (True, 3), (3, True), ("3", 4), (None, 3), (3, None)],
+    ids=[
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "None x",
+        "None y",
+    ],
+)
+def test_style_tuple_text_margin_or_text_offset_that_is_not_two_numbers_raises(
+    field_name, value
+):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, **{field_name: value})
 
@@ -211,10 +226,19 @@ def test_style_override_non_tuple_text_offset_raises(text_offset):
 
 @pytest.mark.parametrize(
     "text_offset",
-    [(True, 3), (3, True)],
-    ids=["bool x", "bool y"],
+    [(), (3,), (3, 4, 5), (True, 3), (3, True), ("3", 4), (None, 3), (3, None)],
+    ids=[
+        "empty",
+        "1 item",
+        "3 items",
+        "bool x",
+        "bool y",
+        "str item",
+        "None x",
+        "None y",
+    ],
 )
-def test_style_override_bool_in_text_offset_raises(text_offset):
+def test_style_override_tuple_text_offset_that_is_not_two_numbers_raises(text_offset):
     with pytest.raises(TypeError):
         StyleOverride(text_offset=text_offset)
 

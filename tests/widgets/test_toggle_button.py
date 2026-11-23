@@ -1,4 +1,5 @@
 from dataclasses import replace
+from pathlib import Path
 
 import pygame as pg
 import pytest
@@ -10,6 +11,7 @@ from puigame import (
     UI,
     Anchor,
     BundledTypeface,
+    DrawnSkin,
     FadeProfile,
     NoSkin,
     State,
@@ -23,9 +25,12 @@ from puigame import (
 )
 from puigame._components.placed_image import PlacedImage
 from puigame._components.skin import Skin
+from puigame._components.text import Text
 from stubs import OnToggleError, on_toggle_error
 
 # region --- Constants --------------------------------------------------------
+
+NEBMON0FONT_PATH = Path(__file__).parent.parent / "assets" / "fonts" / "nebmon0font.ttf"
 
 ANY_SIZE = (9, 10)
 ANY_SKIN = NoSkin()
@@ -100,6 +105,33 @@ class BodyAndBorderColourLayer(Skin):
         image.fill(style.border_colour, pg.Rect((0, 0), (size[0], 1)))
 
         return PlacedImage(image, (0, 0))
+
+
+# endregion
+
+
+# region --- Helpers ----------------------------------------------------------
+
+
+def _text_fitting_ui(*, font_size: int, text_margin: tuple[int, int]) -> UI:
+    """Return a 300x200 UI whose theme sets the text's font size and margin.
+
+    The text is in ``nebmon0font.ttf``, measured by its ink, and anchored
+    ``CENTRE`` to ``CENTRE`` with no offset. Tests that change any of these
+    build their own theme.
+    """
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=font_size,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=text_margin,
+        text_offset=(0, 0),
+    )
+
+    return UI(size=(300, 200), theme=Theme(base_style=style, style_overrides={}))
 
 
 # endregion
@@ -213,6 +245,19 @@ def test_text_defaults_to_empty_string(ui: UI):
     toggle_button = ToggleButton(ui, size=ANY_SIZE, skin=ANY_SKIN)
 
     assert toggle_button.text == ""
+
+
+# endregion
+
+
+# region --- Fitted size ------------------------------------------------------
+
+
+def test_size_defaults_to_fitting_both_axes_to_text():
+    ui = _text_fitting_ui(font_size=18, text_margin=(3, 5))
+    toggle_button = ToggleButton(ui, skin=NoSkin(), text="SPUD")
+
+    assert toggle_button.rect.size == (51, 22)
 
 
 # endregion
@@ -794,6 +839,47 @@ def test_default_theme_checked_changes_style_in_every_toggle_button_state(state)
     unchecked_style = DEFAULT_THEME._style_for(state)
 
     assert checked_style != unchecked_style
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        State.BASE,
+        State.HIGHLIGHTED,
+        State.CHECKED,
+        State.HIGHLIGHTED | State.PRESSED,
+        State.HIGHLIGHTED | State.CHECKED,
+        State.HIGHLIGHTED | State.PRESSED | State.CHECKED,
+        State.DISABLED,
+        State.DISABLED | State.CHECKED,
+    ],
+)
+@pytest.mark.parametrize(
+    "text",
+    ["Hgjpqy", "SPUD\nHgjpqy"],
+    ids=["descenders", "two lines with descenders"],
+)
+def test_default_theme_keeps_fitted_text_on_body_in_every_toggle_button_state(
+    text,
+    state,
+):
+    ui = UI(size=(300, 200), theme=DEFAULT_THEME)
+    toggle_button = ToggleButton(ui, size=(None, None), skin=DrawnSkin(), text=text)
+    style = DEFAULT_THEME._style_for(state)
+
+    skin_placed_image = DrawnSkin().render(toggle_button.rect.size, style)
+    text_placed_image = Text(text).render(toggle_button.rect.size, style)
+
+    # the text surface uses a colour key, so its mask is the ink
+    text_mask = pg.mask.from_surface(text_placed_image.image)
+    body_mask = pg.mask.from_threshold(
+        skin_placed_image.image, style.body_colour, (1, 1, 1, 255)
+    )
+    offset = (
+        text_placed_image.pos[0] - skin_placed_image.pos[0],
+        text_placed_image.pos[1] - skin_placed_image.pos[1],
+    )
+    assert body_mask.overlap_area(text_mask, offset) == text_mask.count()
 
 
 # endregion

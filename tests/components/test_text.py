@@ -673,6 +673,202 @@ def test_render_does_not_antialias():
 # endregion
 
 
+# region --- Preferred size ---------------------------------------------------
+
+
+def _preferred_size(
+    content: str,
+    *,
+    font_size: int,
+    text_horizontal_extent: TextHorizontalExtent,
+    text_margin: tuple[int, int],
+) -> tuple[int, int]:
+    """Return the preferred size of text in the test font.
+
+    The text is anchored ``CENTRE`` to ``CENTRE`` with no offset, in
+    ``nebmon0font.ttf``. Tests that change any of these build their own style.
+    """
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=font_size,
+        text_anchor=Anchor.CENTRE,
+        text_parent_anchor=Anchor.CENTRE,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=text_margin,
+        text_offset=(0, 0),
+    )
+
+    return Text(content).get_preferred_size(style)
+
+
+@pytest.mark.parametrize(
+    ("text_horizontal_extent", "expected_size"),
+    [
+        (TextHorizontalExtent.INK, (53, 24)),
+        (TextHorizontalExtent.LOGICAL, (56, 24)),
+    ],
+    ids=["ink", "logical"],
+)
+def test_preferred_size_is_placement_box_plus_margin_on_each_side(
+    text_horizontal_extent,
+    expected_size,
+):
+    preferred_size = _preferred_size(
+        "SPUD",
+        font_size=18,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=(4, 6),
+    )
+
+    assert preferred_size == expected_size
+
+
+@pytest.mark.parametrize(
+    ("font_size", "expected_size"),
+    [(18, (45, 12)), (24, (60, 16))],
+    ids=["font size 18", "font size 24"],
+)
+def test_preferred_size_follows_font_size(font_size, expected_size):
+    preferred_size = _preferred_size(
+        "SPUD",
+        font_size=font_size,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(0, 0),
+    )
+
+    assert preferred_size == expected_size
+
+
+def test_preferred_size_height_spans_every_line():
+    preferred_size = _preferred_size(
+        "SPUD\nSPUD",
+        font_size=18,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(0, 0),
+    )
+
+    assert preferred_size == (45, 30)
+
+
+def test_preferred_size_ignores_trailing_newline():
+    preferred_size = _preferred_size(
+        "SPUD\n",
+        font_size=18,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(0, 0),
+    )
+
+    assert preferred_size == (45, 12)
+
+
+def test_preferred_size_height_stops_at_baseline():
+    preferred_size = _preferred_size(
+        "Spuddy",
+        font_size=18,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(0, 0),
+    )
+
+    assert preferred_size == (69, 12)
+
+
+@pytest.mark.parametrize(
+    ("text_horizontal_extent", "expected_size"),
+    [
+        (TextHorizontalExtent.INK, (45, 12)),
+        (TextHorizontalExtent.LOGICAL, (72, 12)),
+    ],
+    ids=["ink", "logical"],
+)
+def test_preferred_size_counts_leading_spaces_only_when_logical(
+    text_horizontal_extent,
+    expected_size,
+):
+    preferred_size = _preferred_size(
+        "  SPUD",
+        font_size=18,
+        text_horizontal_extent=text_horizontal_extent,
+        text_margin=(0, 0),
+    )
+
+    assert preferred_size == expected_size
+
+
+@pytest.mark.parametrize(
+    "content",
+    ["", "   ", "\n\n"],
+    ids=["empty", "spaces only", "newlines only"],
+)
+def test_preferred_size_of_empty_text_is_one_line_high(content):
+    preferred_size = _preferred_size(
+        content,
+        font_size=18,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(4, 6),
+    )
+
+    assert preferred_size == (8, 24)
+
+
+def test_preferred_size_negative_margin_shrinks_size():
+    preferred_size = _preferred_size(
+        "SPUD",
+        font_size=18,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(-2, -3),
+    )
+
+    assert preferred_size == (41, 6)
+
+
+@pytest.mark.parametrize(
+    ("text_margin", "expected_size"),
+    [((-30, -40), (0, 0)), ((-30, 6), (0, 24)), ((4, -40), (53, 0))],
+    ids=["both axes", "x only", "y only"],
+)
+def test_preferred_size_stops_at_zero_on_each_axis(text_margin, expected_size):
+    preferred_size = _preferred_size(
+        "SPUD",
+        font_size=18,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=text_margin,
+    )
+
+    assert preferred_size == expected_size
+
+
+def test_preferred_size_ignores_anchors_and_offset():
+    style = replace(
+        ANY_STYLE,
+        text_typeface=NEBMON0FONT_PATH,
+        text_font_size=18,
+        text_anchor=Anchor.TOP_LEFT,
+        text_parent_anchor=Anchor.BOTTOM_RIGHT,
+        text_horizontal_extent=TextHorizontalExtent.INK,
+        text_margin=(4, 6),
+        text_offset=(7, 9),
+    )
+
+    preferred_size = Text("SPUD").get_preferred_size(style)
+
+    assert preferred_size == (53, 24)
+
+
+def test_preferred_size_missing_path_raises(tmp_path):
+    text = Text(ANY_STRING)
+    style = replace(
+        ANY_STYLE,
+        text_typeface=tmp_path / "missing.ttf",
+    )
+
+    with pytest.raises(FileNotFoundError):
+        text.get_preferred_size(style)
+
+
+# endregion
+
+
 # region --- Font loading -----------------------------------------------------
 
 
