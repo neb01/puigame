@@ -97,9 +97,9 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 
 ```
 Widget                  rect, anchor, fixed parent, children, flags, skin, per-state image cache
-├── Box                 (internal) invisible group that stacks its visible children and fits them (NoSkin)
-│   ├── VBox            column, top to bottom
-│   └── HBox            row, left to right
+├── LinearArrangement   (internal) invisible group that stacks its visible children and fits them (NoSkin)
+│   ├── Row             left to right
+│   └── Column          top to bottom
 ├── Panel               group of children with a background (skin given on creation)
 │   └── Container       invisible panel (NoSkin), not hit-testable by default
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
@@ -118,7 +118,7 @@ Classes marked (planned) are designed but not built yet (see [v0.1 scope](#v01-s
 
 - **`InteractiveWidget` is a base class beside `Widget`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing the concrete widgets. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Panel` and `Container` are thin classes that exist to make intent clear. A `Panel` is drawn by the skin it is given. A `Container` is a `Panel` with `NoSkin` that is not hit-testable by default, so it is invisible and lets clicks through. It takes no `skin`, since one would make it a second `Panel`, and it extends `Panel` rather than copying it, so the two fit their children the same way.
-- **`VBox` and `HBox` stack their children** in a column or a row, and size themselves to fit them (see [Boxes](#boxes)). They share an internal base, `Box`, and differ only in their main axis. `Box` extends `Widget`, not `Container`, since it places its children rather than letting them anchor themselves.
+- **`Row` and `Column` stack their children** in a row or a column, and size themselves to fit them (see [Rows and columns](#rows-and-columns)). They share an internal base, `LinearArrangement`, and differ only in their main axis. `LinearArrangement` extends `Widget`, not `Container`, since it places its children rather than letting them anchor themselves.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
 ### Widgets are not pygame Sprites
@@ -135,7 +135,7 @@ Every widget is created with its `parent`, a widget or the `UI`, as the first ar
 
 - `parent` and `children` are read-only. `children` returns a tuple of the widget's children in the order they were created, so it cannot be appended to or replaced.
 - A new widget joins its parent's children only once the rest of its setup has succeeded, so a widget whose creation raised is never left in the tree.
-- A parent can refuse a new child, as the last step of the child's setup: a box refuses one whose `anchor`, `parent_anchor`, or `margin` is not the default. The child's constructor raises, and the child is not added to its parent or to a `ToggleGroup`.
+- A parent can refuse a new child, as the last step of the child's setup: a row or column refuses one whose `anchor`, `parent_anchor`, or `margin` is not the default. The child's constructor raises, and the child is not added to its parent or to a `ToggleGroup`.
 - A widget at the top level of a UI is created with the `UI` as its parent. Every widget therefore has a parent, and `parent` is never `None`. `enabled_in_tree` and `visible_in_tree` stop at the `UI`, which has no flags of its own.
 - Each widget keeps a private reference to its `UI`, copied from its parent, or the parent itself for a top-level widget. Parents never change, so neither does the UI, and the reference cannot go out of date. Through it, the widget reads the UI's theme.
 - To move a widget, kill it and create a new one under the new parent. Moving widgets directly is a later feature.
@@ -242,7 +242,7 @@ The private `theme._style_for(state)` returns a complete `Style` for any combina
 
 Positions are set with a nine-point `Anchor` (`CENTRE`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `MID_LEFT`, `MID_RIGHT`, `MID_TOP`, `MID_BOTTOM`) plus a margin.
 
-- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A box's children are placed by the box instead (see [Boxes](#boxes)), and only their offset applies. A top-level widget is created with the `UI` as its parent, so it is anchored to the UI's rect, which covers the surface the UI draws on.
+- A widget is anchored relative to its **parent's rect**; moving or resizing the parent repositions its children. A row's or column's children are placed by it instead (see [Rows and columns](#rows-and-columns)), and only their offset applies. A top-level widget is created with the `UI` as its parent, so it is anchored to the UI's rect, which covers the surface the UI draws on.
 - A `Text` component is anchored relative to its **owner widget's rect**.
 
 ### Anchor points
@@ -329,12 +329,12 @@ The anchors and margin are fixed on creation and private: they are given to the 
 
 Layout runs once per frame, before drawing, in two walks over the tree from the `UI`:
 
-1. **Measure**, children before parents: each box, and each panel that fits its children, sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing, and neither does one that fits its text, since it fits itself whenever its text changes (see [Fitting to text](#fitting-to-text)).
-2. **Place**, parents before children: the UI's rect is placed first, then every widget, so each widget is placed against its parent's up-to-date rect. A widget asks its parent where it goes. Most parents place it by its own anchors, margin, and offset; a box puts it in the slot the measure walk worked out.
+1. **Measure**, children before parents: each row and column, and each panel that fits its children, sizes itself from its children's sizes, which are already current. A widget with a fixed size does nothing, and neither does one that fits its text, since it fits itself whenever its text changes (see [Fitting to text](#fitting-to-text)).
+2. **Place**, parents before children: the UI's rect is placed first, then every widget, so each widget is placed against its parent's up-to-date rect. A widget asks its parent where it goes. Most parents place it by its own anchors, margin, and offset; a row or column puts it in the slot the measure walk worked out.
 
-Each widget is also placed once when it is created. A box's new child starts at the box's top-left corner, moved by its offset, until the next pass.
+Each widget is also placed once when it is created. A new child of a row or column starts at its parent's top-left corner, moved by its offset, until the next pass.
 
-Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset (or a box's slot and the offset) are combined, so a fractional offset rounds the same way on every widget and on the UI.
+Rects are in the coordinates of the surface the UI draws on, which is the screen only when the UI draws straight onto the display surface. Setting a value, such as an offset, only stores it; the next pass applies it. Positions are rounded down once, after the anchors, margin, and offset (or a row's or column's slot and the offset) are combined, so a fractional offset rounds the same way on every widget and on the UI.
 
 ### Fitting to text
 
@@ -348,17 +348,18 @@ A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` i
 - **Components report a preferred size**, which depends only on their content and the style. A fitted axis takes the largest preferred size among the widget's components, as Flutter's `Stack` and Android's `FrameLayout` do. A `Panel` or `Container` has no components, so it fits its children instead (see [Fitted panels](#fitted-panels)).
 - Children never size a text widget.
 
-### Boxes
+### Rows and columns
 
-`VBox` stacks its children in a column, top to bottom, and `HBox` in a row, left to right, in the order they were created. Along its **main axis** (down a `VBox`, across an `HBox`), a box is as long as its visible children plus the theme's `box_gap` between each pair of neighbours. Across it, on the **cross axis**, it is as wide as its widest visible child. The terms follow CSS flexbox and Flutter.
+`Row` stacks its children left to right, and `Column` top to bottom, in the order they were created. Along its **main axis** (across a `Row`, down a `Column`), a row or column is as long as its visible children plus its `main_axis_spacing` between each pair of neighbours. Across it, on the **cross axis**, it is as wide as its widest visible child. The names and terms follow Flutter and Jetpack Compose, and CSS flexbox's axes. `Box`, the GTK and Qt name, was dropped because it was too close to `Container`: both are invisible and fit their children, and the difference is arranging along an axis.
 
-- **Pure fit.** A box takes no `size`: it is 0x0 until the first layout pass, and 0x0 with no visible children. A fixed size, with the spare space spread between the children, can be added later without breaking anyone.
-- **Alignment.** `align`, a `BoxAlign` fixed on creation, places children narrower than the box across its main axis: `START` (the left edge in a `VBox`, the top in an `HBox`), `CENTRE` (the default), or `END`. There is no stretch. Slots are kept unrounded, so a centred child is rounded down once, after its offset is added, as anchored widgets are.
-- **Hidden children collapse**: they take no space and no gap, and sit at the box's top-left corner. Showing one makes room for it at the next layout pass.
-- **Children keep their default `anchor`, `parent_anchor`, and `margin`**, which the box would ignore, so any other value raises `ValueError` when the child is created. Their `offset` still applies, after the box has placed them, so a child can still be nudged or animated.
-- **`box_gap` is a `Style` field**, read from the theme's base style. It is not in `StyleOverride`, so a box never changes size with its children's states.
-- **Every pass measures every box**, with no dirty flags, so new, killed, shown, and hidden children take effect at the next `update()`.
-- Like a `Container`, a box has `NoSkin` and is not hit-testable by default. With `hit_testable=True`, clicks anywhere over it, including the gaps between its children, stop at it. A box has no background; to put one behind it, place it in a `Panel` that fits it (see [Fitted panels](#fitted-panels)).
+- **Pure fit.** A row or column takes no `size`: it is 0x0 until the first layout pass, and 0x0 with no visible children. A fixed size, with the spare space spread between the children, can be added later without breaking anyone.
+- **Cross-axis alignment.** `cross_axis_align`, a `CrossAxisAlign` fixed on creation, places children narrower than the row or column across its main axis: `START` (the top in a `Row`, the left edge in a `Column`), `CENTRE` (the default), or `END`. The name leaves `MainAxis…` free for spreading spare space along the main axis later. There is no stretch. Slots are kept unrounded, so a centred child is rounded down once, after its offset is added, as anchored widgets are.
+- **Hidden children collapse**: they take no space and no spacing, and sit at their parent's top-left corner. Showing one makes room for it at the next layout pass.
+- **Children keep their default `anchor`, `parent_anchor`, and `margin`**, which the row or column would ignore, so any other value raises `ValueError` when the child is created. Their `offset` still applies, after the row or column has placed them, so a child can still be nudged or animated.
+- **Spacing belongs to each row or column**, as in GTK, Flutter, and Compose: `main_axis_spacing`, fixed on creation, defaults to 0. A negative value overlaps neighbours, as in a hand of cards: later children are drawn, and hit, on top, since both follow creation order. The row or column always encloses its children: along the main axis it runs from the earliest child's start to the latest child's end, and every child is shifted by the same amount so the earliest starts at the row's or column's edge. With ordinary spacing the first child is the earliest, so nothing moves; only an overlap larger than the children shifts them. A floor at 0, as `Panel` uses, was rejected because it would leave children hanging outside, and summing sizes and spacing undercounts whenever a child ends inside an earlier one. Negative spacing is allowed for the same reason negative margins are; SwiftUI and Compose allow it too, while CSS `gap` and GTK do not. It was a `Style` field, `box_gap`, until spacing was recognised as structure rather than look: it was read only from the theme's base style, could not change between states, and forced every row and column in a theme to share one value.
+- **Reversal moves only placement.** `main_axis_reversed`, a keyword-only `bool` fixed on creation, places the children from the end of the main axis, so the first child is at the far end. Drawing and hit-testing keep creation order, so a later child is still on top; with negative spacing this gives a hand of cards fanned the other way. CSS `row-reverse` works the same way, while reversing the drawing too would only repeat what creating the children in the other order already gives. The cross axis is unchanged. It is a `bool` rather than a two-member enum, unlike `TextHorizontalExtent`, because `False` plainly means the ordinary direction, as `sorted(reverse=...)` and Compose's `reverseLayout` do; an enum is for two peers, neither of which is "not" the other. The name is an adjective, as flags are, prefixed like the other main-axis parameter, and avoids shadowing `reversed()`.
+- **Every pass measures every row and column**, with no dirty flags, so new, killed, shown, and hidden children take effect at the next `update()`.
+- Like a `Container`, a row or column has `NoSkin` and is not hit-testable by default. With `hit_testable=True`, clicks anywhere over it, including the gaps between its children, stop at it. A row or column has no background; to put one behind it, place it in a `Panel` that fits it (see [Fitted panels](#fitted-panels)).
 
 ### Fitted panels
 
@@ -366,9 +367,9 @@ A `Panel` can size itself to its children, and so can a `Container`, which is a 
 
 - **Counted children**: visible children whose `anchor` is the same as their `parent_anchor`, so both axes agree. A child placed against an edge or corner it does not share, such as a tab hanging off the panel's side, is not counted on either axis, as Flutter's `Stack` leaves its `Positioned` children out when sizing itself. A counted child can sit anywhere in the panel, such as its top-left corner.
 - **Fitted size**, per axis: the largest counted child's size plus its margin on each side. A negative margin, which lets a child overlap the panel's edge, counts too, floored at 0, as `text_margin` is for text. The panel has no padding of its own, so a child's margin is what spaces it from the edge. With no counted children, a fitted axis is 0. A fixed axis keeps its size.
-- **When**: in the measure walk of every layout pass, after its children, so a panel holding a box fits the box's new size in the same `update()`. A fitted axis is 0 until the first pass. The panel's images are rendered again only when its size changes, since the walk runs every frame.
+- **When**: in the measure walk of every layout pass, after its children, so a panel holding a column fits the column's new size in the same `update()`. A fitted axis is 0 until the first pass. The panel's images are rendered again only when its size changes, since the walk runs every frame.
 - `DrawnSkin` floors each layer's size at 0, so a fitted panel renders at any size, including 0x0 (see [DrawnSkin layers](#drawnskin-layers)).
-- Each widget class says what `None` fits to with a private `FitSource`: nothing (`Widget`), its components (`Label`, `Button`, `ToggleButton`), or its children (`Panel`, so `Container`, and the internal `Box`).
+- Each widget class says what `None` fits to with a private `FitSource`: nothing (`Widget`), its components (`Label`, `Button`, `ToggleButton`), or its children (`Panel`, so `Container`, and the internal `LinearArrangement`).
 
 ## State
 
@@ -413,7 +414,7 @@ Not every combination can occur, so each class lists the combinations it can be 
 
 | Class | `_possible_states` |
 |---|---|
-| `Widget`, `Container`, `VBox`, `HBox`, `Panel`, `Label` | `BASE`, `DISABLED` |
+| `Widget`, `Container`, `Row`, `Column`, `Panel`, `Label` | `BASE`, `DISABLED` |
 | `Button` | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| PRESSED`, `DISABLED` |
 | `ToggleButton` | Button's four, each with and without `CHECKED` (eight) |
 | `TextBox` (planned) | `BASE`, `HIGHLIGHTED`, `HIGHLIGHTED \| EDITING`, `DISABLED` |
@@ -476,7 +477,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 - Widgets are hit-tested against their `rect`. As with pygame's `Rect.collidepoint()`, the right and bottom edges are outside it. Halos and text that extend past the rect do not count, and nor does swell: a negative swell still hits across the whole rect, including the band where nothing is drawn.
 - Hit-testing is clipped to the draw surface, from `(0, 0)` to the UI's `size`, because nothing is drawn beyond it: a position off the surface hits nothing, even where a widget's rect extends past the edge (a panel sliding in, a tooltip at the edge, or a shaking UI). This matters when a game scales up a smaller render surface and maps clicks in the letterbox into its coordinates. The boundary is the surface, not `ui.rect`, so the UI's offset does not move it. Widgets are not clipped to their parents, for hit-testing or drawing, so a child outside its parent, such as a tooltip, can still be clicked.
 - The walk goes in reverse drawing order (see [Tree order](#tree-order)), so the widget drawn on top is found first. Hidden subtrees are skipped. Disabled widgets still count, so a disabled panel still blocks what is below it.
-- Each widget has a `hit_testable` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `VBox`, `HBox`, and `Label`: a `Label` on a `Button` must not block the button, and HUD text should not block clicks meant for the game. The `UI` is not a widget, so it is never hit, and clicks on empty space reach the game.
+- Each widget has a `hit_testable` flag, which decides whether the walk can stop on it. It belongs to the widget alone and is not inherited. It defaults to `True`, since blocking by default is the safer mistake, and is `False` for `Container`, `Row`, `Column`, and `Label`: a `Label` on a `Button` must not block the button, and HUD text should not block clicks meant for the game. The `UI` is not a widget, so it is never hit, and clicks on empty space reach the game.
 - Mask hit-testing, so that non-rectangular widgets respond only where they are drawn, is not in v0.1.
 
 ### Consuming
@@ -584,7 +585,8 @@ src/puigame/
 ├── _layout/                   anchors and placement
 │   ├── __init__.py
 │   ├── anchor.py              Anchor, get_pos_from_anchor_match
-│   └── box_align.py           BoxAlign
+│   ├── cross_axis_align.py    CrossAxisAlign
+│   └── fit_size.py            FitSize, FitSource
 ├── _styling/                  styles and themes
 │   ├── __init__.py
 │   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
@@ -595,12 +597,11 @@ src/puigame/
 │   └── ui_manager.py          UIManager
 ├── _widgets/                  base classes, states, and concrete widgets
 │   ├── __init__.py
-│   ├── box.py                 Box, VBox, HBox, Axis
 │   ├── button.py              Button
-│   ├── container.py           Container
 │   ├── interactive_widget.py  InteractiveWidget
 │   ├── label.py               Label
-│   ├── panel.py               Panel
+│   ├── linear_arrangement.py  LinearArrangement, Row, Column, Axis
+│   ├── panel.py               Panel, Container
 │   ├── state.py               State
 │   ├── toggle_button.py       ToggleButton
 │   ├── toggle_group.py        ToggleGroup
@@ -615,7 +616,8 @@ The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicO
 
 - **Subpackages are private.** The leading underscore marks everything below `puigame` as internal, so modules can move between releases without breaking games. Each subpackage's `__init__.py` holds only a docstring and imports nothing, so importing one module never pulls in the rest of its package.
 - **Base classes live with the concrete widgets.** `Widget`, `InteractiveWidget`, and `State` are in `_widgets`, as Qt and Kivy keep their base widget classes with the widgets.
-- **`_layout` holds placement rules, not widgets**: `Anchor` and `BoxAlign`. `VBox` and `HBox` are widgets, so they live in `_widgets` with the rest.
+- **`_layout` holds placement rules, not widgets**: `Anchor`, `CrossAxisAlign`, and `FitSize`. `Row` and `Column` are widgets, so they live in `_widgets` with the rest.
+- **A subclass that only configures its base lives in the base's module**, as `Container` does in `panel.py`. One that adds behaviour gets its own module, as `ToggleButton` does.
 - **`_styling`**, not `themes` (a plural suggests a collection of themes) or `appearance` (which this document uses for skins).
 - Unfinished widgets live on branches and are not in the tree until they are built.
 
@@ -626,12 +628,12 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | Group | Names |
 | --- | --- |
 | Running a UI | `UI` |
-| Widgets | `Widget`, `Container`, `VBox`, `HBox`, `Panel`, `Label`, `Button`, `ToggleButton`, `ToggleGroup` |
-| Placement | `Anchor`, `BoxAlign`, `FitSize` |
+| Widgets | `Widget`, `Container`, `Row`, `Column`, `Panel`, `Label`, `Button`, `ToggleButton`, `ToggleGroup` |
+| Placement | `Anchor`, `CrossAxisAlign`, `FitSize` |
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
 
-- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIManager`, `InteractiveWidget`, `Box`, `Axis`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
+- **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIManager`, `InteractiveWidget`, `LinearArrangement`, `Axis`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
 - **`Widget` is public for annotations**, for example a function that takes any parent. Subclassing it is not supported in v0.1.
 - **`RGBA` stays internal.** It is an alias for `tuple[int, int, int, int]`, so colour tuples type-check without it, and keeping it private leaves room to accept `pg.Color` later.
@@ -641,12 +643,12 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 Each layer imports only from the layers above it:
 
-1. `_components/placed_image`, `_layout/anchor`, `_layout/box_align`, `_widgets/state`, `_widgets/toggle_group`
+1. `_components/placed_image`, `_layout/anchor`, `_layout/cross_axis_align`, `_layout/fit_size`, `_widgets/state`, `_widgets/toggle_group`
 2. `_styling/style`
 3. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
 4. `_widgets/widget`
 5. `_widgets/interactive_widget`
-6. `_widgets/box`, `_widgets/button`, `_widgets/container`, `_widgets/label`, `_widgets/panel`
+6. `_widgets/button`, `_widgets/label`, `_widgets/linear_arrangement`, `_widgets/panel`
 7. `_widgets/toggle_button`
 8. `_ui/ui_manager`
 9. `_ui/ui`

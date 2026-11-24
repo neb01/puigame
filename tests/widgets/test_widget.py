@@ -42,7 +42,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -90,10 +89,7 @@ class RecordingLayer(Skin):
         self.received_sizes.append(size)
         self.received_styles.append(style)
 
-        return PlacedImage(
-            pg.Surface(size, pg.SRCALPHA),
-            (0, 0),
-        )
+        return PlacedImage(pg.Surface(size, pg.SRCALPHA), (0, 0))
 
 
 class MeasuredLayer(Skin):
@@ -231,11 +227,7 @@ def test_float_size_is_rounded_down(ui: UI):
 
 @pytest.mark.parametrize(
     ("margin", "expected_topleft"),
-    [
-        ((1, 2), (1, 2)),
-        ([2, 3], (2, 3)),
-        (pg.Vector2(4, 2), (4, 2)),
-    ],
+    [((1, 2), (1, 2)), ([2, 3], (2, 3)), (pg.Vector2(4, 2), (4, 2))],
     ids=["tuple", "list", "pg.Vector2"],
 )
 def test_margin_places_rect_on_correct_axes(ui: UI, margin, expected_topleft):
@@ -270,19 +262,7 @@ def test_offset_converts_to_vector2_on_correct_axes(ui: UI, offset, expected_off
 
 @pytest.mark.parametrize(
     "size",
-    [
-        1,
-        2.0,
-        "34",
-        (),
-        (3,),
-        (3, 4, 5),
-        (True, 3),
-        (3, True),
-        ("3", 4),
-        {3, 4},
-        None,
-    ],
+    [1, 2.0, "34", (), (3,), (3, 4, 5), (True, 3), (3, True), ("3", 4), {3, 4}, None],
     ids=[
         "int",
         "float",
@@ -420,11 +400,7 @@ def test_constructor_parent_anchor_can_take_any_member_or_none(ui: UI, parent_an
     assert ui.children == (widget,)
 
 
-@pytest.mark.parametrize(
-    "parent_anchor",
-    ["centre", (0.5, 0.5)],
-    ids=["str", "tuple"],
-)
+@pytest.mark.parametrize("parent_anchor", ["centre", (0.5, 0.5)], ids=["str", "tuple"])
 def test_constructor_with_str_or_tuple_parent_anchor_raises(ui: UI, parent_anchor):
     with pytest.raises(TypeError):
         Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, parent_anchor=parent_anchor)
@@ -440,11 +416,7 @@ def test_constructor_with_str_or_tuple_parent_anchor_raises(ui: UI, parent_ancho
 
 @pytest.mark.parametrize(
     ("size", "expected_size"),
-    [
-        ((None, 30), (12, 30)),
-        ((25, None), (25, 17)),
-        ((None, None), (12, 17)),
-    ],
+    [((None, 30), (12, 30)), ((25, None), (25, 17)), ((None, None), (12, 17))],
     ids=["width", "height", "both"],
 )
 def test_none_axis_fits_to_component_preferred_size(ui: UI, size, expected_size):
@@ -542,11 +514,7 @@ def test_constructor_with_none_axis_on_widget_that_does_not_fit_raises(ui: UI, s
 
 @pytest.mark.parametrize(
     ("size", "expected_size"),
-    [
-        ((None, 30.8), (0, 30)),
-        ((25.6, None), (25, 0)),
-        ((None, None), (0, 0)),
-    ],
+    [((None, 30.8), (0, 30)), ((25.6, None), (25, 0)), ((None, None), (0, 0))],
     ids=["width", "height", "both"],
 )
 def test_none_axis_of_child_fitted_widget_starts_at_zero(ui: UI, size, expected_size):
@@ -642,10 +610,7 @@ def test_parent_child_relationship_is_assigned_both_ways_in_new_widgets(ui: UI):
 
 
 def test_child_and_grandchild_return_ui_theme():
-    theme = Theme(
-        base_style=replace(ANY_STYLE, body_colour=BLUE),
-        style_overrides={},
-    )
+    theme = Theme(base_style=replace(ANY_STYLE, body_colour=BLUE), style_overrides={})
     ui = UI(size=ANY_SIZE, theme=theme)
 
     child = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN)
@@ -1104,12 +1069,7 @@ def test_components_receive_rect_size_and_style_for_each_possible_state():
     ui = UI(size=ANY_SIZE, theme=STATE_COLOUR_THEME)
     component = RecordingLayer()
 
-    Widget(
-        ui,
-        size=(10, 12),
-        skin=ANY_SKIN,
-        components=[component],
-    )
+    Widget(ui, size=(10, 12), skin=ANY_SKIN, components=[component])
 
     assert set(component.received_styles) == {
         replace(ANY_STYLE, body_colour=BASE_COLOUR),
@@ -1123,12 +1083,7 @@ def test_image_keeps_components_given_as_generator(ui: UI):
     single_use_components = (
         layer for layer in [FixedLayer(size=(5, 6), colour=RED, pos=(-3, 2))]
     )
-    widget = Widget(
-        ui,
-        size=ANY_SIZE,
-        skin=ANY_SKIN,
-        components=single_use_components,
-    )
+    widget = Widget(ui, size=ANY_SIZE, skin=ANY_SKIN, components=single_use_components)
 
     # white-box: nothing public renders a plain Widget again
     widget._rebuild_image_cache()

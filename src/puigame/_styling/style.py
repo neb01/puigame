@@ -12,7 +12,7 @@ from enum import Enum, auto, unique
 from pathlib import Path
 
 from puigame._layout.anchor import Anchor
-from puigame._validation import validate_pair
+from puigame._validation import validate_enum, validate_pair, validate_tuple
 
 # a colour as (red, green, blue, alpha), each from 0 to 255
 RGBA = tuple[int, int, int, int]
@@ -123,8 +123,8 @@ class Style:
     for any combination of state flags from it. Only the fields that
     ``StyleOverride`` also has can change between states.
 
-    A negative border thickness, corner radius, box gap, or halo thickness, or
-    a font size of 0 or less, raises ``ValueError`` when the style is created.
+    A negative border thickness, corner radius, or halo thickness, or a font
+    size of 0 or less, raises ``ValueError`` when the style is created.
     A negative swell is allowed. A halo fade profile that is not a
     ``FadeProfile``, a text offset that is not a tuple of two numbers, a
     typeface that is neither a ``BundledTypeface`` nor a ``Path``, a text anchor
@@ -145,10 +145,6 @@ class Style:
             concentric. Each layer's radius is kept between 0 and half that
             layer's shorter side, so a radius that would be larger gives a
             pill shape, and one that would be negative gives square corners.
-        box_gap: Space in pixels between neighbouring children of a ``VBox``
-            or ``HBox``, with none before the first child or after the last.
-            The same in every state, so a box never changes size with its
-            children's states.
         halo_colour: Halo colour as RGBA.
         halo_fade_profile: How the halo's alpha falls from ``halo_colour``'s
             alpha at its inner edge to transparent just past its outer edge.
@@ -186,7 +182,6 @@ class Style:
 
     # general appearance options (state-agnostic)
     corner_radius: int  # outer edge; halo, border, and body radii derive from it
-    box_gap: int
 
     # effect options
     halo_colour: RGBA
@@ -237,29 +232,18 @@ class Style:
                 f"corner_radius cannot be negative, got {self.corner_radius} px",
             )
 
-        if self.box_gap < 0:
-            raise ValueError(
-                f"box_gap cannot be negative, got {self.box_gap} px",
-            )
-
-        if not isinstance(self.halo_fade_profile, FadeProfile):
-            raise TypeError(
-                "halo_fade_profile must be a FadeProfile, "
-                f"got {self.halo_fade_profile!r}",
-            )
+        validate_enum("halo_fade_profile", self.halo_fade_profile, FadeProfile)
 
         if self.halo_thickness < 0:
             raise ValueError(
                 f"halo_thickness cannot be negative, got {self.halo_thickness} px",
             )
 
-        if not isinstance(self.text_offset, tuple):
-            raise TypeError(f"text_offset must be a tuple, got {self.text_offset!r}")
-        validate_pair("text_offset", self.text_offset)
+        validate_tuple("text_offset", self.text_offset)
 
         if not isinstance(self.text_typeface, (BundledTypeface, Path)):
             raise TypeError(
-                "text_typeface must be a BundledTypeface or Path, "
+                "text_typeface must be BundledTypeface or Path, "
                 f"got {self.text_typeface!r}",
             )
 
@@ -268,29 +252,16 @@ class Style:
                 f"text_font_size must be positive, got {self.text_font_size} px",
             )
 
-        if not isinstance(self.text_anchor, Anchor):
-            raise TypeError(f"text_anchor must be an Anchor, got {self.text_anchor!r}")
+        validate_enum("text_anchor", self.text_anchor, Anchor)
+        validate_enum("text_parent_anchor", self.text_parent_anchor, Anchor)
+        validate_enum("text_align", self.text_align, TextAlign)
+        validate_enum(
+            "text_horizontal_extent",
+            self.text_horizontal_extent,
+            TextHorizontalExtent,
+        )
 
-        if not isinstance(self.text_parent_anchor, Anchor):
-            raise TypeError(
-                "text_parent_anchor must be an Anchor, "
-                f"got {self.text_parent_anchor!r}",
-            )
-
-        if not isinstance(self.text_align, TextAlign):
-            raise TypeError(
-                f"text_align must be a TextAlign, got {self.text_align!r}",
-            )
-
-        if not isinstance(self.text_horizontal_extent, TextHorizontalExtent):
-            raise TypeError(
-                "text_horizontal_extent must be a TextHorizontalExtent, "
-                f"got {self.text_horizontal_extent!r}",
-            )
-
-        if not isinstance(self.text_margin, tuple):
-            raise TypeError(f"text_margin must be a tuple, got {self.text_margin!r}")
-        validate_pair("text_margin", self.text_margin)
+        validate_tuple("text_margin", self.text_margin)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -358,14 +329,12 @@ class StyleOverride:
                 f"border_thickness cannot be negative, got {self.border_thickness} px",
             )
 
-        if self.halo_fade_profile is not None and not isinstance(
+        validate_enum(
+            "halo_fade_profile",
             self.halo_fade_profile,
             FadeProfile,
-        ):
-            raise TypeError(
-                "halo_fade_profile must be a FadeProfile or None, "
-                f"got {self.halo_fade_profile!r}",
-            )
+            allow_none=True,
+        )
 
         if self.halo_thickness is not None and self.halo_thickness < 0:
             raise ValueError(
@@ -375,6 +344,6 @@ class StyleOverride:
         if self.text_offset is not None:
             if not isinstance(self.text_offset, tuple):
                 raise TypeError(
-                    f"text_offset must be a tuple or None, got {self.text_offset!r}",
+                    f"text_offset must be tuple or None, got {self.text_offset!r}",
                 )
             validate_pair("text_offset", self.text_offset)

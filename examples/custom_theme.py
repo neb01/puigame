@@ -1,9 +1,9 @@
 """Custom-theme puigame example: the default theme restyled.
 
-Builds a theme from a tweaked copy of the default base style and new
-overrides for the disabled, highlighted, and pressed states. A titled panel
-sits above a button that quits, beside a disabled button, so every state can
-be seen. Esc also quits.
+Builds a theme from a tweaked copy of the default base style, with
+right-aligned text, and new overrides for the disabled, highlighted, and
+pressed states. A panel with a two-line title sits above a button that quits,
+beside a disabled button, so every state can be seen. Esc also quits.
 
 Run it from the repository root with ``uv run python examples/custom_theme.py``.
 """
@@ -24,6 +24,7 @@ from puigame import (
     Panel,
     State,
     StyleOverride,
+    TextAlign,
     Theme,
 )
 
@@ -61,12 +62,10 @@ CUSTOM_THEME = Theme(
         corner_radius=20,  # over half the button height: a pill, as in CSS
         text_colour=MID_ORANGE,
         text_font_size=24,
+        text_align=TextAlign.RIGHT,
     ),
     style_overrides={
-        State.DISABLED: StyleOverride(
-            body_colour=DARK_RED,
-            text_colour=DARK_ORANGE,
-        ),
+        State.DISABLED: StyleOverride(body_colour=DARK_RED, text_colour=DARK_ORANGE),
         State.HIGHLIGHTED: StyleOverride(
             halo_colour=ORANGE,
             halo_fade_profile=FadeProfile.HARD_QUADRATIC,
@@ -111,11 +110,7 @@ def main() -> None:
         margin=MARGIN,
     )
 
-    Label(
-        title_panel,
-        size=LABEL_SIZE,
-        text="CUSTOM\nTHEME",
-    )
+    Label(title_panel, size=LABEL_SIZE, text="CUSTOM\nTHEME")
 
     # quit button
     Button(

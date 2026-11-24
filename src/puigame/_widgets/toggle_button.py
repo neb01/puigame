@@ -132,7 +132,7 @@ class ToggleButton(Button):
                 button is not added to ``parent`` or ``group``.
             ValueError: If either dimension of ``size`` is negative, if
                 ``checked`` is ``True`` and ``group`` already has a checked
-                button, or if ``parent`` is a box and ``anchor``,
+                button, or if ``parent`` is a row or column and ``anchor``,
                 ``parent_anchor``, or ``margin`` is not its default. The button
                 is not added to ``parent`` or ``group``.
         """
@@ -144,7 +144,7 @@ class ToggleButton(Button):
 
         if group is not None:
             if not isinstance(group, ToggleGroup):
-                raise TypeError(f"group must be a ToggleGroup or None, got {group!r}")
+                raise TypeError(f"group must be ToggleGroup or None, got {group!r}")
 
             group._before_button_added(self)
 

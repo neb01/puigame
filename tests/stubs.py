@@ -19,7 +19,11 @@ class FixedLayer(Skin):
     """
 
     def __init__(
-        self, *, size: tuple[int, int], colour: RGBA, pos: tuple[int, int]
+        self,
+        *,
+        size: tuple[int, int],
+        colour: RGBA,
+        pos: tuple[int, int],
     ) -> None:
         """Set up a layer of ``size``, filled with ``colour``, placed at ``pos``."""
         super().__init__()

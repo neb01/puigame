@@ -12,13 +12,11 @@ def main() -> None:
     """Open a window and run the example until it is closed."""
     pg.init()
     screen = pg.display.set_mode((640, 360), pg.SCALED)
-    pg.display.set_caption("puigame minimal demo")
 
     ui = UI(size=screen.size)
 
     Button(
         ui,
-        size=(64, 30),
         skin=DrawnSkin(),
         text="QUIT",
         on_click=lambda _button: pg.event.post(pg.Event(pg.QUIT)),

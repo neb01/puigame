@@ -37,11 +37,7 @@ def left_release(ui: UI, *, pos: tuple[int, int]) -> bool:
     Returns:
         Whether ``ui`` consumed the event.
     """
-    mouse_button_up_event = pg.Event(
-        pg.MOUSEBUTTONUP,
-        pos=pos,
-        button=pg.BUTTON_LEFT,
-    )
+    mouse_button_up_event = pg.Event(pg.MOUSEBUTTONUP, pos=pos, button=pg.BUTTON_LEFT)
 
     return ui.handle_event(mouse_button_up_event)
 

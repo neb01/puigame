@@ -16,7 +16,7 @@ from pygame.typing import Point
 
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui_manager import UIManager
-from puigame._validation import reject_negative_in_pair, validate_pair
+from puigame._validation import validate_pair, validate_size
 from puigame._widgets.widget import Widget
 
 
@@ -32,12 +32,7 @@ class UI:
     own.
     """
 
-    def __init__(
-        self,
-        *,
-        size: Point,
-        theme: Theme = DEFAULT_THEME,
-    ) -> None:
+    def __init__(self, *, size: Point, theme: Theme = DEFAULT_THEME) -> None:
         """Create a UI with no widgets yet.
 
         Args:
@@ -50,8 +45,7 @@ class UI:
             TypeError: If ``size`` is not an ``(x, y)`` pair of numbers.
             ValueError: If either dimension of ``size`` is negative.
         """
-        validate_pair("size", size)
-        reject_negative_in_pair("size", size)
+        validate_size("size", size)
 
         self._rect = pg.Rect((0, 0), size)
         self._theme = theme
@@ -142,10 +136,10 @@ class UI:
 
         Call once per frame, after handling events and before ``draw()``.
         Changes made to widgets since the last update, such as a new offset or
-        flag, take effect here: the layout pass sizes every box to its children
-        and places every widget against its parent, the highlight moves to the
-        widget under the cursor, then each widget shows its image for its
-        current state.
+        flag, take effect here: the layout pass sizes every fitted widget to
+        its contents and places every widget against its parent, the
+        highlight moves to the widget under the cursor, then each widget shows
+        its image for its current state.
         """
         self._measure_tree()
         self._place_tree()
@@ -179,7 +173,8 @@ class UI:
 
         This is the first step of the layout pass, before ``_place_tree()``.
         Each widget's size is set from its contents before any widget is
-        placed, so a box sizes itself from its children's current sizes.
+        placed, so a row or column sizes itself from its children's current
+        sizes.
         """
         for widget in self._iter_descendants_post_order():
             widget._measure()
@@ -213,10 +208,7 @@ class UI:
         on each axis, as for every widget, so a fractional offset rounds the
         same way everywhere.
         """
-        self.rect.topleft = (
-            math.floor(self.offset.x),
-            math.floor(self.offset.y),
-        )
+        self.rect.topleft = (math.floor(self.offset.x), math.floor(self.offset.y))
 
     def _iter_descendants(self) -> Iterator[Widget]:
         """Yield every widget in the UI, parents first.

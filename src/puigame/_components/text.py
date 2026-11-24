@@ -176,7 +176,7 @@ class Text:
     @content.setter
     def content(self, value: str) -> None:
         if not isinstance(value, str):
-            raise TypeError(f"content must be a string, got {value!r}")
+            raise TypeError(f"content must be str, got {value!r}")
 
         self._content = value
 
