@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- A `Container` can fit its children, as a `Panel` does: `None` on either axis of its `size` sizes that axis to its visible children whose `anchor` is the same as their `parent_anchor`, at each `ui.update()`.
+- `Panel` and `Container` can be created without a `size`, which defaults to `(None, None)` and fits both axes.
+
+### Changed
+
+- `Container` is now an invisible `Panel`: a `Panel` with `NoSkin` that is not hit-testable by default, so `isinstance(container, Panel)` is `True`. It still takes no `skin`.
+
 ## [0.3.0] - 2026-11-23
 
 ### Added

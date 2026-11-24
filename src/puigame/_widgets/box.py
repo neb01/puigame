@@ -153,7 +153,7 @@ class Box(Widget):
 
         super().__init__(
             parent,
-            size=(0, 0),
+            size=(None, None),
             skin=NoSkin(),
             anchor=anchor,
             parent_anchor=parent_anchor,

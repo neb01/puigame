@@ -6,6 +6,7 @@ from puigame import (
     BundledTypeface,
     Container,
     FadeProfile,
+    Panel,
     Style,
     TextAlign,
     TextHorizontalExtent,
@@ -94,6 +95,45 @@ def test_hit_testable_false_by_default(ui: UI):
     container = Container(ui, size=ANY_SIZE)
 
     assert not container.hit_testable
+
+
+def test_is_a_panel(ui: UI):
+    container = Container(ui, size=ANY_SIZE)
+
+    assert isinstance(container, Panel)
+
+
+# endregion
+
+
+# region --- Fitted size ------------------------------------------------------
+
+
+def test_size_defaults_to_fitting_children(ui: UI):
+    container = Container(ui)
+    Container(container, size=(10, 4))
+    Container(container, size=(6, 8))
+
+    ui.update()
+
+    assert container.rect.size == (10, 8)
+
+
+@pytest.mark.parametrize(
+    ("size", "expected_size"),
+    [
+        ((None, 25), (10, 25)),
+        ((30, None), (30, 8)),
+    ],
+    ids=["width fitted", "height fitted"],
+)
+def test_none_axis_fits_children(ui: UI, size, expected_size):
+    container = Container(ui, size=size)
+    Container(container, size=(10, 8))
+
+    ui.update()
+
+    assert container.rect.size == expected_size
 
 
 # endregion

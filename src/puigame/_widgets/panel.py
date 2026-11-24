@@ -19,9 +19,9 @@ if TYPE_CHECKING:
 class Panel(Widget):
     """Widget with a skin, giving its children a visible background.
 
-    Any widget can hold children, so a Panel differs from a ``Container`` in
-    appearance: its images come from the skin it is given, where a Container
-    is invisible. The skin is fixed on creation.
+    Any widget can hold children; a Panel gives them a background, drawn by
+    the skin it is given, which is fixed on creation. A ``Container`` is an
+    invisible Panel.
 
     A Panel can also fit its children: ``None`` on an axis of its ``size``
     sizes that axis to them at each ``ui.update()``.
@@ -33,7 +33,7 @@ class Panel(Widget):
         self,
         parent: Widget | UI,
         *,
-        size: FitSize,
+        size: FitSize = (None, None),
         skin: Skin,
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
@@ -56,7 +56,7 @@ class Panel(Widget):
                 hanging off the panel's side, are not counted. The axis is 0
                 until the first ``ui.update()``, which fits it, and each
                 update fits it again. Other values are rounded down to whole
-                pixels.
+                pixels. Defaults to ``(None, None)``, which fits both axes.
             skin: Skin that draws the panel's images. It cannot be changed
                 later. For no background, use a ``Container``.
             anchor: Point on this panel used for positioning. Defaults to

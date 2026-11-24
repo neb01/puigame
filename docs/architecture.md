@@ -97,11 +97,11 @@ The hierarchy is shallow and describes **behaviour** only. Appearance (skins) an
 
 ```
 Widget                  rect, anchor, fixed parent, children, flags, skin, per-state image cache
-├── Container           invisible group of children (NoSkin)
 ├── Box                 (internal) invisible group that stacks its visible children and fits them (NoSkin)
 │   ├── VBox            column, top to bottom
 │   └── HBox            row, left to right
 ├── Panel               group of children with a background (skin given on creation)
+│   └── Container       invisible panel (NoSkin), not hit-testable by default
 ├── Label               + Text component and text property, no background (NoSkin), non-interactive
 └── InteractiveWidget   + the highlight and activation behaviour interactive widgets share
     ├── Button          + Text component, pressed look, on_click
@@ -117,7 +117,7 @@ UIManager               handles one UI's input: consumes events, tracks the high
 Classes marked (planned) are designed but not built yet (see [v0.1 scope](#v01-scope)).
 
 - **`InteractiveWidget` is a base class beside `Widget`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing the concrete widgets. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
-- **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Container` and `Panel` are thin classes that exist to make intent clear, and differ only in appearance: a `Container` is invisible, and a `Panel` is drawn by the skin it is given. `Panel` extends `Widget`, not `Container`, since a `Container` promises to be invisible.
+- **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Panel` and `Container` are thin classes that exist to make intent clear. A `Panel` is drawn by the skin it is given. A `Container` is a `Panel` with `NoSkin` that is not hit-testable by default, so it is invisible and lets clicks through. It takes no `skin`, since one would make it a second `Panel`, and it extends `Panel` rather than copying it, so the two fit their children the same way.
 - **`VBox` and `HBox` stack their children** in a column or a row, and size themselves to fit them (see [Boxes](#boxes)). They share an internal base, `Box`, and differ only in their main axis. `Box` extends `Widget`, not `Container`, since it places its children rather than letting them anchor themselves.
 - Complex widgets are built by **composing** simpler ones (a slider is a container holding a track and a handle button), not by deepening the hierarchy.
 
@@ -345,7 +345,7 @@ A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` i
 - `text_anchor` has no visible effect on a fitted axis, since the box fills it.
 - **Empty text** fits to no width and one line's cap height, plus the margin on each side, so an empty label keeps its line.
 - **When**: on creation, and whenever `text` is assigned, rather than in the layout pass, since a widget's text depends on nothing else in the tree. The rect is resized in place at once, keeping its top-left corner, and the next layout pass places it by its anchors.
-- **Components report a preferred size**, which depends only on their content and the style. A fitted axis takes the largest preferred size among the widget's components, as Flutter's `Stack` and Android's `FrameLayout` do. A `Container` has nothing to fit to, so `None` in its `size` raises `ValueError`; a `Panel` fits its children instead (see [Fitted panels](#fitted-panels)).
+- **Components report a preferred size**, which depends only on their content and the style. A fitted axis takes the largest preferred size among the widget's components, as Flutter's `Stack` and Android's `FrameLayout` do. A `Panel` or `Container` has no components, so it fits its children instead (see [Fitted panels](#fitted-panels)).
 - Children never size a text widget.
 
 ### Boxes
@@ -362,13 +362,13 @@ A `Label`, `Button`, or `ToggleButton` can size itself to its text. Its `size` i
 
 ### Fitted panels
 
-A `Panel` can size itself to its children. Its `size` is a `FitSize` and is still required: `None` on an axis fits that axis, so `(None, None)` fits both and `(200, None)` fits only the height.
+A `Panel` can size itself to its children, and so can a `Container`, which is a `Panel` with no appearance. Its `size` is a `FitSize`: `None` on an axis fits that axis, so `(200, None)` fits only the height. It defaults to `(None, None)`, which fits both.
 
 - **Counted children**: visible children whose `anchor` is the same as their `parent_anchor`, so both axes agree. A child placed against an edge or corner it does not share, such as a tab hanging off the panel's side, is not counted on either axis, as Flutter's `Stack` leaves its `Positioned` children out when sizing itself. A counted child can sit anywhere in the panel, such as its top-left corner.
 - **Fitted size**, per axis: the largest counted child's size plus its margin on each side. A negative margin, which lets a child overlap the panel's edge, counts too, floored at 0, as `text_margin` is for text. The panel has no padding of its own, so a child's margin is what spaces it from the edge. With no counted children, a fitted axis is 0. A fixed axis keeps its size.
 - **When**: in the measure walk of every layout pass, after its children, so a panel holding a box fits the box's new size in the same `update()`. A fitted axis is 0 until the first pass. The panel's images are rendered again only when its size changes, since the walk runs every frame.
 - `DrawnSkin` floors each layer's size at 0, so a fitted panel renders at any size, including 0x0 (see [DrawnSkin layers](#drawnskin-layers)).
-- Each widget class says what `None` fits to with a private `FitSource`: nothing (`Widget`, `Container`), its components (`Label`, `Button`, `ToggleButton`), or its children (`Panel`, and the internal `Box`). A `Container` keeps a fixed size.
+- Each widget class says what `None` fits to with a private `FitSource`: nothing (`Widget`), its components (`Label`, `Button`, `ToggleButton`), or its children (`Panel`, so `Container`, and the internal `Box`).
 
 ## State
 

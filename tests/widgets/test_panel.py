@@ -121,6 +121,16 @@ def test_hit_testable_true_by_default(ui: UI):
 # region --- Fitted size ------------------------------------------------------
 
 
+def test_size_defaults_to_fitting_children(ui: UI):
+    panel = Panel(ui, skin=ANY_SKIN)
+    Container(panel, size=(10, 4))
+    Container(panel, size=(6, 8))
+
+    ui.update()
+
+    assert panel.rect.size == (10, 8)
+
+
 def test_fitted_panel_with_no_children_is_zero_size(ui: UI):
     panel = Panel(ui, size=(None, None), skin=ANY_SKIN)
 
