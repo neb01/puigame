@@ -4,7 +4,7 @@ requires = [ "uv-build>=0.12.21,<0.13" ]
 
 [project]
 name = "puigame"
-version = "0.4.0"
+version = "0.5.0"
 description = "UI widgets for pygame-ce"
 readme = "README.md"
 keywords = [ "game-development", "gui", "pygame", "pygame-ce", "ui", "widgets" ]
