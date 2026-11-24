@@ -53,7 +53,7 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 @pytest.fixture(scope="session", autouse=True)
 def pygame_session() -> Iterator[None]:
-    """Initialise pygame once for the whole test session and quit it afterwards."""
+    """Initialise pygame once for the test session, and quit it afterwards."""
     pg.init()
 
     yield

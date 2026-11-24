@@ -106,6 +106,10 @@ class ToggleGroup:
         parent, after ``_before_button_added()`` has allowed it, so nothing
         here can fail. Both ends of the link are set here and cleared in
         ``_remove()``.
+
+        Args:
+            button: The button joining the group, already a child of its
+                parent.
         """
         # ToggleButton.__init__ checked this with _before_button_added()
         assert not button.checked or self.checked_button is None
@@ -118,6 +122,9 @@ class ToggleGroup:
 
         ``ToggleButton.kill()`` calls this. If the button was checked, the
         group is left with no checked button, and no callbacks are called.
+
+        Args:
+            button: The button leaving the group, which must be a member.
         """
         # _group is set only while the button is a member, and kill() checks it
         assert button in self._buttons
@@ -136,6 +143,9 @@ class ToggleGroup:
         The ``checked`` setter calls this to check a button in a group. It
         writes ``_checked`` directly, since assigning ``checked`` would call
         back into the group.
+
+        Args:
+            button: The member to check.
         """
         # the setter calls this only through the button's own _group
         assert button in self._buttons

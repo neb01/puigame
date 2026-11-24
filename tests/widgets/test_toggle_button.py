@@ -98,7 +98,7 @@ class BodyAndBorderColourLayer(Skin):
     """
 
     def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a new surface of ``size`` at (0, 0), top row in the border colour."""
+        """Return a new two-colour surface of ``size`` at (0, 0)."""
         image = pg.Surface(size, pg.SRCALPHA)
         image.fill(style.body_colour)
         image.fill(style.border_colour, pg.Rect((0, 0), (size[0], 1)))

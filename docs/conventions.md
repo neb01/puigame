@@ -14,7 +14,7 @@ The rules the code, tests, and docs follow, each with its reason. Tools enforce 
 
 ## Enforced by tools
 
-- **Ruff** checks and formats everything; the selected rules are in `pyproject.toml` (`B`, `COM812`, `D` with the Google convention, `E`, `F`, `I`, `N`, `RET`, `RUF`, `SIM`, `TC004`, `TID`, `UP`, `W`), except `SIM108`, so an `if`/`else` that assigns one of two values is never forced into a conditional expression. Lines are at most 88 characters. Relative imports are banned.
+- **Ruff** checks and formats everything; the selected rules are in `pyproject.toml` (`B`, `COM812`, `D` with the Google convention, `E`, `F`, `I`, `N`, `RET`, `RUF`, `SIM`, `TC004`, `TID`, `UP`, `W`), except `SIM108`, so an `if`/`else` that assigns one of two values is never forced into a conditional expression. Code lines are at most 88 characters, as in Black. Docstring and comment lines are at most 80 (`max-doc-length`, checked by `W505`), since PEP 8 gives prose a shorter limit than code: prose is read rather than scanned, and `help()` and editor hovers show docstrings as written. Relative imports are banned.
 - **Trailing commas:** anything that fits on one line is written on one line, with no trailing comma. Anything split across lines gets a trailing comma, which COM812 adds, so the formatter keeps it one item per line. Ruff warns that COM812 can conflict with its formatter; the conflicts are rare edge cases, and the rule saves adding the commas by hand.
 - **Pyright** type-checks `src/`, `tests/`, and `examples/` in CI.
 - **pre-commit** runs the housekeeping hooks, Ruff, and pyproject-fmt on every commit. Pyright and pytest run only in CI.

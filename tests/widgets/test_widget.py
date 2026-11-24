@@ -81,7 +81,7 @@ class RecordingLayer(Skin):
         self.received_styles: list[Style] = []
 
     def get_preferred_size(self, style: Style) -> tuple[int, int]:
-        """Return ``(0, 0)``, since the layer fills whatever size it is given."""
+        """Return ``(0, 0)``, since the layer fills any size it is given."""
         return (0, 0)
 
     def render(self, size: Point, style: Style) -> PlacedImage:
@@ -99,7 +99,7 @@ class MeasuredLayer(Skin):
     """
 
     def __init__(self, *, preferred_size: tuple[int, int]) -> None:
-        """Set up a layer that reports ``preferred_size``, with no measures yet."""
+        """Set up a layer reporting ``preferred_size``, with no measures yet."""
         super().__init__()
 
         self.preferred_size = preferred_size

@@ -194,7 +194,7 @@ class Style:
     text_offset: tuple[int, int]
 
     # text options (state-agnostic)
-    # BundledTypeface.PYGAME_DEFAULT is pygame-ce's built-in font, freesansbold.ttf
+    # BundledTypeface.PYGAME_DEFAULT is pygame-ce's built-in freesansbold.ttf
     text_typeface: BundledTypeface | Path
     text_font_size: int
     text_anchor: Anchor

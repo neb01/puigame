@@ -108,7 +108,7 @@ class InteractiveWidget(Widget):
                 ``margin`` is not its default. The widget is not added to
                 ``parent``.
         """
-        # set first, since super().__init__() picks the image through _current_state
+        # set first: super().__init__() picks the image through _current_state
         self._highlighted = False
         self._pressed = False
 

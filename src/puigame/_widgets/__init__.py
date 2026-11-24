@@ -1,1 +1,1 @@
-"""Widgets: the base classes, the states they can be in, and the concrete widgets."""
+"""Widgets: the base classes, their states, and the concrete widgets."""

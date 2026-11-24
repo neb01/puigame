@@ -77,7 +77,7 @@ ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
 
 
 class OnClickError(Exception):
-    """Error raised by ``on_click_error()``, distinct from any built-in error."""
+    """Error from ``on_click_error()``, distinct from any built-in error."""
 
 
 def on_click_error(_button: Button) -> NoReturn:

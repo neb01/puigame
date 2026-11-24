@@ -120,7 +120,7 @@ def test_no_skin_always_returns_zero_image_pos():
     ids=["tuple", "list", "pg.Vector2 of ints", "pg.Vector2 of floats"],
 )
 def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
-    # no halo, swell, or border, so DrawnSkin's surface is exactly the given size
+    # no halo, swell, or border, so DrawnSkin's surface is the given size
     style = replace(ANY_STYLE, border_thickness=0, halo_thickness=0, swell=0)
 
     surface = DrawnSkin().render(point, style).image

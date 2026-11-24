@@ -99,7 +99,7 @@ class UIManager:
         # a down for a button already recorded as down means its up was lost
         self._buttons_down.discard(event.button)
 
-        # a press lasts from a left down to its up, so one still recorded is stale
+        # a press lasts from a left down to its up, so any recorded one is stale
         if event.button == pg.BUTTON_LEFT:
             self._clear_pressed_widget()
 
@@ -134,7 +134,7 @@ class UIManager:
         """
         self._mouse_pos = event.pos
 
-        # the down went to the game, so the up does too, such as a drag's release
+        # the game got the down, so it gets the up too, such as a drag's release
         if event.button not in self._buttons_down:
             return False
 
@@ -148,7 +148,7 @@ class UIManager:
         if event.button != pg.BUTTON_LEFT:
             return True
 
-        # clear the press before calling out, since activation may change the tree
+        # clear the press before calling out, as activation may change the tree
         pressed_widget = self._pressed_widget
         self._clear_pressed_widget()
 
@@ -239,8 +239,9 @@ class UIManager:
             self._clear_highlighted_widget()
             return
 
-        # during a press nothing else highlights, as with native mouse capture, and
-        # the pressed widget only while it is under the cursor and still enabled
+        # during a press nothing else highlights, as with native mouse capture,
+        # and the pressed widget only while it is under the cursor and still
+        # enabled
         if self._pressed_widget is not None:
             if (
                 self._pressed_widget is hit_widget
@@ -277,8 +278,8 @@ class UIManager:
         Returns:
             The topmost such widget, or ``None`` if there is none.
         """
-        # nothing is drawn off the surface, so nothing there can be hit; the UI's
-        # rect can't stand in for the surface, since an offset moves it
+        # nothing is drawn off the surface, so nothing there can be hit; the
+        # UI's rect can't stand in for the surface, since an offset moves it
         surface_rect = pg.Rect((0, 0), self._ui.rect.size)
         if not surface_rect.collidepoint(pos):
             return None

@@ -288,7 +288,7 @@ class Widget:
 
     @property
     def image_pos(self) -> tuple[int, int]:
-        """The position of ``image``'s top-left corner, relative to ``rect.topleft``.
+        """The offset of ``image``'s top-left corner from ``rect.topleft``.
 
         Add it to ``rect.topleft`` to get the drawing position. Negative on an
         axis where the image starts above or to the left of the rect, for
@@ -446,7 +446,7 @@ class Widget:
         self._refresh_current_placed_image()
 
     def _iter_subtree(self) -> Iterator[Widget]:
-        """Yield this widget and every widget below it in the tree, parents first.
+        """Yield this widget and all its descendants, parents first.
 
         The order is depth-first pre-order: the widget itself, then each child
         followed by all of its own descendants before the next child. The tree
@@ -515,6 +515,13 @@ class Widget:
         rect's size in the theme's style for ``state``. The layers are combined
         with ``compose_layers()``, so the skin is at the bottom and the result
         covers every layer. With no components, the result is the skin's.
+
+        Args:
+            state: The state whose style the layers are rendered in.
+
+        Returns:
+            The combined image, and the position of its top-left corner
+            relative to ``rect.topleft``.
         """
         style = self.theme._style_for(state)
 

@@ -25,7 +25,7 @@ class FixedLayer(Skin):
         colour: RGBA,
         pos: tuple[int, int],
     ) -> None:
-        """Set up a layer of ``size``, filled with ``colour``, placed at ``pos``."""
+        """Set up a layer of ``size`` and ``colour``, placed at ``pos``."""
         super().__init__()
 
         self.size = size
@@ -37,7 +37,7 @@ class FixedLayer(Skin):
         return self.size
 
     def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a new surface of the layer's colour and size at its position."""
+        """Return a new surface in the layer's colour, size, and position."""
         image = pg.Surface(self.size, pg.SRCALPHA)
         image.fill(self.colour)
 
@@ -52,7 +52,7 @@ class BodyColourLayer(Skin):
     """
 
     def render(self, size: Point, style: Style) -> PlacedImage:
-        """Return a new surface of ``size``, filled with the body colour, at (0, 0)."""
+        """Return a new surface of ``size`` in the body colour, at (0, 0)."""
         image = pg.Surface(size, pg.SRCALPHA)
         image.fill(style.body_colour)
 
@@ -60,7 +60,7 @@ class BodyColourLayer(Skin):
 
 
 class OnToggleError(Exception):
-    """Error raised by ``on_toggle_error()``, distinct from any built-in error."""
+    """Error from ``on_toggle_error()``, distinct from any built-in error."""
 
 
 def on_toggle_error(_toggle_button: ToggleButton, _checked: bool) -> NoReturn:
