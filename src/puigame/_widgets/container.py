@@ -8,25 +8,30 @@ from pygame.typing import Point
 
 from puigame._components.skin import NoSkin
 from puigame._layout.anchor import Anchor
+from puigame._layout.fit_size import FitSize
+from puigame._widgets.panel import Panel
 from puigame._widgets.widget import Widget
 
 if TYPE_CHECKING:
     from puigame._ui.ui import UI
 
 
-class Container(Widget):
-    """Invisible widget that holds and positions children.
+class Container(Panel):
+    """Invisible panel that holds and positions children.
 
-    A Container has no appearance: it uses a ``NoSkin``, so its image is 0x0
-    and costs almost nothing to draw. For a group of children with a
-    background, use a ``Panel``.
+    A Container is a ``Panel`` with a ``NoSkin``, so its image is 0x0 and
+    costs almost nothing to draw, and by default clicks pass through it. For
+    a group of children with a background, use a ``Panel``.
+
+    A Container can fit its children: ``None`` on an axis of its ``size``
+    sizes that axis to them at each ``ui.update()``.
     """
 
     def __init__(
         self,
         parent: Widget | UI,
         *,
-        size: Point,
+        size: FitSize = (None, None),
         anchor: Anchor = Anchor.CENTRE,
         parent_anchor: Anchor | None = None,
         margin: Point = (0, 0),
@@ -40,7 +45,9 @@ class Container(Widget):
         Args:
             parent: Widget or ``UI`` to anchor against and to be a child of. It
                 cannot be changed later.
-            size: Width and height in pixels.
+            size: Width and height in pixels, or ``None`` on an axis to fit
+                that axis to the container's children, as for ``Panel``.
+                Defaults to ``(None, None)``, which fits both axes.
             anchor: Point on this container used for positioning. Defaults to
                 ``Anchor.CENTRE``.
             parent_anchor: Point on the parent that ``anchor`` is matched to.
@@ -62,10 +69,10 @@ class Container(Widget):
                 is neither an ``Anchor`` nor ``None``, or if ``size``,
                 ``margin``, or ``offset`` is not an ``(x, y)`` pair of numbers.
                 The container is not added to ``parent``.
-            ValueError: If either dimension of ``size`` is negative or
-                ``None``, or if ``parent`` is a box and ``anchor``,
-                ``parent_anchor``, or ``margin`` is not its default. The
-                container is not added to ``parent``.
+            ValueError: If either dimension of ``size`` is negative, or if
+                ``parent`` is a box and ``anchor``, ``parent_anchor``, or
+                ``margin`` is not its default. The container is not added to
+                ``parent``.
         """
         super().__init__(
             parent,
