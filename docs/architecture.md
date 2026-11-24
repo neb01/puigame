@@ -82,7 +82,7 @@ pause_ui.draw(screen)  # drawn last, so on top
 - **Input** goes to the top UI first and stops at the first one that consumes it. A modal menu is the game not passing events to the UIs below.
 - **Drawing** goes from the bottom UI to the top.
 - **Each UI has its own highlight and presses.** Once keyboard navigation arrives, each will also have its own settings: a HUD would typically turn keyboard navigation off, while a pause menu keeps it on.
-- **Only one UI should manage the cursor** at a time, once cursor management arrives, since the cursor belongs to the whole window. The others would be created with `manage_cursor=False` (see [Cursor](#cursor)).
+- **Only one UI should draw the cursor**, normally the top one, since there is one mouse. The others keep the default `has_cursor=False` (see [Cursor](#cursor)).
 
 ### Timing
 
@@ -507,8 +507,8 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 
 Not built yet. Mouse hover and keyboard focus will be **one concept**, the highlight:
 
-- **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and hides the cursor.
-- **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, shows the cursor, and highlights whatever is under it.
+- **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and stops drawing the cursor.
+- **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, draws the cursor again, and highlights whatever is under it.
 - **Turning keyboard navigation off**: a scene that uses the keyboard for something else (typically a game screen, as opposed to a menu or options screen) creates its `UI` with `keyboard_navigation=False`. Tab, the arrow keys, Enter, and Space then pass through to the game, and only the mouse highlights and activates widgets. A `TextBox` being edited still receives typing.
 - **Keyboard activation** follows the same rule as clicks: Enter or Space down on the highlighted widget shows `HIGHLIGHTED | PRESSED`, and key up fires.
 
@@ -525,7 +525,21 @@ Not built yet, since `TextBox` is planned.
 
 ### Cursor
 
-Not built yet, since it is only needed for keyboard navigation. The `UIManager` will hide and show the mouse cursor as the input mode changes. A game that manages the cursor itself will create its `UI` with `manage_cursor=False`. When several UIs are shown at once (see [Layering](#layering)), only one should manage the cursor. Since `pygame.mouse.set_visible` affects the whole window, this is an option rather than something puigame always does.
+Not built yet. A UI created with `has_cursor=True` draws the mouse cursor itself, and shows a different cursor depending on what is under it.
+
+- **Software cursor.** The cursor is an image that `ui.draw()` draws last, on top of the UI's widgets. It is drawn on the UI's surface, so it scales with `pg.SCALED` like everything else; a hardware cursor set with `pg.mouse.set_cursor()` stays at its native size, so pixel-art cursors would look tiny on a scaled-up window. The cost is up to a frame of lag behind the mouse. puigame never calls `pg.mouse.set_cursor()` or `pg.mouse.set_visible()`: the game hides the system cursor itself, so puigame changes nothing that belongs to the whole window.
+- **Off by default.** Each UI knows only its own widgets, and several UIs drawing cursors would draw several cursors. A game turns it on for one UI, normally the top one, which is drawn last and gets events first (see [Layering](#layering)). That UI's cursor reflects only its own widgets: over another UI's button, it shows the default cursor.
+- **Position**: the image is drawn with its hotspot at the cursor position the UI already stores from mouse events (see [Highlight](#highlight)), in the surface's pixels. The UI's `offset` does not move it. With no stored position, for example after `WINDOWLEAVE`, no cursor is drawn.
+- **Cursor roles.** A widget names a `CursorRole` rather than an image: `DEFAULT`, `CLICKABLE`, or `TEXT`. Roles are named by meaning rather than shape, since a game may draw any shape for a role, such as a gauntlet for `CLICKABLE`. An interactive widget's role is a private class attribute: `CLICKABLE` for buttons and toggle buttons, and `TEXT` for the planned `TextBox`. Roles do not change with state. A per-widget override, or roles that change with state (such as grab and grabbing for a slider handle), can be added later without breaking anything.
+- **Which role shows:**
+  - while the cursor is over the highlighted widget, that widget's role;
+  - during a press, the pressed widget's role, even when the cursor is dragged off it, as the press itself is kept;
+  - otherwise `DEFAULT`.
+
+  A disabled widget is never highlighted, so it shows `DEFAULT` and does not look clickable. A `TextBox` being edited keeps the highlight, so the cursor is `TEXT` over it and `DEFAULT` elsewhere, where a click only ends editing. In keyboard mode, no cursor is drawn (see [Keyboard navigation](#keyboard-navigation)).
+- **`CursorImage`**: a small frozen type pairing an `image`, a `pg.Surface`, with its `hotspot`, the pixel in the image that is the click point. It is puigame's own type rather than `pg.Cursor`, because `pg.Cursor` also holds system cursors, which cannot be drawn as images, and keeps its data in a tuple whose shape depends on the kind of cursor.
+- **The theme** maps each role to a `CursorImage` in a `cursors` field, since cursor art is part of the look. The field defaults to puigame's bundled cursors, so existing themes keep working. Their source art is drawn in the same Aseprite sheet as the rest of `art/`, and exported as one PNG per role into `assets/cursors/`.
+- **Still to decide while building:** the name of the `has_cursor` flag; whether `cursors` must map every role, or falls back to the bundled image for a missing one; when the bundled images are loaded (on first use, as fonts are, rather than at import); and whether a hotspot outside the image is rejected.
 
 ## Callbacks
 
@@ -561,7 +575,7 @@ Callbacks are plain callables passed to widgets on creation. Each receives the w
 
 ## Assets
 
-- Bundled assets live in `assets/fonts/` and, once `ImageSkin` arrives, `assets/images/` (default skin art, nine-slice-ready), all MIT-compatible.
+- Bundled assets live in `assets/fonts/`, `assets/cursors/` once cursors arrive, and, once `ImageSkin` arrives, `assets/images/` (default skin art, nine-slice-ready), all MIT-compatible.
 - They are loaded with `importlib.resources`, so they are found wherever the package is installed.
 - Loaded fonts are cached by typeface and size, since loading a font file is slow. All text with the same typeface and size shares one `pg.Font`, which is never changed after it is created, including attributes such as `bold` and `align`.
 - Loading failures raise exceptions (for example `FileNotFoundError`) and never exit the program.
