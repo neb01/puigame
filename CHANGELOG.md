@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-24
+
 ### Added
 
 - `main_axis_spacing`, the space in pixels between neighbouring children of a `Row` or `Column`, set on creation. It defaults to 0. A negative value overlaps neighbouring children, each drawn over the one before it, as in a hand of cards. The row or column always encloses its children: if the overlap is larger than the children, it grows to fit them and shifts them inside. A value that is not an `int`, including a `bool`, raises `TypeError`.
@@ -87,7 +89,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Inline type hints (`py.typed`).
 - Examples: `minimal.py`, `custom_theme.py`, and `showcase.py`.
 
-[Unreleased]: https://github.com/neb01/puigame/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/neb01/puigame/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/neb01/puigame/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/neb01/puigame/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/neb01/puigame/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/neb01/puigame/compare/v0.2.0...v0.2.1
