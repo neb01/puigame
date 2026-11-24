@@ -22,8 +22,7 @@ The library code in `src/` is written by hand. This document, like the rest of t
 - [Assets](#assets)
 - [Naming and code conventions](#naming-and-code-conventions)
 - [Package layout](#package-layout)
-- [v0.1 scope](#v01-scope)
-- [Build order](#build-order)
+- [Roadmap](#roadmap)
 - [Open questions](#open-questions)
 
 ## Goals and scope
@@ -114,7 +113,7 @@ UI                      top of the tree (not a Widget): covers the draw surface,
 UIManager               handles one UI's input: consumes events, tracks the highlight and presses
 ```
 
-Classes marked (planned) are designed but not built yet (see [v0.1 scope](#v01-scope)).
+Classes marked (planned) are designed but not built yet (see [Roadmap](#roadmap)).
 
 - **`InteractiveWidget` is a base class beside `Widget`**, so the `UIManager` can find interactive widgets with `isinstance()` without importing the concrete widgets. Non-interactive widgets (`Container`, `Panel`, and `Label`) have no highlight concept at all.
 - **Every widget can hold children.** The tree lives on `Widget` itself, so any widget can parent another (for example a tooltip that is a child of its button). `Panel` and `Container` are thin classes that exist to make intent clear. A `Panel` is drawn by the skin it is given. A `Container` is a `Panel` with `NoSkin` that is not hit-testable by default, so it is invisible and lets clicks through. It takes no `skin`, since one would make it a second `Panel`, and it extends `Panel` rather than copying it, so the two fit their children the same way.
@@ -655,38 +654,9 @@ Each layer imports only from the layers above it:
 
 `_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets` imports `UI` from `_ui` for type checking only, `_widgets/toggle_group` imports `ToggleButton` the same way, and `_ui/ui_manager` imports `UI` the same way, since `_ui/ui` imports both; that is why `Widget` tests whether its parent is a `Widget` rather than a `UI`. `UIManager` and `UI` need only `Widget` and `InteractiveWidget`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
 
-## v0.1 scope
+## Roadmap
 
-**Public classes:** `UI`, `Widget`, `Container`, `Panel`, `Label`, `Button`, `Anchor`, `State`, `Theme` with a default theme, `Style`, `StyleOverride`, `NoSkin`, and `DrawnSkin` (see [Public API](#public-api) for the full list of names).
-
-**Internal classes:** `UIRoot`, `UIManager`, `InteractiveWidget`, `Skin`, `Component`, `Text`, and `PlacedImage`.
-
-**Features:**
-
-- The widget tree, with fixed parents, `kill()`, and the `_in_tree` flags
-- Layout every frame from anchors, margin, and offset
-- Eager per-state image caching
-- A mouse highlight, designed to be shared with keyboard navigation later
-- Left-click press-and-release activation with mouse capture
-- Bundled fonts, loaded with `importlib.resources`
-
-**Later:** an indicator-style `Checkbox`, an exclusive group for radio behaviour, `TextBox` with text editing, keyboard navigation, cursor management, a mouse-button enable map, `ImageSkin` with default art, mask hit-testing, lazy caching, per-widget themes, moving widgets to a new parent, an `Image` widget, sliders and progress bars (as compound widgets), dropdowns, scroll and list views, row and column layouts, a shared skin cache, and a non-linear (eased) halo fade.
-
-## Build order
-
-Each step is one branch and pull request, with tests:
-
-1. `docs/architecture`: this document
-2. `chore/package-structure`: subpackages, `__init__.py` files, and module stubs
-3. `feat/widget-base`: `Anchor`, `State`, the abstract `Skin` with `TransparentSkin`, and a first pass at `Widget`, with the tree, flags, and state cache (replaces the `hello()` placeholder)
-4. `feat/theme-drawn-skin`: `Theme` and `DrawnSkin`
-5. `feat/widget-tree`: fixed parents, `kill()`, `UIRoot`, `NoSkin`, and `Container`
-6. `feat/text`: `Text` component and font cache
-7. `feat/layout`: positioning from anchors, margin, and offset
-8. `refactor/drop-sprite`: widgets stop being pygame Sprites, and `WidgetGroup` is dropped in favour of drawing the tree from `UI`
-9. `feat/panel-label`: `Panel` and `Label`
-10. `feat/ui`: `InteractiveWidget`, `UIManager`, and `UI`: drawing, input routing, and the mouse highlight
-11. `feat/button`: `Button`
+Planned work is tracked as [GitHub issues](https://github.com/neb01/puigame/issues), and the issues planned for each release are grouped into [milestones](https://github.com/neb01/puigame/milestones). What each release added is recorded in the [changelog](../CHANGELOG.md).
 
 ## Open questions
 
