@@ -46,7 +46,7 @@ def _get_font(
     size: int,
     text_align: TextAlign,
 ) -> pg.Font:
-    """Return a font for a typeface, size, and alignment, loading it on first use.
+    """Return the font for a typeface, size, and alignment, loading it once.
 
     Results are cached by all three arguments, so every caller that passes the
     same arguments receives the same font object. The alignment is set once,
@@ -69,9 +69,9 @@ def _get_font(
         font = pg.Font(None, size)
 
     elif isinstance(typeface, BundledTypeface):
-        # read the font's bytes rather than its path, since a bundled font has no
-        # path when puigame is imported from a zip archive; each font gets its own
-        # stream, since SDL keeps seeking in it while the font is in use
+        # read the font's bytes rather than its path, since a bundled font has
+        # no path when puigame is imported from a zip archive; each font gets
+        # its own stream, since SDL keeps seeking in it while the font is in use
         font_bytes = (
             files("puigame") / "assets" / "fonts" / typeface.value
         ).read_bytes()
@@ -182,7 +182,7 @@ class Text:
 
     @property
     def stripped_content(self) -> str:
-        """The content as drawn, with trailing whitespace removed from each line.
+        """The content as drawn, with each line's trailing whitespace removed.
 
         Leading whitespace and newlines are kept, so a final newline is still
         drawn as a blank space at the end of its line. Whitespace is anything

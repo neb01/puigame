@@ -1,4 +1,4 @@
-"""Anchor, the named points on a rect, and positioning one rect in another by them."""
+"""Anchor, a rect's named points, and placing one rect in another by them."""
 
 import math
 from enum import Enum, unique
@@ -75,7 +75,7 @@ def get_pos_from_anchor_match(
     margin: Point = (0, 0),
     offset: Point = (0, 0),
 ) -> tuple[int, int]:
-    """Return the child's top-left position that matches its anchor to the parent's.
+    """Return the top-left position putting the child's anchor on the parent's.
 
     Places the child so that ``child_anchor`` on the child lands on
     ``parent_anchor`` on the parent, then applies the margin and offset. The

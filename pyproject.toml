@@ -65,6 +65,7 @@ lint.select = [
 lint.ignore = [ "SIM108" ]  # if/else is kept for two-way assignments; ternaries are not required
 lint.per-file-ignores."tests/**/*.py" = [ "D100", "D103" ]  # test modules/functions don't need docstrings
 lint.flake8-tidy-imports.ban-relative-imports = "all"
+lint.pycodestyle.max-doc-length = 80  # docstrings and comments; code lines are 88
 lint.pydocstyle.convention = "google"
 
 [tool.pyright]

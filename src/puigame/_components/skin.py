@@ -67,8 +67,8 @@ class NoSkin(Skin):
         """Return a 0x0 surface, whatever the size and style.
 
         Args:
-            size: Not used; accepted so the signature matches ``Skin.render()``.
-            style: Not used; accepted so the signature matches ``Skin.render()``.
+            size: Not used; accepted to match ``Skin.render()``'s signature.
+            style: Not used; accepted to match ``Skin.render()``'s signature.
 
         Returns:
             A new 0x0 surface at position ``(0, 0)``.

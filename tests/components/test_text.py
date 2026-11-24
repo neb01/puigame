@@ -86,11 +86,11 @@ def _centred_ink_rect(
     content: str,
     text_horizontal_extent: TextHorizontalExtent,
 ) -> pg.Rect:
-    """Render centred text in the test font and return its ink in widget coordinates.
+    """Return the ink of centred text in the test font, in widget coordinates.
 
-    The text is anchored ``CENTRE`` to ``CENTRE`` in a ``WIDGET_SIZE`` widget, with
-    no margin or offset, in ``nebmon0font.ttf``. Tests that change any of these
-    build their own style.
+    The text is anchored ``CENTRE`` to ``CENTRE`` in a ``WIDGET_SIZE`` widget,
+    with no margin or offset, in ``nebmon0font.ttf``. Tests that change any of
+    these build their own style.
     """
     style = replace(
         ANY_STYLE,
@@ -136,7 +136,7 @@ def _zip_puigame(zip_path: Path) -> Path:
 # region --- Fixtures ---------------------------------------------------------
 
 
-# the font and cap-height caches last for the whole run, so clear them before each
+# the font and cap-height caches last the whole run, so clear them before each
 # test; otherwise a font cached by an earlier test could hide a cache-key bug
 @pytest.fixture(autouse=True)
 def clear_text_caches() -> None:
