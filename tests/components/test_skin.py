@@ -29,7 +29,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -122,12 +121,7 @@ def test_no_skin_always_returns_zero_image_pos():
 )
 def test_drawn_skin_render_truncates_any_point_type(point, expected_size):
     # no halo, swell, or border, so DrawnSkin's surface is exactly the given size
-    style = replace(
-        ANY_STYLE,
-        border_thickness=0,
-        halo_thickness=0,
-        swell=0,
-    )
+    style = replace(ANY_STYLE, border_thickness=0, halo_thickness=0, swell=0)
 
     surface = DrawnSkin().render(point, style).image
 
@@ -178,11 +172,7 @@ def test_drawn_skin_size_and_pos_for_swell_and_halo(
     ids=["zero height and width", "zero width", "zero height"],
 )
 def test_drawn_skin_body_size_can_be_zero(size):
-    style = replace(
-        ANY_STYLE,
-        border_thickness=2,
-        swell=0,
-    )
+    style = replace(ANY_STYLE, border_thickness=2, swell=0)
 
     DrawnSkin().render(size, style)  # body is 0 px on at least one axis: all border
 
@@ -215,13 +205,11 @@ def test_drawn_skin_body_size_can_be_zero(size):
     ],
 )
 def test_drawn_skin_can_take_border_and_swell_larger_than_size(
-    size, border_thickness, swell
+    size,
+    border_thickness,
+    swell,
 ):
-    style = replace(
-        ANY_STYLE,
-        border_thickness=border_thickness,
-        swell=swell,
-    )
+    style = replace(ANY_STYLE, border_thickness=border_thickness, swell=swell)
 
     DrawnSkin().render(size, style)  # body would be negative: clamped to 0
 

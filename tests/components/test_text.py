@@ -36,7 +36,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -320,11 +319,7 @@ def test_render_logical_width_comes_from_longest_line():
 
 @pytest.mark.parametrize(
     ("text_align", "expected_left"),
-    [
-        (TextAlign.LEFT, 0),
-        (TextAlign.CENTRE, 30),
-        (TextAlign.RIGHT, 60),
-    ],
+    [(TextAlign.LEFT, 0), (TextAlign.CENTRE, 30), (TextAlign.RIGHT, 60)],
 )
 def test_render_aligns_lines_by_text_align(text_align, expected_left):
     style = replace(
@@ -582,10 +577,7 @@ def test_render_honours_margins_and_anchors(
 
 @pytest.mark.parametrize(
     ("text_horizontal_extent", "expected_ink_topleft"),
-    [
-        (TextHorizontalExtent.INK, (0, 0)),
-        (TextHorizontalExtent.LOGICAL, (3, 0)),
-    ],
+    [(TextHorizontalExtent.INK, (0, 0)), (TextHorizontalExtent.LOGICAL, (3, 0))],
     ids=["ink", "logical"],
 )
 def test_render_corrects_for_space_above_capitals_left_bearing(
@@ -704,10 +696,7 @@ def _preferred_size(
 
 @pytest.mark.parametrize(
     ("text_horizontal_extent", "expected_size"),
-    [
-        (TextHorizontalExtent.INK, (53, 24)),
-        (TextHorizontalExtent.LOGICAL, (56, 24)),
-    ],
+    [(TextHorizontalExtent.INK, (53, 24)), (TextHorizontalExtent.LOGICAL, (56, 24))],
     ids=["ink", "logical"],
 )
 def test_preferred_size_is_placement_box_plus_margin_on_each_side(
@@ -775,10 +764,7 @@ def test_preferred_size_height_stops_at_baseline():
 
 @pytest.mark.parametrize(
     ("text_horizontal_extent", "expected_size"),
-    [
-        (TextHorizontalExtent.INK, (45, 12)),
-        (TextHorizontalExtent.LOGICAL, (72, 12)),
-    ],
+    [(TextHorizontalExtent.INK, (45, 12)), (TextHorizontalExtent.LOGICAL, (72, 12))],
     ids=["ink", "logical"],
 )
 def test_preferred_size_counts_leading_spaces_only_when_logical(
@@ -857,10 +843,7 @@ def test_preferred_size_ignores_anchors_and_offset():
 
 def test_preferred_size_missing_path_raises(tmp_path):
     text = Text(ANY_STRING)
-    style = replace(
-        ANY_STYLE,
-        text_typeface=tmp_path / "missing.ttf",
-    )
+    style = replace(ANY_STYLE, text_typeface=tmp_path / "missing.ttf")
 
     with pytest.raises(FileNotFoundError):
         text.get_preferred_size(style)
@@ -877,11 +860,7 @@ def test_render_all_bundled_fonts_create_non_zero_images(bundled_typeface):
     text = Text(ANY_STRING)
     image = text.render(
         (30, 40),
-        replace(
-            ANY_STYLE,
-            text_typeface=bundled_typeface,
-            text_font_size=12,
-        ),
+        replace(ANY_STYLE, text_typeface=bundled_typeface, text_font_size=12),
     ).image
 
     assert image.width != 0
@@ -893,10 +872,7 @@ def test_render_can_take_typeface_path():
 
     image = text.render(
         (30, 40),
-        replace(
-            ANY_STYLE,
-            text_typeface=NEBMON0FONT_PATH,
-        ),
+        replace(ANY_STYLE, text_typeface=NEBMON0FONT_PATH),
     ).image
 
     assert image.width != 0
@@ -905,10 +881,7 @@ def test_render_can_take_typeface_path():
 
 def test_render_missing_path_raises(tmp_path):
     text = Text(ANY_STRING)
-    style = replace(
-        ANY_STYLE,
-        text_typeface=tmp_path / "missing.ttf",
-    )
+    style = replace(ANY_STYLE, text_typeface=tmp_path / "missing.ttf")
 
     with pytest.raises(FileNotFoundError):
         text.render((30, 40), style)
@@ -922,7 +895,8 @@ def test_render_missing_path_raises(tmp_path):
     ids=[typeface.name for typeface in BundledTypeface],
 )
 def test_get_font_loads_bundled_fonts_when_puigame_is_imported_from_zip(
-    bundled_typeface, tmp_path
+    bundled_typeface,
+    tmp_path,
 ):
     zip_path = _zip_puigame(tmp_path / "puigame.zip")
 

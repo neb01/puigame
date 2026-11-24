@@ -106,15 +106,9 @@ def get_pos_from_anchor_match(
     if parent_anchor is None:
         parent_anchor = child_anchor
 
-    anchor_pos_in_parent = _get_anchor_pos_in_rect_coords(
-        parent_size,
-        parent_anchor,
-    )
+    anchor_pos_in_parent = _get_anchor_pos_in_rect_coords(parent_size, parent_anchor)
 
-    anchor_pos_in_child = _get_anchor_pos_in_rect_coords(
-        child_size,
-        child_anchor,
-    )
+    anchor_pos_in_child = _get_anchor_pos_in_rect_coords(child_size, child_anchor)
 
     margin_nudge = child_anchor.margin_sign.elementwise() * pg.Vector2(margin)
     pos = anchor_pos_in_parent - anchor_pos_in_child + margin_nudge + pg.Vector2(offset)

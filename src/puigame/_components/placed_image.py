@@ -78,10 +78,7 @@ def compose_layers(layers: Iterable[PlacedImage]) -> PlacedImage:
     for layer in non_zero_layers:
         union_image.blit(
             layer.image,
-            (
-                layer.pos[0] - union_image_pos[0],
-                layer.pos[1] - union_image_pos[1],
-            ),
+            (layer.pos[0] - union_image_pos[0], layer.pos[1] - union_image_pos[1]),
         )
 
     return PlacedImage(union_image, union_image_pos)

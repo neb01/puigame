@@ -86,7 +86,8 @@ def _has_same_ink(surface_1: pg.Surface, surface_2: pg.Surface) -> bool:
 
 
 @pytest.mark.parametrize(
-    "typeface", [BundledTypeface.NEB0FONT, BundledTypeface.NEBMON0FONT]
+    "typeface",
+    [BundledTypeface.NEB0FONT, BundledTypeface.NEBMON0FONT],
 )
 def test_bundled_fonts_draw_every_printable_ascii_character(typeface):
     placeholder_image = _render(typeface, 6, "£")
@@ -101,7 +102,8 @@ def test_bundled_fonts_draw_every_printable_ascii_character(typeface):
 
 
 @pytest.mark.parametrize(
-    "typeface", [BundledTypeface.NEB0FONT, BundledTypeface.NEBMON0FONT]
+    "typeface",
+    [BundledTypeface.NEB0FONT, BundledTypeface.NEBMON0FONT],
 )
 def test_bundled_fonts_draw_other_characters_as_the_same_placeholder(typeface):
     pound_image = _render(typeface, 6, "£")
@@ -171,10 +173,13 @@ def test_neb0font_glyphs_start_at_their_origin():
     ids=["size 12", "size 18", "size 24"],
 )
 @pytest.mark.parametrize(
-    "typeface", [BundledTypeface.NEB0FONT, BundledTypeface.NEBMON0FONT]
+    "typeface",
+    [BundledTypeface.NEB0FONT, BundledTypeface.NEBMON0FONT],
 )
 def test_bundled_fonts_render_multiples_of_6_as_scaled_up_size_6(
-    typeface, font_size, scale
+    typeface,
+    font_size,
+    scale,
 ):
     size_6_image = _render(typeface, 6, PRINTABLE_ASCII)
     expected_image = pg.transform.scale_by(size_6_image, scale)

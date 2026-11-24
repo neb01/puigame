@@ -52,7 +52,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -268,10 +267,7 @@ def test_size_defaults_to_fitting_both_axes_to_text():
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_checked_setter_with_other_value_changes_checked(
@@ -288,10 +284,7 @@ def test_checked_setter_with_other_value_changes_checked(
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_checked_setter_with_other_value_calls_on_toggle_once_with_new_value(
@@ -339,10 +332,7 @@ def test_checked_setter_with_same_value_does_not_call_on_toggle(ui: UI, checked)
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_on_toggle_sees_new_checked_value(ui: UI, checked, expected_checked):
@@ -382,12 +372,7 @@ def test_changing_checked_with_no_on_toggle_does_not_raise(ui: UI):
 
 def test_group_getter_returns_given_group(ui: UI):
     toggle_group = ToggleGroup()
-    toggle_button = ToggleButton(
-        ui,
-        size=ANY_SIZE,
-        skin=ANY_SKIN,
-        group=toggle_group,
-    )
+    toggle_button = ToggleButton(ui, size=ANY_SIZE, skin=ANY_SKIN, group=toggle_group)
 
     assert toggle_button.group is toggle_group
 
@@ -400,19 +385,11 @@ def test_group_getter_returns_given_group(ui: UI):
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_toggle_toggles_checked(ui: UI, checked, expected_checked):
-    toggle_button = ToggleButton(
-        ui,
-        size=ANY_SIZE,
-        skin=ANY_SKIN,
-        checked=checked,
-    )
+    toggle_button = ToggleButton(ui, size=ANY_SIZE, skin=ANY_SKIN, checked=checked)
 
     toggle_button.toggle()
 
@@ -421,10 +398,7 @@ def test_toggle_toggles_checked(ui: UI, checked, expected_checked):
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_toggle_calls_on_toggle_once_with_new_value(ui: UI, checked, expected_checked):
@@ -446,10 +420,7 @@ def test_toggle_calls_on_toggle_once_with_new_value(ui: UI, checked, expected_ch
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_toggle_on_disabled_button_toggles_checked(ui: UI, checked, expected_checked):
@@ -474,10 +445,7 @@ def test_toggle_on_disabled_button_toggles_checked(ui: UI, checked, expected_che
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_click_toggles_checked(ui: UI, checked, expected_checked):
@@ -502,10 +470,7 @@ def test_click_toggles_checked(ui: UI, checked, expected_checked):
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, True),
-        (True, False),
-    ],
+    [(False, True), (True, False)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_click_calls_on_toggle_once_with_new_value(ui: UI, checked, expected_checked):
@@ -534,10 +499,7 @@ def test_click_calls_on_toggle_once_with_new_value(ui: UI, checked, expected_che
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, False),
-        (True, True),
-    ],
+    [(False, False), (True, True)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_press_alone_does_not_toggle_checked(ui: UI, checked, expected_checked):
@@ -562,10 +524,7 @@ def test_press_alone_does_not_toggle_checked(ui: UI, checked, expected_checked):
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, False),
-        (True, True),
-    ],
+    [(False, False), (True, True)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_release_off_button_does_not_toggle_checked(ui: UI, checked, expected_checked):
@@ -591,10 +550,7 @@ def test_release_off_button_does_not_toggle_checked(ui: UI, checked, expected_ch
 
 @pytest.mark.parametrize(
     ("checked", "expected_checked"),
-    [
-        (False, False),
-        (True, True),
-    ],
+    [(False, False), (True, True)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_click_on_disabled_button_does_not_toggle_checked(
@@ -737,10 +693,7 @@ def test_checked_and_disabled_button_shows_checked_border_and_disabled_body(
 
 @pytest.mark.parametrize(
     ("initial_checked", "updated_checked", "expected_border_colour"),
-    [
-        (False, True, CHECKED_COLOUR),
-        (True, False, BORDER_BASE_COLOUR),
-    ],
+    [(False, True, CHECKED_COLOUR), (True, False, BORDER_BASE_COLOUR)],
     ids=["initial unchecked", "initial checked"],
 )
 def test_checked_setter_updates_image_after_update(
@@ -773,19 +726,10 @@ def test_checked_setter_updates_image_after_update(
 # region --- Validation -------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "on_toggle",
-    [3, "large rooster mayhem"],
-    ids=["int", "str"],
-)
+@pytest.mark.parametrize("on_toggle", [3, "large rooster mayhem"], ids=["int", "str"])
 def test_constructor_with_non_callable_on_toggle_raises(ui: UI, on_toggle):
     with pytest.raises(TypeError):
-        ToggleButton(
-            ui,
-            size=ANY_SIZE,
-            skin=ANY_SKIN,
-            on_toggle=on_toggle,
-        )
+        ToggleButton(ui, size=ANY_SIZE, skin=ANY_SKIN, on_toggle=on_toggle)
 
     assert ui.children == ()
 
@@ -797,12 +741,7 @@ def test_constructor_with_non_callable_on_toggle_raises(ui: UI, on_toggle):
 )
 def test_constructor_with_non_toggle_group_raises(ui: UI, group):
     with pytest.raises(TypeError):
-        ToggleButton(
-            ui,
-            size=ANY_SIZE,
-            skin=ANY_SKIN,
-            group=group,
-        )
+        ToggleButton(ui, size=ANY_SIZE, skin=ANY_SKIN, group=group)
 
     assert ui.children == ()
 
@@ -827,12 +766,7 @@ def test_constructor_with_non_string_text_raises(ui: UI):
 
 @pytest.mark.parametrize(
     "state",
-    [
-        State.BASE,
-        State.HIGHLIGHTED,
-        State.HIGHLIGHTED | State.PRESSED,
-        State.DISABLED,
-    ],
+    [State.BASE, State.HIGHLIGHTED, State.HIGHLIGHTED | State.PRESSED, State.DISABLED],
 )
 def test_default_theme_checked_changes_style_in_every_toggle_button_state(state):
     checked_style = DEFAULT_THEME._style_for(state | State.CHECKED)
@@ -873,7 +807,9 @@ def test_default_theme_keeps_fitted_text_on_body_in_every_toggle_button_state(
     # the text surface uses a colour key, so its mask is the ink
     text_mask = pg.mask.from_surface(text_placed_image.image)
     body_mask = pg.mask.from_threshold(
-        skin_placed_image.image, style.body_colour, (1, 1, 1, 255)
+        skin_placed_image.image,
+        style.body_colour,
+        (1, 1, 1, 255),
     )
     offset = (
         text_placed_image.pos[0] - skin_placed_image.pos[0],

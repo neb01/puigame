@@ -13,67 +13,80 @@ import math
 import pygame as pg
 from pygame.typing import Point
 
-from puigame import UI, Anchor, Button, Container, DrawnSkin, Label, Panel, Widget
+from puigame import (
+    UI,
+    Anchor,
+    Button,
+    Column,
+    CrossAxisAlign,
+    DrawnSkin,
+    Label,
+    Panel,
+    Row,
+    ToggleButton,
+    ToggleGroup,
+    Widget,
+)
 
 FPS_CAP = 60
 DT_CAP = 0.1  # seconds; a longer frame is treated as lag, not one big step
 FULL_TURN = math.pi * 2  # radians
 
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 360
-SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
-CONTENT_HEIGHT = 288
-EDGE_MARGIN = (SCREEN_HEIGHT - CONTENT_HEIGHT) // 2
-MARGIN = (EDGE_MARGIN, EDGE_MARGIN)
+SCREEN_SIZE = (640, 360)
+MAIN_ROW_SPACING = 50
 
-FONT_SPECIMEN_WIDTH = 192
-FONT_SPECIMEN_SIZE = (FONT_SPECIMEN_WIDTH, CONTENT_HEIGHT)
+INTRA_CONTENT_SPACING = 15
+BUTTON_PANEL_MARGIN = (7, 7)
+SHOW_HIDE_BUTTON_SPACING = 5
 
-GAP = 12
-GROUP_GAP = GAP * 3
-
-BUTTON_WIDTH = 192
-BUTTON_HEIGHT = 30
-BUTTON_SIZE = (BUTTON_WIDTH, BUTTON_HEIGHT)
+TITLE_MARGIN = (5, 5)
+TITLE_TEXT = "JUMPING\nSTANDARD\nBERNARDS"
 
 TOGGLE_PAUSE = pg.event.custom_type()
 PAUSE_TEXT = "PAUSE (P)"
-RESUME_TEXT = "RESUME (P)"
+UNPAUSE_TEXT = "UNPAUSE (P)"
 
 JOSTLE_LAP_TIME = 1.2  # seconds
 JOSTLE_TOTAL_LAPS = 2
-JOSTLE_CENTRE = (0, 10)
+JOSTLE_CENTRE = (6, 0)
 JOSTLE_IDLE_TEXT = "JOSTLE (J)"
 JOSTLE_ACTIVE_TEXT = "JOSTLING..."
 
 QUIT_TEXT = "QUIT (ESC)"
 
-SHOW_TEXT = "SHOW BUTTONS"
-HIDE_TEXT = "HIDE BUTTONS"
+SHOW_TEXT = "SHOW"
+HIDE_TEXT = "HIDE"
 
+# fixed width, wide enough for both texts, so the button doesn't resize when
+# its text changes; height fitted
+TOGGLE_ENABLE_BUTTON_SIZE = (198, None)
 DISABLE_TEXT = "DISABLE BUTTONS"
 ENABLE_TEXT = "ENABLE BUTTONS"
 
-BOUNCE_LABEL_WIDTH = 36  # three digits; matches MAX_BOUNCES and the :03 format
-BOUNCE_LABEL_HEIGHT = 18
-BOUNCE_LABEL_SIZE = (BOUNCE_LABEL_WIDTH, BOUNCE_LABEL_HEIGHT)
+BOUNCE_PANEL_SIZE = (80, 250)
 MAX_BOUNCES = 999
-
-# a group gap either side at rest; a jostle narrows it by the jostle's radius
-BOUNCE_PANEL_WIDTH = (
-    SCREEN_WIDTH - EDGE_MARGIN * 2 - BUTTON_WIDTH - FONT_SPECIMEN_WIDTH - GROUP_GAP * 2
-)
-BOUNCE_PANEL_SIZE = (
-    BOUNCE_PANEL_WIDTH,
-    CONTENT_HEIGHT - BOUNCE_LABEL_HEIGHT - GROUP_GAP,
-)
-
-BOUNCE_CONTAINER_SIZE = (BOUNCE_PANEL_WIDTH, CONTENT_HEIGHT)
-
 SQUARE_SIZE = (10, 10)
 SQUARE_LAUNCH_VELOCITY = (0, -600)
 RED_SQUARE_ACCELERATION = (0, 831)
 BLUE_SQUARE_ACCELERATION = (0, 1000)
+
+FONT_SPECIMEN_TEXT = (
+    "Neb0Font\n\n"
+    " !\"#$%&'()*+,-./\n"
+    "0123456789:;<=>?\n"
+    "@ABCDEFGHIJKLMNO\n"
+    "PQRSTUVWXYZ[\\]^_\n"
+    "`abcdefghijklmno\n"
+    # U+FFFD isn't in Neb0Font, so it renders as .notdef, the glyph drawn in
+    # the sheet's last cell
+    "pqrstuvwxyz{|}~\ufffd\n\n"
+    "THE QUICK BROWN\n"
+    "FOX JUMPS OVER\n"
+    "THE LAZY DOG\n\n"
+    "the quick brown\n"
+    "fox jumps over\n"
+    "the lazy dog"
+)
 
 
 class BouncingSquare(pg.sprite.Sprite):
@@ -259,49 +272,35 @@ def main() -> None:
 
     ui = UI(size=screen.size)
 
-    # title
-    Label(
+    main_row = Row(
         ui,
-        size=(96, 54),
-        text="JUMPING\nSTANDARD\nBERNARDS",
-        anchor=Anchor.TOP_LEFT,
-        margin=MARGIN,
+        main_axis_spacing=MAIN_ROW_SPACING,
+        cross_axis_align=CrossAxisAlign.END,
+    )
+    button_panel = Panel(main_row, skin=DrawnSkin())
+    button_column = Column(
+        button_panel,
+        main_axis_spacing=INTRA_CONTENT_SPACING,
+        margin=BUTTON_PANEL_MARGIN,
     )
 
-    # button containers
-    main_buttons_height = BUTTON_HEIGHT * 3 + GAP * 2
-    lower_buttons_height = BUTTON_HEIGHT * 2 + GAP
+    bounce_container = Column(main_row, main_axis_spacing=INTRA_CONTENT_SPACING)
+    show_hide_buttons = Row(button_column, main_axis_spacing=SHOW_HIDE_BUTTON_SPACING)
+    main_buttons = Column(button_column, main_axis_spacing=INTRA_CONTENT_SPACING)
 
-    button_column = Container(
-        ui,
-        size=(
-            BUTTON_WIDTH,
-            main_buttons_height + GROUP_GAP + lower_buttons_height,
-        ),
-        anchor=Anchor.BOTTOM_LEFT,
-        margin=MARGIN,
-    )
-
-    main_buttons = Container(
-        button_column,
-        size=(BUTTON_WIDTH, main_buttons_height),
-        anchor=Anchor.MID_TOP,
-    )
+    Label(ui, text=TITLE_TEXT, anchor=Anchor.TOP_LEFT, margin=TITLE_MARGIN)
 
     # pause button
     pause_button = Button(
         main_buttons,
-        size=BUTTON_SIZE,
         skin=DrawnSkin(),
         text=PAUSE_TEXT,
         on_click=lambda _button: pg.event.post(pg.Event(TOGGLE_PAUSE)),
-        anchor=Anchor.MID_TOP,
     )
 
     # jostle button
     jostle_button = Button(
         main_buttons,
-        size=BUTTON_SIZE,
         skin=DrawnSkin(),
         on_click=lambda _button: jostle_animation.start(),
     )
@@ -319,35 +318,49 @@ def main() -> None:
     # quit button
     Button(
         main_buttons,
-        size=BUTTON_SIZE,
         skin=DrawnSkin(),
         text=QUIT_TEXT,
         on_click=lambda _button: pg.event.post(pg.Event(pg.QUIT)),
-        anchor=Anchor.MID_BOTTOM,
     )
 
-    # show and hide button
-    def toggle_buttons_visible(button: Button) -> None:
-        """Show or hide the main buttons, and relabel this button to match.
+    show_hide_toggle_group = ToggleGroup()
+
+    # show and hide buttons
+    def set_buttons_visible(_button: ToggleButton, checked: bool) -> None:
+        """Show the main buttons when the show button becomes checked.
 
         Args:
-            button: Button that was clicked.
+            _button: Toggle button that changed. Unused.
+            checked: Whether the button is now checked.
         """
-        if main_buttons.visible:
-            main_buttons.visible = False
-            button.text = SHOW_TEXT
-        else:
+        if checked:
             main_buttons.visible = True
-            button.text = HIDE_TEXT
 
-    Button(
-        button_column,
-        size=BUTTON_SIZE,
+    def set_buttons_invisible(_button: ToggleButton, checked: bool) -> None:
+        """Hide the main buttons when the hide button becomes checked.
+
+        Args:
+            _button: Toggle button that changed. Unused.
+            checked: Whether the button is now checked.
+        """
+        if checked:
+            main_buttons.visible = False
+
+    ToggleButton(
+        show_hide_buttons,
+        skin=DrawnSkin(),
+        text=SHOW_TEXT,
+        on_toggle=set_buttons_visible,
+        group=show_hide_toggle_group,
+        checked=True,
+    )
+
+    ToggleButton(
+        show_hide_buttons,
         skin=DrawnSkin(),
         text=HIDE_TEXT,
-        on_click=toggle_buttons_visible,
-        anchor=Anchor.MID_BOTTOM,
-        margin=(0, BUTTON_HEIGHT + GAP),
+        group=show_hide_toggle_group,
+        on_toggle=set_buttons_invisible,
     )
 
     # enable and disable button
@@ -366,42 +379,29 @@ def main() -> None:
 
     Button(
         button_column,
-        size=BUTTON_SIZE,
+        size=TOGGLE_ENABLE_BUTTON_SIZE,
         skin=DrawnSkin(),
         text=DISABLE_TEXT,
         on_click=toggle_buttons_enabled,
-        anchor=Anchor.MID_BOTTOM,
     )
 
     # bouncing squares
-    bounce_container = Container(
-        ui,
-        size=BOUNCE_CONTAINER_SIZE,
-    )
 
-    bounce_count_label = Label(
-        bounce_container,
-        size=BOUNCE_LABEL_SIZE,
-        anchor=Anchor.MID_TOP,
-    )
+    bounce_count_label = Label(bounce_container)
 
-    bounce_panel = Panel(
-        bounce_container,
-        size=BOUNCE_PANEL_SIZE,
-        skin=DrawnSkin(),
-        anchor=Anchor.MID_BOTTOM,
-    )
+    bounce_panel = Panel(bounce_container, size=BOUNCE_PANEL_SIZE, skin=DrawnSkin())
 
+    # Neb0Font specimen
+    Label(main_row, text=FONT_SPECIMEN_TEXT)
+
+    ui.update()  # lay out the UI, so bounce_panel.rect is current
     floor_y = bounce_panel.rect.bottom - bounce_panel.theme.base_style.border_thickness
 
     red_surface = pg.Surface(SQUARE_SIZE)
     red_surface.fill("red")
     red_square = BouncingSquare(
         image=red_surface,
-        start_pos=(
-            bounce_panel.rect.left + bounce_panel.rect.width / 3,
-            floor_y,
-        ),
+        start_pos=(bounce_panel.rect.left + bounce_panel.rect.width / 3, floor_y),
         launch_velocity=SQUARE_LAUNCH_VELOCITY,
         acceleration=RED_SQUARE_ACCELERATION,
         floor_y=floor_y,
@@ -411,41 +411,13 @@ def main() -> None:
     blue_surface.fill("blue")
     blue_square = BouncingSquare(
         image=blue_surface,
-        start_pos=(
-            bounce_panel.rect.left + bounce_panel.rect.width * 2 / 3,
-            floor_y,
-        ),
+        start_pos=(bounce_panel.rect.left + bounce_panel.rect.width * 2 / 3, floor_y),
         launch_velocity=SQUARE_LAUNCH_VELOCITY,
         acceleration=BLUE_SQUARE_ACCELERATION,
         floor_y=floor_y,
     )
 
     squares = pg.sprite.Group(red_square, blue_square)
-
-    # Neb0Font specimen
-    Label(
-        ui,
-        size=FONT_SPECIMEN_SIZE,
-        text=(
-            "Neb0Font\n\n"
-            " !\"#$%&'()*+,-./\n"
-            "0123456789:;<=>?\n"
-            "@ABCDEFGHIJKLMNO\n"
-            "PQRSTUVWXYZ[\\]^_\n"
-            "`abcdefghijklmno\n"
-            # U+FFFD isn't in Neb0Font, so it renders as .notdef, the glyph drawn
-            # in the sheet's last cell
-            "pqrstuvwxyz{|}~\ufffd\n\n"
-            "THE QUICK BROWN\n"
-            "FOX JUMPS OVER\n"
-            "THE LAZY DOG\n\n"
-            "the quick brown\n"
-            "fox jumps over\n"
-            "the lazy dog"
-        ),
-        anchor=Anchor.MID_RIGHT,
-        margin=MARGIN,
-    )
 
     clock = pg.time.Clock()
     running = True
@@ -464,7 +436,7 @@ def main() -> None:
             elif event.type == TOGGLE_PAUSE:
                 paused = not paused
                 if paused:
-                    pause_button.text = RESUME_TEXT
+                    pause_button.text = UNPAUSE_TEXT
                 else:
                     pause_button.text = PAUSE_TEXT
 

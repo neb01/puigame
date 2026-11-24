@@ -45,7 +45,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -161,11 +160,7 @@ def test_hit_testable_widget_consumes_mouse_button_down(ui: UI, button):
         hit_testable=True,
     )
 
-    mouse_button_down_event = pg.Event(
-        pg.MOUSEBUTTONDOWN,
-        pos=(1, 2),
-        button=button,
-    )
+    mouse_button_down_event = pg.Event(pg.MOUSEBUTTONDOWN, pos=(1, 2), button=button)
 
     assert ui.handle_event(mouse_button_down_event)
 
@@ -346,11 +341,7 @@ def test_up_is_not_consumed_if_its_down_was_off_widget(ui: UI):
     assert not left_release(ui, pos=(1, 2))
 
 
-@pytest.mark.parametrize(
-    "pos",
-    [(1, 2), (6, 7)],
-    ids=["on widget", "off widget"],
-)
+@pytest.mark.parametrize("pos", [(1, 2), (6, 7)], ids=["on widget", "off widget"])
 def test_widget_does_not_consume_lone_up_event(ui: UI, pos):
     Panel(
         ui,
@@ -434,12 +425,7 @@ def test_down_only_clears_record_of_own_button(ui: UI):
         pg.Event(pg.WINDOWFOCUSLOST),
         pg.Event(pg.KEYDOWN),
     ],
-    ids=[
-        "mouse motion",
-        "window leave",
-        "window focus lost",
-        "key down",
-    ],
+    ids=["mouse motion", "window leave", "window focus lost", "key down"],
 )
 def test_non_button_events_are_not_consumed(ui: UI, event):
     Panel(
@@ -594,12 +580,7 @@ def test_non_hit_testable_widget_allows_widget_below_activation(ui: UI):
 
 @pytest.mark.parametrize(
     ("pos", "consumed"),
-    [
-        ((5, 7), True),
-        ((4, 8), True),
-        ((5, 10), False),
-        ((6, 8), False),
-    ],
+    [((5, 7), True), ((4, 8), True), ((5, 10), False), ((6, 8), False)],
     ids=["top", "left", "bottom", "right"],
 )
 def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
@@ -625,11 +606,7 @@ def test_hit_test_includes_top_left_edges_and_excludes_bottom_right_edges(
 
 @pytest.mark.parametrize(
     ("swell", "halo_thickness", "pos", "consumed"),
-    [
-        (-2, 0, (10, 26), True),
-        (2, 0, (9, 26), False),
-        (0, 2, (9, 26), False),
-    ],
+    [(-2, 0, (10, 26), True), (2, 0, (9, 26), False), (0, 2, (9, 26), False)],
     ids=[
         "negative swell, on left edge of rect",
         "positive swell, off left edge of rect",
@@ -701,18 +678,8 @@ def test_top_hit_testable_widget_is_activated(ui: UI):
 
 @pytest.mark.parametrize(
     ("pos", "consumed"),
-    [
-        ((0, 3), True),
-        ((-1, 3), False),
-        ((3, 0), True),
-        ((3, -1), False),
-    ],
-    ids=[
-        "left on edge",
-        "left off edge",
-        "top on edge",
-        "top off edge",
-    ],
+    [((0, 3), True), ((-1, 3), False), ((3, 0), True), ((3, -1), False)],
+    ids=["left on edge", "left off edge", "top on edge", "top off edge"],
 )
 def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
     ui = UI(size=(200, 100), theme=ANY_THEME)
@@ -734,23 +701,10 @@ def test_hit_test_excludes_positions_off_top_left_of_surface(pos, consumed):
 
 @pytest.mark.parametrize(
     ("pos", "consumed"),
-    [
-        ((199, 97), True),
-        ((200, 97), False),
-        ((197, 99), True),
-        ((197, 100), False),
-    ],
-    ids=[
-        "right on edge",
-        "right off edge",
-        "bottom on edge",
-        "bottom off edge",
-    ],
+    [((199, 97), True), ((200, 97), False), ((197, 99), True), ((197, 100), False)],
+    ids=["right on edge", "right off edge", "bottom on edge", "bottom off edge"],
 )
-def test_hit_test_excludes_positions_off_bottom_right_of_surface(
-    pos,
-    consumed,
-):
+def test_hit_test_excludes_positions_off_bottom_right_of_surface(pos, consumed):
     ui = UI(size=(200, 100), theme=ANY_THEME)
     Widget(
         ui,

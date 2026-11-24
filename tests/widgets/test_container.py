@@ -25,7 +25,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -121,10 +120,7 @@ def test_size_defaults_to_fitting_children(ui: UI):
 
 @pytest.mark.parametrize(
     ("size", "expected_size"),
-    [
-        ((None, 25), (10, 25)),
-        ((30, None), (30, 8)),
-    ],
+    [((None, 25), (10, 25)), ((30, None), (30, 8))],
     ids=["width fitted", "height fitted"],
 )
 def test_none_axis_fits_children(ui: UI, size, expected_size):

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `main_axis_spacing`, the space in pixels between neighbouring children of a `Row` or `Column`, set on creation. It defaults to 0. A negative value overlaps neighbouring children, each drawn over the one before it, as in a hand of cards. The row or column always encloses its children: if the overlap is larger than the children, it grows to fit them and shifts them inside. A value that is not an `int`, including a `bool`, raises `TypeError`.
+- `main_axis_reversed`, set on creation, places a `Row`'s children right to left, or a `Column`'s bottom to top, with the first child at the far end. They are still drawn, and hit, in the order they were created. It defaults to `False`.
+
+### Changed
+
+- **Breaking:** `VBox` is renamed `Column`, `HBox` is renamed `Row`, and `BoxAlign` is renamed `CrossAxisAlign`. Their `align` parameter is renamed `cross_axis_align`.
+- **Breaking:** `Style.box_gap` is removed, and `DEFAULT_THEME` no longer sets it. Spacing is now set on each row or column with `main_axis_spacing`, which defaults to 0 rather than the default theme's 3; pass `main_axis_spacing=3` to keep the old layout.
+
 ## [0.4.0] - 2026-11-24
 
 ### Added

@@ -15,7 +15,7 @@ from puigame._layout.anchor import Anchor, get_pos_from_anchor_match
 from puigame._layout.fit_size import FitSize, FitSource
 from puigame._styling.style import Style
 from puigame._styling.theme import Theme
-from puigame._validation import validate_fit_size, validate_pair
+from puigame._validation import validate_enum, validate_fit_size, validate_pair
 from puigame._widgets.state import State
 
 if TYPE_CHECKING:
@@ -66,14 +66,14 @@ def _resolve_size(
         case FitSource.NO_FIT:
             raise ValueError(
                 "size cannot have None on an axis of a widget that does not fit "
-                f"its content, got {requested_size!r}"
+                f"its content, got {requested_size!r}",
             )
 
         case FitSource.COMPONENTS:
             if not components:
                 raise ValueError(
                     "size cannot have None on an axis of a widget with no "
-                    f"components to fit to, got {requested_size!r}"
+                    f"components to fit to, got {requested_size!r}",
                 )
 
             preferred_sizes = [
@@ -186,17 +186,12 @@ class Widget:
                 not added to ``parent``.
             ValueError: If either dimension of ``size`` is negative, if either
                 is ``None`` and the widget's class fits nothing, or fits its
-                components and it has none, or if ``parent`` is a box and
-                ``anchor``, ``parent_anchor``, or ``margin`` is not its
-                default. The widget is not added to ``parent``.
+                components and it has none, or if ``parent`` is a row or
+                column and ``anchor``, ``parent_anchor``, or ``margin`` is not
+                its default. The widget is not added to ``parent``.
         """
-        if not isinstance(anchor, Anchor):
-            raise TypeError(f"anchor must be an Anchor, got {anchor!r}")
-
-        if parent_anchor is not None and not isinstance(parent_anchor, Anchor):
-            raise TypeError(
-                f"parent_anchor must be an Anchor or None, got {parent_anchor!r}",
-            )
+        validate_enum("anchor", anchor, Anchor)
+        validate_enum("parent_anchor", parent_anchor, Anchor, allow_none=True)
 
         self._parent: Widget | UI = parent
         # parents are fixed, so a widget's UI never changes; it is set before
@@ -407,8 +402,8 @@ class Widget:
         """Set the widget's size from its contents, before it is placed.
 
         ``UI.update()`` calls this for every widget each frame, children before
-        parents, so every descendant has already been measured. Boxes and
-        panels override it to fit their children. The default does
+        parents, so every descendant has already been measured. Rows,
+        columns, and panels override it to fit their children. The default does
         nothing, since a fixed size never changes and a widget that fits its
         text measures itself when the text is set, so overrides need not call
         ``super()``.
@@ -418,9 +413,9 @@ class Widget:
         """Place the rect where the parent's ``_get_child_pos()`` puts it.
 
         Most parents place the widget by its own anchors, margin, and offset;
-        a box stacks its children. The rect is updated in place, in the
-        coordinates of the surface the UI draws on. The parent, a widget or the
-        ``UI``, must already be placed, since its rect is read as it is.
+        a row or column stacks its children. The rect is updated in place, in
+        the coordinates of the surface the UI draws on. The parent, a widget or
+        the ``UI``, must already be placed, since its rect is read as it is.
         """
         self.rect.topleft = self.parent.rect.topleft
         self.rect.move_ip(self.parent._get_child_pos(self))
@@ -572,7 +567,7 @@ class Widget:
         """Return where ``child`` goes, from this widget's top-left corner.
 
         The default places ``child`` by its own anchors, margin, and offset.
-        A widget that arranges its children, such as a box, overrides this.
+        A widget that arranges its children, such as a row, overrides this.
         ``child._place()`` calls it, including once while ``child`` is being
         created, before it has joined, so an override must handle a child it
         does not hold yet.

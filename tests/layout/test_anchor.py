@@ -156,10 +156,7 @@ def test_get_pos_from_anchor_match_moves_opposite_anchors_outwards_with_margin()
 
 @pytest.mark.parametrize(
     ("anchor", "expected_child_pos"),
-    [
-        (Anchor.MID_TOP, (45, 4)),
-        (Anchor.MID_LEFT, (3, 90)),
-    ],
+    [(Anchor.MID_TOP, (45, 4)), (Anchor.MID_LEFT, (3, 90))],
 )
 def test_get_pos_from_anchor_match_ignores_margin_on_central_axis(
     anchor,

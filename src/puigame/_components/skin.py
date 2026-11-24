@@ -271,9 +271,6 @@ class DrawnSkin(Skin):
             border_radius=body_corner_radius,
         )
 
-        pos = (
-            -style.swell - style.halo_thickness,
-            -style.swell - style.halo_thickness,
-        )
+        pos = (-style.swell - style.halo_thickness, -style.swell - style.halo_thickness)
 
         return PlacedImage(surface, pos)

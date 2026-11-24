@@ -44,7 +44,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -148,12 +147,7 @@ def state_colour_ui() -> UI:
     ],
 )
 def test_forwards_arguments_stored_as_attributes(ui: UI, field_name, value):
-    button = Button(
-        ui,
-        size=ANY_SIZE,
-        skin=ANY_SKIN,
-        **{field_name: value},
-    )
+    button = Button(ui, size=ANY_SIZE, skin=ANY_SKIN, **{field_name: value})
 
     assert getattr(button, field_name) == value
 
@@ -659,19 +653,10 @@ def test_text_setter_with_non_string_text_raises(ui: UI, text):
     assert button.text == "corndog"
 
 
-@pytest.mark.parametrize(
-    "on_click",
-    [5, "poppycock"],
-    ids=["int", "str"],
-)
+@pytest.mark.parametrize("on_click", [5, "poppycock"], ids=["int", "str"])
 def test_constructor_with_non_callable_on_click_raises(ui: UI, on_click):
     with pytest.raises(TypeError):
-        Button(
-            ui,
-            size=ANY_SIZE,
-            skin=ANY_SKIN,
-            on_click=on_click,
-        )
+        Button(ui, size=ANY_SIZE, skin=ANY_SKIN, on_click=on_click)
 
     assert ui.children == ()
 

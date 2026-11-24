@@ -27,7 +27,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -51,9 +50,9 @@ ANY_STYLE = Style(
 
 @pytest.mark.parametrize(
     "field_name",
-    ["border_thickness", "corner_radius", "box_gap", "halo_thickness"],
+    ["border_thickness", "corner_radius", "halo_thickness"],
 )
-def test_style_thickness_radius_or_gap_can_be_zero(field_name):
+def test_style_thickness_or_radius_can_be_zero(field_name):
     style = replace(ANY_STYLE, **{field_name: 0})
 
     assert getattr(style, field_name) == 0
@@ -61,9 +60,9 @@ def test_style_thickness_radius_or_gap_can_be_zero(field_name):
 
 @pytest.mark.parametrize(
     "field_name",
-    ["border_thickness", "corner_radius", "box_gap", "halo_thickness"],
+    ["border_thickness", "corner_radius", "halo_thickness"],
 )
-def test_style_negative_thickness_radius_or_gap_raises(field_name):
+def test_style_negative_thickness_or_radius_raises(field_name):
     with pytest.raises(ValueError):
         replace(ANY_STYLE, **{field_name: -5})
 
@@ -112,11 +111,7 @@ def test_style_override_halo_fade_profile_can_take_any_member_or_none(
     assert style_override.halo_fade_profile == halo_fade_profile
 
 
-@pytest.mark.parametrize(
-    "halo_fade_profile",
-    [1, "linear"],
-    ids=["int", "str"],
-)
+@pytest.mark.parametrize("halo_fade_profile", [1, "linear"], ids=["int", "str"])
 def test_style_override_int_or_str_halo_fade_profile_raises(halo_fade_profile):
     with pytest.raises(TypeError):
         StyleOverride(halo_fade_profile=halo_fade_profile)
@@ -139,18 +134,8 @@ def test_style_override_swell_can_take_any_int(swell):
 @pytest.mark.parametrize("field_name", ["text_margin", "text_offset"])
 @pytest.mark.parametrize(
     "value",
-    [
-        (0, 0),
-        (-1, -4),
-        (2, 5),
-        (-3, 4),
-    ],
-    ids=[
-        "zero",
-        "both negative",
-        "both positive",
-        "one negative, one positive",
-    ],
+    [(0, 0), (-1, -4), (2, 5), (-3, 4)],
+    ids=["zero", "both negative", "both positive", "one negative, one positive"],
 )
 def test_style_text_margin_or_text_offset_can_take_tuple_of_int(field_name, value):
     style = replace(ANY_STYLE, **{field_name: value})
@@ -185,7 +170,8 @@ def test_style_non_tuple_text_margin_or_text_offset_raises(field_name, value):
     ],
 )
 def test_style_tuple_text_margin_or_text_offset_that_is_not_two_numbers_raises(
-    field_name, value
+    field_name,
+    value,
 ):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, **{field_name: value})
@@ -193,13 +179,7 @@ def test_style_tuple_text_margin_or_text_offset_that_is_not_two_numbers_raises(
 
 @pytest.mark.parametrize(
     "text_offset",
-    [
-        (0, 0),
-        (-1, -4),
-        (2, 5),
-        (-3, 4),
-        None,
-    ],
+    [(0, 0), (-1, -4), (2, 5), (-3, 4), None],
     ids=[
         "zero",
         "both negative",
@@ -245,10 +225,7 @@ def test_style_override_tuple_text_offset_that_is_not_two_numbers_raises(text_of
 
 @pytest.mark.parametrize(
     "text_typeface",
-    [
-        *BundledTypeface,
-        pytest.param(ANY_PATH, id="Path"),
-    ],
+    [*BundledTypeface, pytest.param(ANY_PATH, id="Path")],
 )
 def test_style_text_typeface_can_take_bundled_typeface_or_path(text_typeface):
     style = replace(ANY_STYLE, text_typeface=text_typeface)
@@ -256,11 +233,7 @@ def test_style_text_typeface_can_take_bundled_typeface_or_path(text_typeface):
     assert style.text_typeface == text_typeface
 
 
-@pytest.mark.parametrize(
-    "text_typeface",
-    [ANY_STRING, None],
-    ids=["str", "None"],
-)
+@pytest.mark.parametrize("text_typeface", [ANY_STRING, None], ids=["str", "None"])
 def test_style_str_or_none_text_typeface_raises(text_typeface):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, text_typeface=text_typeface)
@@ -329,9 +302,7 @@ def test_style_text_horizontal_extent_can_take_any_member(text_horizontal_extent
     [False, ANY_STRING, None],
     ids=["bool", "str", "None"],
 )
-def test_style_bool_str_or_none_text_horizontal_extent_raises(
-    text_horizontal_extent,
-):
+def test_style_bool_str_or_none_text_horizontal_extent_raises(text_horizontal_extent):
     with pytest.raises(TypeError):
         replace(ANY_STYLE, text_horizontal_extent=text_horizontal_extent)
 

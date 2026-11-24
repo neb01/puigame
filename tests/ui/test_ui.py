@@ -35,7 +35,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -80,10 +79,7 @@ def test_offset_is_zero_by_default():
 
 
 def test_theme_is_given_theme():
-    theme = Theme(
-        base_style=replace(ANY_STYLE, body_colour=BLUE),
-        style_overrides={},
-    )
+    theme = Theme(base_style=replace(ANY_STYLE, body_colour=BLUE), style_overrides={})
     ui = UI(size=ANY_SIZE, theme=theme)
 
     assert ui.theme is theme

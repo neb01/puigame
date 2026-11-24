@@ -1,11 +1,10 @@
-from dataclasses import replace
-
 import pytest
 
 from puigame import (
     UI,
     Anchor,
     BundledTypeface,
+    Column,
     Container,
     FadeProfile,
     NoSkin,
@@ -14,7 +13,6 @@ from puigame import (
     TextAlign,
     TextHorizontalExtent,
     Theme,
-    VBox,
 )
 from stubs import BodyColourLayer, FixedLayer
 
@@ -33,7 +31,6 @@ ANY_STYLE = Style(
     border_colour=BLACK,
     border_thickness=2,
     corner_radius=2,
-    box_gap=0,
     halo_colour=(0, 0, 0, 0),
     halo_fade_profile=FadeProfile.SOLID,
     halo_thickness=0,
@@ -158,14 +155,13 @@ def test_fitted_panel_is_as_big_as_largest_child_on_each_axis(ui: UI):
 
 @pytest.mark.parametrize(
     ("size", "expected_size"),
-    [
-        ((None, 25.7), (10, 25)),
-        ((30.9, None), (30, 8)),
-    ],
+    [((None, 25.7), (10, 25)), ((30.9, None), (30, 8))],
     ids=["width fitted", "height fitted"],
 )
 def test_fixed_axis_beside_fitted_axis_keeps_its_size_rounded_down(
-    ui: UI, size, expected_size
+    ui: UI,
+    size,
+    expected_size,
 ):
     panel = Panel(ui, size=size, skin=ANY_SKIN)
     Container(panel, size=(10, 8))
@@ -185,7 +181,9 @@ def test_fixed_axis_beside_fitted_axis_keeps_its_size_rounded_down(
     ids=["differs across", "differs down", "differs on both axes"],
 )
 def test_child_whose_anchor_differs_from_its_parent_anchor_is_not_counted(
-    ui: UI, anchor, parent_anchor
+    ui: UI,
+    anchor,
+    parent_anchor,
 ):
     panel = Panel(ui, size=(None, None), skin=ANY_SKIN)
     Container(panel, size=(10, 8))
@@ -274,13 +272,12 @@ def test_killed_child_frees_its_size_at_next_update(ui: UI):
     assert panel.rect.size == (10, 4)
 
 
-def test_fitted_panel_fits_nested_vbox_in_one_update():
-    theme = Theme(base_style=replace(ANY_STYLE, box_gap=3), style_overrides={})
-    ui = UI(size=(300, 200), theme=theme)
+def test_fitted_panel_fits_nested_column_in_one_update():
+    ui = UI(size=(300, 200), theme=ANY_THEME)
     panel = Panel(ui, size=(200, None), skin=ANY_SKIN)
-    vbox = VBox(panel)
-    Container(vbox, size=(10, 4))
-    Container(vbox, size=(6, 8))
+    column = Column(panel, main_axis_spacing=3)
+    Container(column, size=(10, 4))
+    Container(column, size=(6, 8))
 
     ui.update()
 
@@ -302,7 +299,10 @@ def test_children_are_placed_against_fitted_size_in_the_same_update():
     panel = Panel(ui, size=(None, None), skin=ANY_SKIN, anchor=Anchor.CENTRE)
     Container(panel, size=(10, 8))
     hanging_child = Container(
-        panel, size=(4, 6), anchor=Anchor.TOP_LEFT, parent_anchor=Anchor.TOP_RIGHT
+        panel,
+        size=(4, 6),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_RIGHT,
     )
 
     ui.update()
