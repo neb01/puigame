@@ -3,10 +3,16 @@ from dataclasses import replace
 import pygame as pg
 import pytest
 
+from mouse_helpers import left_press, left_release, move_mouse
 from puigame import (
+    DEFAULT_THEME,
     UI,
     Anchor,
+    BundledCursor,
     BundledTypeface,
+    Button,
+    CursorImage,
+    CursorRole,
     DrawnSkin,
     FadeProfile,
     NoSkin,
@@ -51,6 +57,78 @@ ANY_STYLE = Style(
 )
 
 ANY_THEME = Theme(base_style=ANY_STYLE, style_overrides={})
+
+CURSOR_UI_SIZE = (40, 30)
+
+DEFAULT_CURSOR_COLOUR = RED
+CLICKABLE_CURSOR_COLOUR = BLUE
+
+# endregion
+
+
+# region --- Helpers ----------------------------------------------------------
+
+
+def _filled_image(
+    size: tuple[int, int],
+    colour: tuple[int, int, int, int],
+) -> pg.Surface:
+    """Return a new image of one colour, with per-pixel alpha.
+
+    Args:
+        size: Width and height in pixels.
+        colour: Colour to fill the image with.
+
+    Returns:
+        The filled image.
+    """
+    image = pg.Surface(size, pg.SRCALPHA)
+    image.fill(colour)
+    return image
+
+
+def _role_colour_theme() -> Theme:
+    """Return a theme whose cursor for each role is a block of its own colour.
+
+    Each cursor is 3x2 with its hotspot inside, at ``(1, 1)``, so the pixel at
+    the mouse position shows which role was drawn.
+
+    Returns:
+        The theme, with ``DEFAULT`` and ``CLICKABLE`` cursors.
+    """
+    return Theme(
+        base_style=ANY_STYLE,
+        style_overrides={},
+        cursors={
+            CursorRole.DEFAULT: CursorImage(
+                _filled_image((3, 2), DEFAULT_CURSOR_COLOUR),
+                (1, 1),
+            ),
+            CursorRole.CLICKABLE: CursorImage(
+                _filled_image((3, 2), CLICKABLE_CURSOR_COLOUR),
+                (1, 1),
+            ),
+        },
+    )
+
+
+def _assert_same_shape(drawn: pg.Surface, expected: pg.Surface) -> None:
+    """Assert that the non-transparent pixels of two surfaces match exactly.
+
+    Args:
+        drawn: Surface the UI drew on.
+        expected: Surface with the expected pixels filled in.
+    """
+    drawn_non_transparent_mask = pg.mask.from_surface(drawn, 0)
+    expected_non_transparent_mask = pg.mask.from_surface(expected, 0)
+
+    overlap_bits = expected_non_transparent_mask.overlap_area(
+        drawn_non_transparent_mask,
+        (0, 0),
+    )
+    assert drawn_non_transparent_mask.count() == overlap_bits
+    assert expected_non_transparent_mask.count() == overlap_bits
+
 
 # endregion
 
@@ -488,6 +566,393 @@ def test_draw_blits_siblings_in_order():
     assert surface.get_at((1, 0)) == RED
     assert surface.get_at((0, 1)) == WHITE
     assert surface.get_at((1, 1)) == WHITE
+
+
+# endregion
+
+
+# region --- Cursor position --------------------------------------------------
+
+
+def test_draw_draws_no_cursor_by_default():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme())
+
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    assert pg.mask.from_surface(surface, 0).count() == 0
+
+
+def test_draw_draws_cursor_with_hotspot_at_mouse_pos():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    theme = Theme(
+        base_style=ANY_STYLE,
+        style_overrides={},
+        cursors={CursorRole.DEFAULT: CursorImage(_filled_image((4, 3), RED), (2, 1))},
+    )
+    ui = UI(size=CURSOR_UI_SIZE, theme=theme, has_cursor=True)
+
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    expected_surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    expected_surface.fill(RED, ((13, 10), (4, 3)))
+    _assert_same_shape(surface, expected_surface)
+
+
+def test_draw_with_default_theme_draws_bundled_green_arrow():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=DEFAULT_THEME, has_cursor=True)
+
+    move_mouse(ui, pos=(9, 10))
+    ui.update()
+    ui.draw(surface)
+
+    # the arrow's hotspot is its top-left pixel
+    expected_surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    expected_surface.blit(CursorImage.bundled(BundledCursor.GREEN_ARROW).image, (9, 10))
+    _assert_same_shape(surface, expected_surface)
+
+
+def test_offset_does_not_move_cursor():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    theme = Theme(
+        base_style=ANY_STYLE,
+        style_overrides={},
+        cursors={CursorRole.DEFAULT: CursorImage(_filled_image((4, 3), RED), (2, 1))},
+    )
+    ui = UI(size=CURSOR_UI_SIZE, theme=theme, has_cursor=True)
+    ui.offset = (3, 5)
+
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    expected_surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    expected_surface.fill(RED, ((13, 10), (4, 3)))
+    _assert_same_shape(surface, expected_surface)
+
+
+def test_draw_draws_cursor_above_widgets():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Widget(
+        ui,
+        size=(10, 6),
+        skin=FixedLayer(size=(10, 6), colour=WHITE, pos=(0, 0)),
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+        hit_testable=False,
+    )
+
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((15, 11)) == DEFAULT_CURSOR_COLOUR
+    assert surface.get_at((20, 13)) == WHITE
+
+
+def test_draw_draws_no_cursor_before_any_mouse_event():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    ui.update()
+    ui.draw(surface)
+
+    assert pg.mask.from_surface(surface, 0).count() == 0
+
+
+def test_draw_draws_no_cursor_after_mouse_leaves_window():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    window_leave_event = pg.Event(pg.WINDOWLEAVE)
+    ui.handle_event(window_leave_event)
+    ui.update()
+    ui.draw(surface)
+
+    assert pg.mask.from_surface(surface, 0).count() == 0
+
+
+def test_draw_draws_no_cursor_after_mouse_leaves_window_during_press():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+    )
+
+    ui.update()
+    left_press(ui, pos=(15, 11))
+    ui.update()
+    window_leave_event = pg.Event(pg.WINDOWLEAVE)
+    ui.handle_event(window_leave_event)
+    ui.update()
+    ui.draw(surface)
+
+    assert pg.mask.from_surface(surface, 0).count() == 0
+
+
+# endregion
+
+
+# region --- Cursor role ------------------------------------------------------
+
+
+def test_cursor_over_empty_space_shows_default():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+    )
+
+    move_mouse(ui, pos=(30, 25))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((30, 25)) == DEFAULT_CURSOR_COLOUR
+
+
+def test_cursor_over_enabled_button_shows_clickable():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+        enabled=True,
+    )
+
+    ui.update()
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((15, 11)) == CLICKABLE_CURSOR_COLOUR
+
+
+def test_cursor_over_disabled_button_shows_default():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+        enabled=False,
+    )
+
+    ui.update()
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((15, 11)) == DEFAULT_CURSOR_COLOUR
+
+
+def test_cursor_over_non_interactive_widget_shows_default():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Widget(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+        hit_testable=True,
+    )
+
+    ui.update()
+    move_mouse(ui, pos=(15, 11))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((15, 11)) == DEFAULT_CURSOR_COLOUR
+
+
+def test_cursor_role_comes_from_last_update():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+    )
+
+    move_mouse(ui, pos=(30, 25))
+    ui.update()
+    move_mouse(ui, pos=(15, 11))
+    ui.draw(surface)
+
+    # drawn at the new position, but only update() recomputes the highlight
+    assert surface.get_at((15, 11)) == DEFAULT_CURSOR_COLOUR
+
+
+def test_cursor_stays_clickable_while_pressed_button_is_dragged_off():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+    )
+
+    ui.update()
+    left_press(ui, pos=(15, 11))
+    ui.update()
+    move_mouse(ui, pos=(30, 25))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((30, 25)) == CLICKABLE_CURSOR_COLOUR
+
+
+def test_cursor_shows_default_once_press_is_released_off_button():
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    Button(
+        ui,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+    )
+
+    ui.update()
+    left_press(ui, pos=(15, 11))
+    ui.update()
+    left_release(ui, pos=(30, 25))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((30, 25)) == DEFAULT_CURSOR_COLOUR
+
+
+def _disable_button(button: Button, _parent: Widget) -> None:
+    button.enabled = False
+
+
+def _hide_button(button: Button, _parent: Widget) -> None:
+    button.visible = False
+
+
+def _kill_button(button: Button, _parent: Widget) -> None:
+    button.kill()
+
+
+def _disable_parent(_button: Button, parent: Widget) -> None:
+    parent.enabled = False
+
+
+def _hide_parent(_button: Button, parent: Widget) -> None:
+    parent.visible = False
+
+
+def _kill_parent(_button: Button, parent: Widget) -> None:
+    parent.kill()
+
+
+@pytest.mark.parametrize(
+    "make_unusable",
+    [
+        _disable_button,
+        _hide_button,
+        _kill_button,
+        _disable_parent,
+        _hide_parent,
+        _kill_parent,
+    ],
+    ids=[
+        "button disabled",
+        "button hidden",
+        "button killed",
+        "parent disabled",
+        "parent hidden",
+        "parent killed",
+    ],
+)
+def test_cursor_shows_default_once_pressed_button_cannot_be_used(make_unusable):
+    surface = pg.Surface(CURSOR_UI_SIZE, pg.SRCALPHA)
+    ui = UI(size=CURSOR_UI_SIZE, theme=_role_colour_theme(), has_cursor=True)
+
+    parent = Widget(
+        ui,
+        size=CURSOR_UI_SIZE,
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(0, 0),
+        hit_testable=False,
+    )
+    button = Button(
+        parent,
+        size=(10, 6),
+        skin=ANY_SKIN,
+        anchor=Anchor.TOP_LEFT,
+        parent_anchor=Anchor.TOP_LEFT,
+        margin=(0, 0),
+        offset=(12, 8),
+    )
+
+    ui.update()
+    left_press(ui, pos=(15, 11))
+    ui.update()
+    make_unusable(button, parent)
+
+    # off the button, so only the press could make the cursor clickable
+    move_mouse(ui, pos=(30, 25))
+    ui.update()
+    ui.draw(surface)
+
+    assert surface.get_at((30, 25)) == DEFAULT_CURSOR_COLOUR
 
 
 # endregion

@@ -235,6 +235,10 @@ class Widget:
         self.visible = visible
         self.hit_testable = hit_testable
 
+        # kill() clears this: a killed widget keeps its parent, so the _in_tree
+        # flags cannot tell that it has gone
+        self._alive = True
+
         self._placed_image_cache: dict[State, PlacedImage] = {}
         self._placed_image: PlacedImage
         # needs the components above to render, and the flags to pick the image
@@ -369,6 +373,7 @@ class Widget:
         keeps its link to its old parent, but should not be used again.
         """
         self.parent._remove_child(self)
+        self._alive = False
 
         for child in self.children:
             child.kill()

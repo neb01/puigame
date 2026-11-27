@@ -136,22 +136,45 @@ def test_drawing_on_a_bundled_cursor_does_not_change_later_ones():
 
 
 @pytest.mark.parametrize(
-    "hotspot",
-    [(0, 0), (3, 4), (-3, 20), (1.5, 2.5)],
-    ids=["zero", "inside the image", "outside the image", "floats"],
+    ("hotspot", "expected_hotspot"),
+    [
+        ((0, 0), (0, 0)),
+        ((3, 4), (3, 4)),
+        ((-3, 20), (-3, 20)),
+        ([5, 6], (5, 6)),
+        (pg.Vector2(7, 8), (7, 8)),
+    ],
+    ids=["zero", "inside the image", "outside the image", "list", "pg.Vector2"],
 )
-def test_cursor_image_hotspot_can_take_tuple_of_numbers(hotspot):
+def test_cursor_image_hotspot_is_stored_as_tuple(hotspot, expected_hotspot):
     cursor_image = CursorImage(_filled_image((9, 10), RED), hotspot)
 
-    assert cursor_image.hotspot == hotspot
+    assert cursor_image.hotspot == expected_hotspot
+    assert type(cursor_image.hotspot) is tuple
 
 
 @pytest.mark.parametrize(
-    "hotspot",
-    [1, 3.5, [2, 3], pg.Vector2(4, 5)],
-    ids=["int", "float", "list", "pg.Vector2"],
+    ("hotspot", "expected_hotspot"),
+    [((1.25, 2.75), (1, 2)), ((-1.25, -2.75), (-2, -3))],
+    ids=["positive", "negative"],
 )
-def test_constructor_with_non_tuple_hotspot_raises(hotspot):
+def test_fractional_hotspot_is_rounded_down(hotspot, expected_hotspot):
+    cursor_image = CursorImage(_filled_image((9, 10), RED), hotspot)
+
+    assert cursor_image.hotspot == expected_hotspot
+
+
+def test_changing_hotspot_list_later_does_not_change_cursor_image():
+    hotspot = [3, 4]
+    cursor_image = CursorImage(_filled_image((9, 10), RED), hotspot)
+
+    hotspot[0] = 5
+
+    assert cursor_image.hotspot == (3, 4)
+
+
+@pytest.mark.parametrize("hotspot", [1, 3.5], ids=["int", "float"])
+def test_constructor_with_non_pair_hotspot_raises(hotspot):
     image = _filled_image((9, 10), RED)
 
     with pytest.raises(TypeError):
@@ -172,7 +195,7 @@ def test_constructor_with_non_tuple_hotspot_raises(hotspot):
         "None y",
     ],
 )
-def test_constructor_with_tuple_hotspot_that_is_not_two_numbers_raises(hotspot):
+def test_constructor_with_hotspot_that_is_not_two_numbers_raises(hotspot):
     image = _filled_image((9, 10), RED)
 
     with pytest.raises(TypeError):

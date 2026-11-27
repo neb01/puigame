@@ -19,6 +19,7 @@ from puigame._components.component import Component
 from puigame._components.skin import Skin
 from puigame._layout.anchor import Anchor
 from puigame._layout.fit_size import FitSize
+from puigame._styling.cursor_role import CursorRole
 from puigame._widgets.state import State
 from puigame._widgets.widget import Widget
 
@@ -33,8 +34,10 @@ class InteractiveWidget(Widget):
     The ``UIManager`` highlights it while the cursor is over it, and presses
     and activates it with the left mouse button. A disabled widget is never
     highlighted, pressed, or activated, and draws its disabled look instead.
-    Subclasses respond to a click by overriding ``_activate()``, and add their
-    own states, such as ``PRESSED``.
+    A UI that draws the cursor shows ``CLICKABLE`` over it and while it is
+    pressed, unless a subclass sets another ``_cursor_role``. Subclasses
+    respond to a click by overriding ``_activate()``, and add their own states,
+    such as ``PRESSED``.
     """
 
     _possible_states: ClassVar[tuple[State, ...]] = (
@@ -42,6 +45,8 @@ class InteractiveWidget(Widget):
         State.HIGHLIGHTED,
         State.DISABLED,
     )
+
+    _cursor_role: ClassVar[CursorRole] = CursorRole.CLICKABLE
 
     def __init__(
         self,

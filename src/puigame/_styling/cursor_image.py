@@ -7,8 +7,10 @@ from importlib.resources import files
 from typing import Self
 
 import pygame as pg
+from pygame.typing import Point
 
-from puigame._validation import validate_enum, validate_tuple
+from puigame._floor_pair import floor_pair
+from puigame._validation import validate_enum, validate_pair
 
 _ARROW_HOTSPOT = (0, 0)
 _CROSSHAIR_HOTSPOT = (4, 4)
@@ -82,7 +84,7 @@ class CursorImage:
     def __init__(
         self,
         image: pg.Surface,
-        hotspot: tuple[int, int],
+        hotspot: Point,
     ) -> None:
         """Create a cursor image from a copy of ``image``.
 
@@ -90,17 +92,18 @@ class CursorImage:
             image: Image to draw as the cursor. A copy is stored.
             hotspot: ``(x, y)`` of the pixel in ``image`` that is the cursor's
                 point, which is drawn at the mouse position. It may lie
-                outside the image.
+                outside the image. A fractional value is rounded down to the
+                pixel it lies in, and it is stored as a tuple of ints.
 
         Raises:
-            TypeError: If ``hotspot`` is not a ``tuple`` of length 2, or if
-                either of its items is not an ``int`` or ``float``, or is a
-                ``bool``.
+            TypeError: If ``hotspot`` is not an indexable sequence of length 2,
+                or if either of its items is not an ``int`` or ``float``, or is
+                a ``bool``.
         """
         self._image = image.copy()
 
-        validate_tuple("hotspot", hotspot)
-        self._hotspot = hotspot
+        validate_pair("hotspot", hotspot)
+        self._hotspot = floor_pair(hotspot)
 
     @property
     def image(self) -> pg.Surface:
