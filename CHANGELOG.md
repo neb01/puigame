@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- A software mouse cursor. With `UI(has_cursor=True)`, `ui.draw()` draws the mouse cursor last, on top of every widget, with its image's hotspot at the last mouse position the UI was given. It is drawn on the UI's surface, so it scales with the game, as with `pg.SCALED`, and the UI's `offset` does not move it. Until the UI has been given a mouse position, and after `WINDOWLEAVE`, no cursor is drawn. puigame does not hide the system cursor; a game that wants only this one hides it with `pg.mouse.set_visible(False)`. `has_cursor` defaults to `False`.
+- `CursorRole`, what the mouse cursor means over a widget, which picks its image: `DEFAULT`, `CLICKABLE`, or `TEXT`. Buttons and toggle buttons are `CLICKABLE`, and other widgets show `DEFAULT`. The cursor shows the highlighted widget's role, or `DEFAULT` over anything else. During a press, it shows the pressed widget's role, even when dragged off it, until the widget is disabled, hidden, or killed, which shows `DEFAULT`. No widget uses `TEXT` yet.
+- `CursorImage`, an image drawn as the mouse cursor, with its `hotspot`: the `(x, y)` of the pixel drawn at the mouse position, which may lie outside the image. The image is copied on creation. A fractional hotspot is rounded down to the pixel it lies in. A hotspot that is not two numbers raises `TypeError`.
+- `BundledCursor`, twelve 16 by 16 cursors bundled with puigame: an arrow, a crosshair, a hand, and an I-beam in each of the `DARK`, `GREEN`, and `LIGHT` sets. `CursorImage.bundled()` makes a cursor image from one, with its hotspot set.
+- `Theme.cursors`, a mapping from each `CursorRole` to its `CursorImage`. It must map `DEFAULT`, whose image also shows for any role it leaves out. It defaults to `None`, which uses the bundled `GREEN` arrow, hand, and I-beam, to match `DEFAULT_THEME`. A mapping without `DEFAULT` raises `ValueError`, and a value that is not a `CursorImage` raises `TypeError`.
+
 ## [0.5.0] - 2026-11-24
 
 ### Added
