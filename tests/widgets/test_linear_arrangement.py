@@ -120,6 +120,26 @@ def test_hit_testable_false_by_default(ui: UI, arrangement_class):
     assert not arrangement.hit_testable
 
 
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("main_axis_spacing", -3),
+        ("main_axis_reversed", True),
+        ("cross_axis_align", CrossAxisAlign.END),
+    ],
+)
+@pytest.mark.parametrize("arrangement_class", [Row, Column], ids=["Row", "Column"])
+def test_layout_arguments_stored_as_attributes(
+    ui: UI,
+    arrangement_class,
+    field_name,
+    value,
+):
+    arrangement = arrangement_class(ui, **{field_name: value})
+
+    assert getattr(arrangement, field_name) == value
+
+
 # endregion
 
 
@@ -200,7 +220,7 @@ def test_row_can_be_child_of_column(ui: UI):
 # endregion
 
 
-# region --- Validation: main_axis_spacing ------------------------------------
+# region --- Validation: spacing and alignment --------------------------------
 
 
 @pytest.mark.parametrize("main_axis_spacing", [0, -3], ids=["zero", "negative"])
@@ -228,6 +248,39 @@ def test_non_int_main_axis_spacing_raises(ui: UI, arrangement_class, main_axis_s
     assert ui.children == ()
 
 
+@pytest.mark.parametrize("main_axis_spacing", [0, -3], ids=["zero", "negative"])
+@pytest.mark.parametrize("arrangement_class", [Row, Column], ids=["Row", "Column"])
+def test_main_axis_spacing_setter_can_take_zero_or_negative(
+    ui: UI,
+    arrangement_class,
+    main_axis_spacing,
+):
+    arrangement = arrangement_class(ui, main_axis_spacing=5)
+
+    arrangement.main_axis_spacing = main_axis_spacing
+
+    assert arrangement.main_axis_spacing == main_axis_spacing
+
+
+@pytest.mark.parametrize(
+    "main_axis_spacing",
+    [True, 2.5, "3", None],
+    ids=["bool", "float", "str", "None"],
+)
+@pytest.mark.parametrize("arrangement_class", [Row, Column], ids=["Row", "Column"])
+def test_main_axis_spacing_setter_with_non_int_raises(
+    ui: UI,
+    arrangement_class,
+    main_axis_spacing,
+):
+    arrangement = arrangement_class(ui, main_axis_spacing=5)
+
+    with pytest.raises(TypeError):
+        arrangement.main_axis_spacing = main_axis_spacing
+
+    assert arrangement.main_axis_spacing == 5
+
+
 @pytest.mark.parametrize(
     "cross_axis_align",
     ["CENTRE", None, 1],
@@ -239,6 +292,34 @@ def test_non_cross_axis_align_raises(ui: UI, arrangement_class, cross_axis_align
         arrangement_class(ui, cross_axis_align=cross_axis_align)
 
     assert ui.children == ()
+
+
+@pytest.mark.parametrize("arrangement_class", [Row, Column], ids=["Row", "Column"])
+def test_cross_axis_align_setter_can_take_cross_axis_align(ui: UI, arrangement_class):
+    arrangement = arrangement_class(ui, cross_axis_align=CrossAxisAlign.START)
+
+    arrangement.cross_axis_align = CrossAxisAlign.END
+
+    assert arrangement.cross_axis_align == CrossAxisAlign.END
+
+
+@pytest.mark.parametrize(
+    "cross_axis_align",
+    [1, "CENTRE", None],
+    ids=["int", "str", "None"],
+)
+@pytest.mark.parametrize("arrangement_class", [Row, Column], ids=["Row", "Column"])
+def test_cross_axis_align_setter_with_non_cross_axis_align_raises(
+    ui: UI,
+    arrangement_class,
+    cross_axis_align,
+):
+    arrangement = arrangement_class(ui, cross_axis_align=CrossAxisAlign.START)
+
+    with pytest.raises(TypeError):
+        arrangement.cross_axis_align = cross_axis_align
+
+    assert arrangement.cross_axis_align == CrossAxisAlign.START
 
 
 # endregion
@@ -870,6 +951,71 @@ def test_killing_child_twice_does_not_raise(ui: UI, arrangement_class):
 
     container.kill()
     container.kill()
+
+
+# endregion
+
+
+# region --- Assigning layout settings ----------------------------------------
+
+
+def test_assigned_main_axis_spacing_applies_at_next_update():
+    ui = UI(size=UI_SIZE, theme=ANY_THEME)
+    row = Row(
+        ui,
+        anchor=Anchor.TOP_LEFT,
+        margin=(10, 20),
+        main_axis_spacing=3,
+        cross_axis_align=CrossAxisAlign.START,
+    )
+    Container(row, size=(10, 4))
+    container = Container(row, size=(6, 8))
+    ui.update()
+
+    row.main_axis_spacing = -2
+    ui.update()
+
+    assert row.rect.size == (14, 8)
+    assert container.rect.topleft == (18, 20)
+
+
+def test_assigned_main_axis_reversed_applies_at_next_update():
+    ui = UI(size=UI_SIZE, theme=ANY_THEME)
+    row = Row(
+        ui,
+        anchor=Anchor.TOP_LEFT,
+        margin=(10, 20),
+        main_axis_spacing=3,
+        cross_axis_align=CrossAxisAlign.START,
+    )
+    container_1 = Container(row, size=(10, 4))
+    container_2 = Container(row, size=(6, 8))
+    ui.update()
+
+    row.main_axis_reversed = True
+    ui.update()
+
+    assert container_1.rect.topleft == (19, 20)
+    assert container_2.rect.topleft == (10, 20)
+
+
+def test_assigned_cross_axis_align_applies_at_next_update():
+    ui = UI(size=UI_SIZE, theme=ANY_THEME)
+    column = Column(
+        ui,
+        anchor=Anchor.TOP_LEFT,
+        margin=(10, 20),
+        main_axis_spacing=3,
+        cross_axis_align=CrossAxisAlign.START,
+    )
+    Container(column, size=(10, 4))
+    container = Container(column, size=(6, 8))
+    ui.update()
+
+    column.cross_axis_align = CrossAxisAlign.END
+    ui.update()
+
+    assert container.rect.topleft == (14, 27)
 
 
 # endregion

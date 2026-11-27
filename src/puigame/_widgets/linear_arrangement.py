@@ -95,6 +95,10 @@ class LinearArrangement(Widget):
     are drawn and hit in the order they were created, so a later child is on
     top of an earlier one.
 
+    ``main_axis_spacing``, ``main_axis_reversed``, and ``cross_axis_align`` can
+    be assigned at any time, and a new value applies at the next
+    ``UI.update()``.
+
     A row or column places its children, so each child's ``anchor``,
     ``parent_anchor``, and ``margin`` must keep their defaults. A child's
     ``offset`` still applies, after it has been placed. The size and the
@@ -150,16 +154,17 @@ class LinearArrangement(Widget):
                 the widgets below it and the game.
             main_axis_spacing: Space in pixels between neighbouring children
                 along the main axis, with none before the first child or after
-                the last. A negative value overlaps them. Fixed on creation.
-                Defaults to 0.
+                the last. A negative value overlaps them. It can be changed
+                later through ``main_axis_spacing``. Defaults to 0.
             main_axis_reversed: Whether children are placed from the end of
                 the main axis instead of its start: right to left in a row,
                 bottom to top in a column. They are still drawn and hit in
-                the order they were created. Fixed on creation. Defaults to
-                ``False``.
+                the order they were created. It can be changed later through
+                ``main_axis_reversed``. Defaults to ``False``.
             cross_axis_align: Where children narrower than this widget sit,
-                across its main axis (see ``CrossAxisAlign``). Fixed on
-                creation. Defaults to ``CrossAxisAlign.CENTRE``.
+                across its main axis (see ``CrossAxisAlign``). It can be
+                changed later through ``cross_axis_align``. Defaults to
+                ``CrossAxisAlign.CENTRE``.
 
         Raises:
             TypeError: If ``anchor`` is not an ``Anchor``, if ``parent_anchor``
@@ -172,13 +177,9 @@ class LinearArrangement(Widget):
                 ``parent_anchor``, or ``margin`` is not its default. The widget
                 is not added to ``parent``.
         """
-        validate_int("main_axis_spacing", main_axis_spacing)
-        self._main_axis_spacing = main_axis_spacing
-
-        self._main_axis_reversed = main_axis_reversed
-
-        validate_enum("cross_axis_align", cross_axis_align, CrossAxisAlign)
-        self._cross_axis_align = cross_axis_align
+        self.main_axis_spacing = main_axis_spacing
+        self.main_axis_reversed = main_axis_reversed
+        self.cross_axis_align = cross_axis_align
 
         self._child_positions: dict[Widget, pg.Vector2] = {}
 
@@ -194,6 +195,36 @@ class LinearArrangement(Widget):
             visible=visible,
             hit_testable=hit_testable,
         )
+
+    @property
+    def main_axis_spacing(self) -> int:
+        """The space in pixels between neighbouring children on the main axis.
+
+        A negative value overlaps them. A new value applies at the next
+        ``UI.update()``. Assigning a value that is not an ``int``, including a
+        ``bool``, raises ``TypeError`` and leaves the spacing unchanged.
+        """
+        return self._main_axis_spacing
+
+    @main_axis_spacing.setter
+    def main_axis_spacing(self, value: int) -> None:
+        validate_int("main_axis_spacing", value)
+        self._main_axis_spacing = value
+
+    @property
+    def cross_axis_align(self) -> CrossAxisAlign:
+        """Where children narrower than this widget sit, across its main axis.
+
+        See ``CrossAxisAlign``. A new value applies at the next
+        ``UI.update()``. Assigning a value that is not a ``CrossAxisAlign``
+        raises ``TypeError`` and leaves the alignment unchanged.
+        """
+        return self._cross_axis_align
+
+    @cross_axis_align.setter
+    def cross_axis_align(self, value: CrossAxisAlign) -> None:
+        validate_enum("cross_axis_align", value, CrossAxisAlign)
+        self._cross_axis_align = value
 
     def _measure(self) -> None:
         """Size to the visible children and work out where each goes.
@@ -217,7 +248,7 @@ class LinearArrangement(Widget):
             self.rect.size = (0, 0)
             return
 
-        if self._main_axis_reversed:
+        if self.main_axis_reversed:
             visible_children.reverse()
 
         main_axis = self._main_axis
