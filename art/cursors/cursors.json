@@ -1,0 +1,33 @@
+{ "frames": [
+   {
+    "filename": "cursors.aseprite",
+    "frame": { "x": 0, "y": 0, "w": 320, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 320, "h": 320 },
+    "sourceSize": { "w": 320, "h": 320 },
+    "duration": 100
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.18.6-x64",
+  "format": "RGBA8888",
+  "size": { "w": 320, "h": 320 },
+  "scale": "1",
+  "slices": [
+   { "name": "light_arrow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 16, "h": 16 }, "pivot": {"x": 0, "y": 0 } }] },
+   { "name": "light_hand", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 0, "w": 16, "h": 16 }, "pivot": {"x": 3, "y": 0 } }] },
+   { "name": "light_i_beam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 32, "y": 0, "w": 16, "h": 16 }, "pivot": {"x": 4, "y": 7 } }] },
+   { "name": "light_crosshair", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 48, "y": 0, "w": 16, "h": 16 }, "pivot": {"x": 4, "y": 4 } }] },
+   { "name": "dark_arrow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 16, "w": 16, "h": 16 }, "pivot": {"x": 0, "y": 0 } }] },
+   { "name": "dark_hand", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 16, "w": 16, "h": 16 }, "pivot": {"x": 3, "y": 0 } }] },
+   { "name": "dark_i_beam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 32, "y": 16, "w": 16, "h": 16 }, "pivot": {"x": 4, "y": 7 } }] },
+   { "name": "dark_crosshair", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 48, "y": 16, "w": 16, "h": 16 }, "pivot": {"x": 4, "y": 4 } }] },
+   { "name": "green_crosshair", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 48, "y": 32, "w": 16, "h": 16 }, "pivot": {"x": 4, "y": 4 } }] },
+   { "name": "green_i_beam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 32, "y": 32, "w": 16, "h": 16 }, "pivot": {"x": 4, "y": 7 } }] },
+   { "name": "green_hand", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 32, "w": 16, "h": 16 }, "pivot": {"x": 3, "y": 0 } }] },
+   { "name": "green_arrow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 32, "w": 16, "h": 16 }, "pivot": {"x": 0, "y": 0 } }] }
+  ]
+ }
+}

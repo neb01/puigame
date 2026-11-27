@@ -270,7 +270,8 @@ def main() -> None:
     screen = pg.display.set_mode(SCREEN_SIZE, pg.SCALED)
     pg.display.set_caption("puigame showcase demo")
 
-    ui = UI(size=screen.size)
+    ui = UI(size=screen.size, has_cursor=True)
+    pg.mouse.set_visible(False)
 
     main_row = Row(
         ui,

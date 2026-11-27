@@ -82,7 +82,7 @@ pause_ui.draw(screen)  # drawn last, so on top
 - **Input** goes to the top UI first and stops at the first one that consumes it. A modal menu is the game not passing events to the UIs below.
 - **Drawing** goes from the bottom UI to the top.
 - **Each UI has its own highlight and presses.** Once keyboard navigation arrives, each will also have its own settings: a HUD would typically turn keyboard navigation off, while a pause menu keeps it on.
-- **Only one UI should manage the cursor** at a time, once cursor management arrives, since the cursor belongs to the whole window. The others would be created with `manage_cursor=False` (see [Cursor](#cursor)).
+- **Only one UI should draw the cursor**, normally the top one, since there is one mouse. The others keep the default `has_cursor=False` (see [Cursor](#cursor)).
 
 ### Timing
 
@@ -499,7 +499,7 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 - **Clicks fire on release**, and only if the release is over the pressed widget and it is still enabled. The press is cleared before the widget is activated, since activation may change the tree.
 - During a press, no other widget is highlighted, as with native mouse capture. Dragging off the pressed widget shows `BASE`; dragging back on while still held shows `HIGHLIGHTED | PRESSED`. Releasing off it does nothing.
 - A press that starts elsewhere and is dragged onto a widget does not press or activate it.
-- A widget killed mid-press can no longer be hit, so its release cannot activate it, and no liveness flag is needed.
+- A widget killed mid-press can no longer be hit, so its release cannot activate it. Only the cursor needs to know that it was killed (see [Cursor](#cursor)).
 - A left down while a press is still recorded ends the old press, since its release was lost. Losing window focus (`WINDOWFOCUSLOST`) also ends any press, since another window may receive the release.
 - Widgets respond through private hooks such as `_activate()`, not by handling raw events themselves.
 
@@ -507,8 +507,8 @@ The game passes every event to `ui.handle_event()`, which returns `True` if the 
 
 Not built yet. Mouse hover and keyboard focus will be **one concept**, the highlight:
 
-- **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and hides the cursor.
-- **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, shows the cursor, and highlights whatever is under it.
+- **Keyboard**: Tab and the arrow keys move the highlight between `highlightable_in_tree` widgets. The `UIManager` switches to keyboard mode and stops drawing the cursor.
+- **Switching back**: in keyboard mode, hover is ignored, because the hidden cursor still has a position. The first real mouse movement switches back to mouse mode, draws the cursor again, and highlights whatever is under it.
 - **Turning keyboard navigation off**: a scene that uses the keyboard for something else (typically a game screen, as opposed to a menu or options screen) creates its `UI` with `keyboard_navigation=False`. Tab, the arrow keys, Enter, and Space then pass through to the game, and only the mouse highlights and activates widgets. A `TextBox` being edited still receives typing.
 - **Keyboard activation** follows the same rule as clicks: Enter or Space down on the highlighted widget shows `HIGHLIGHTED | PRESSED`, and key up fires.
 
@@ -525,7 +525,23 @@ Not built yet, since `TextBox` is planned.
 
 ### Cursor
 
-Not built yet, since it is only needed for keyboard navigation. The `UIManager` will hide and show the mouse cursor as the input mode changes. A game that manages the cursor itself will create its `UI` with `manage_cursor=False`. When several UIs are shown at once (see [Layering](#layering)), only one should manage the cursor. Since `pygame.mouse.set_visible` affects the whole window, this is an option rather than something puigame always does.
+A UI created with `has_cursor=True` draws the mouse cursor itself, and shows a different cursor depending on what is under it.
+
+- **Software cursor.** The cursor is an image that `ui.draw()` draws last, on top of the UI's widgets. It is drawn on the UI's surface, so it scales with `pg.SCALED` like everything else; a hardware cursor set with `pg.mouse.set_cursor()` stays at its native size, so pixel-art cursors would look tiny on a scaled-up window. The cost is up to a frame of lag behind the mouse. puigame never calls `pg.mouse.set_cursor()` or `pg.mouse.set_visible()`: the game hides the system cursor itself, so puigame changes nothing that belongs to the whole window.
+- **Off by default.** Each UI knows only its own widgets, and several UIs drawing cursors would draw several cursors. A game turns it on for one UI, normally the top one, which is drawn last and gets events first (see [Layering](#layering)). That UI's cursor reflects only its own widgets: over another UI's button, it shows the default cursor.
+- **Position**: the image is drawn with its hotspot at the cursor position the UI already stores from mouse events (see [Highlight](#highlight)), in the surface's pixels. The UI's `offset` does not move it. With no stored position, for example after `WINDOWLEAVE`, no cursor is drawn.
+- **Cursor roles.** A widget names a `CursorRole` rather than an image: `DEFAULT`, `CLICKABLE`, or `TEXT`. Roles are named by meaning rather than shape, since a game may draw any shape for a role, such as a gauntlet for `CLICKABLE`. An interactive widget's role is a private class attribute: `CLICKABLE` for buttons and toggle buttons, and `TEXT` for the planned `TextBox`. Roles do not change with state. A per-widget override, or roles that change with state (such as grab and grabbing for a slider handle), can be added later without breaking anything.
+- **Which role shows:**
+  - while the cursor is over the highlighted widget, that widget's role;
+  - during a press, the pressed widget's role, even when the cursor is dragged off it, as the press itself is kept, while the widget is still enabled, visible, and not killed;
+  - otherwise `DEFAULT`.
+
+  A disabled widget is never highlighted, so it shows `DEFAULT` and does not look clickable. The press is checked first: during a press only the pressed widget can be highlighted, so the highlight decides only when there is no usable press. A pressed widget that is disabled, hidden, or killed mid-press shows `DEFAULT`, like any widget that cannot be used. A killed widget keeps its link to its old parent, so its `_in_tree` flags cannot tell that it has gone; `kill()` clears a private `_alive` flag that the cursor checks instead. The role comes from the state left by the last `update()`, as the widgets' images do. A `TextBox` being edited keeps the highlight, so the cursor is `TEXT` over it and `DEFAULT` elsewhere, where a click only ends editing. In keyboard mode, no cursor is drawn (see [Keyboard navigation](#keyboard-navigation)).
+- **`CursorImage`**: a small frozen type pairing an `image`, a `pg.Surface`, with its `hotspot`, the pixel in the image that is the click point. The hotspot is given as an `(x, y)` pair of numbers and stored as a tuple of ints: a fractional hotspot is rounded down to the pixel it lies in, since that pixel is what is drawn at the mouse position. It may lie outside the image, for example for a cursor drawn trailing away from the point it marks: it is still drawable, and only undrawable values are rejected, as with styles. It is puigame's own type rather than `pg.Cursor`, because `pg.Cursor` also holds system cursors, which cannot be drawn as images, and keeps its data in a tuple whose shape depends on the kind of cursor. It stores a copy of the image it is given, so drawing on the original later cannot change a theme after it is created, as `style_overrides` is stored as a read-only copy.
+- **The theme** maps roles to `CursorImage`s in a `cursors` field, since cursor art is part of the look. The field defaults to `None`, meaning the bundled `GREEN` set, which matches `DEFAULT_THEME`, so existing themes keep working. The bundled images are loaded on first use, as fonts are, not when `DEFAULT_THEME` is created at import, so a missing or broken file raises when the cursor is drawn rather than making `import puigame` fail.
+- **Bundled cursors** are public, so games can use them in their own themes or their own drawing, such as a crosshair during gameplay. They are named by shape, since each is a particular drawing, while roles are named by meaning. `BundledCursor` is one flat enum with a member per image, named `<SET>_<SHAPE>` (`DARK_`, `GREEN_`, and `LIGHT_`, each with `ARROW`, `CROSSHAIR`, `HAND`, and `I_BEAM`), rather than a set enum and a shape enum, so a one-off cursor can be added without drawing it in every set. `CursorImage.bundled(bundled_cursor)` returns a cursor image with that member's image and hotspot; the file is read once and cached, and each result gets its own copy. Each shape's hotspot is written once in the code, since the Aseprite data is not shipped. A theme that wants another set maps each role to `CursorImage.bundled()` itself: accepting a set directly in `cursors` would be a second way to do the same thing, and can be added later without breaking anything. `CROSSHAIR` has no role, since no puigame widget needs one.
+- **Bundled art**: the source is one Aseprite sheet, `art/cursors/cursors.aseprite`, with a 16x16 slice per image named `<set>_<shape>` (such as `green_arrow`), whose pivot marks the hotspot. Fixed cells keep each hotspot valid when the art is redrawn. The slices are exported as one PNG each into `assets/cursors/` with Aseprite's `--split-slices`. A shape's hotspot is the same in every set.
+- **A theme's `cursors` need not map every role**, but must map `DEFAULT`, or creating the theme raises `ValueError`. A role it leaves out shows its `DEFAULT` image. Requiring every role would make each new role, such as a grab cursor for a slider, a breaking change for every custom theme; falling back to the bundled image instead would mix puigame's art with the game's.
 
 ## Callbacks
 
@@ -561,7 +577,7 @@ Callbacks are plain callables passed to widgets on creation. Each receives the w
 
 ## Assets
 
-- Bundled assets live in `assets/fonts/` and, once `ImageSkin` arrives, `assets/images/` (default skin art, nine-slice-ready), all MIT-compatible.
+- Bundled assets live in `assets/fonts/`, `assets/cursors/` once cursors arrive, and, once `ImageSkin` arrives, `assets/images/` (default skin art, nine-slice-ready), all MIT-compatible.
 - They are loaded with `importlib.resources`, so they are found wherever the package is installed.
 - Loaded fonts are cached by typeface and size, since loading a font file is slow. All text with the same typeface and size shares one `pg.Font`, which is never changed after it is created, including attributes such as `bold` and `align`.
 - Loading failures raise exceptions (for example `FileNotFoundError`) and never exit the program.
@@ -588,6 +604,8 @@ src/puigame/
 │   └── fit_size.py            FitSize, FitSource
 ├── _styling/                  styles and themes
 │   ├── __init__.py
+│   ├── cursor_image.py        CursorImage, BundledCursor
+│   ├── cursor_role.py         CursorRole
 │   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
 │   └── theme.py               Theme, DEFAULT_THEME
 ├── _ui/                       running a widget tree
@@ -606,8 +624,11 @@ src/puigame/
 │   ├── toggle_group.py        ToggleGroup
 │   └── widget.py              Widget
 ├── assets/
+│   ├── cursors/
 │   └── fonts/
 ├── __init__.py                public API: re-exports and __all__
+├── _floor_pair.py             floor_pair, rounding positions down to pixels
+├── _validation.py             checks on values that callers pass in
 └── py.typed
 ```
 
@@ -631,6 +652,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 | Placement | `Anchor`, `CrossAxisAlign`, `FitSize` |
 | States | `State` |
 | Looks | `Theme`, `DEFAULT_THEME`, `Style`, `StyleOverride`, `FadeProfile`, `TextHorizontalExtent`, `TextAlign`, `BundledTypeface`, `NoSkin`, `DrawnSkin` |
+| Cursors | `CursorRole`, `CursorImage`, `BundledCursor` |
 
 - **Narrow first.** A name can be made public later without breaking anyone, but not made private again. Everything else stays internal: `UIManager`, `InteractiveWidget`, `LinearArrangement`, `Axis`, `Skin`, `Component`, `Text`, `PlacedImage`, `compose_layers`, `get_pos_from_anchor_match`, and `RGBA`.
 - **Themes are the way to change the look in v0.1.** A theme can be built from public names alone; the practical route is `dataclasses.replace(DEFAULT_THEME.base_style, ...)` plus a few `StyleOverride`s. Custom skins (`Skin` and `PlacedImage` made public) are planned for the release after v0.1.
@@ -642,15 +664,16 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 Each layer imports only from the layers above it:
 
-1. `_components/placed_image`, `_layout/anchor`, `_layout/cross_axis_align`, `_layout/fit_size`, `_widgets/state`, `_widgets/toggle_group`
-2. `_styling/style`
-3. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
-4. `_widgets/widget`
-5. `_widgets/interactive_widget`
-6. `_widgets/button`, `_widgets/label`, `_widgets/linear_arrangement`, `_widgets/panel`
-7. `_widgets/toggle_button`
-8. `_ui/ui_manager`
-9. `_ui/ui`
+1. `_floor_pair`, `_components/placed_image`, `_layout/anchor`, `_layout/cross_axis_align`, `_layout/fit_size`, `_styling/cursor_role`, `_widgets/state`, `_widgets/toggle_group`
+2. `_validation`
+3. `_styling/cursor_image`, `_styling/style`
+4. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
+5. `_widgets/widget`
+6. `_widgets/interactive_widget`
+7. `_widgets/button`, `_widgets/label`, `_widgets/linear_arrangement`, `_widgets/panel`
+8. `_widgets/toggle_button`
+9. `_ui/ui_manager`
+10. `_ui/ui`
 
 `_widgets` and `_styling` import from each other at package level (`Widget` reads a `Theme`, and a `Theme` is keyed by `State`), but no module imports one that imports it back. `_widgets` imports `UI` from `_ui` for type checking only, `_widgets/toggle_group` imports `ToggleButton` the same way, and `_ui/ui_manager` imports `UI` the same way, since `_ui/ui` imports both; that is why `Widget` tests whether its parent is a `Widget` rather than a `UI`. `UIManager` and `UI` need only `Widget` and `InteractiveWidget`, not the concrete widgets, so nothing in `_ui` imports them. This prevents circular imports and makes it clear where new code belongs.
 

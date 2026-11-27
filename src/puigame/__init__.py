@@ -9,6 +9,8 @@ from puigame._components.skin import DrawnSkin, NoSkin
 from puigame._layout.anchor import Anchor
 from puigame._layout.cross_axis_align import CrossAxisAlign
 from puigame._layout.fit_size import FitSize
+from puigame._styling.cursor_image import BundledCursor, CursorImage
+from puigame._styling.cursor_role import CursorRole
 from puigame._styling.style import (
     BundledTypeface,
     FadeProfile,
@@ -32,11 +34,14 @@ __all__ = [
     "DEFAULT_THEME",
     "UI",
     "Anchor",
+    "BundledCursor",
     "BundledTypeface",
     "Button",
     "Column",
     "Container",
     "CrossAxisAlign",
+    "CursorImage",
+    "CursorRole",
     "DrawnSkin",
     "FadeProfile",
     "FitSize",

@@ -10,9 +10,12 @@ window with ``pg.SCALED``.
 
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, replace
+from functools import cache
 from types import MappingProxyType
 
 from puigame._layout.anchor import Anchor
+from puigame._styling.cursor_image import BundledCursor, CursorImage
+from puigame._styling.cursor_role import CursorRole
 from puigame._styling.style import (
     BundledTypeface,
     FadeProfile,
@@ -46,6 +49,25 @@ _MID_GREEN = (0, 200, 0, 255)
 _DARK_GREEN = (0, 100, 0, 255)
 
 
+@cache
+def _get_default_cursors() -> Mapping[CursorRole, CursorImage]:
+    """Return the bundled ``GREEN`` cursor for each role, loaded on first use.
+
+    Cached, so every theme with ``cursors=None`` shares one read-only mapping,
+    and the images are neither read nor copied again each frame.
+
+    Returns:
+        A read-only mapping from each cursor role to its bundled image.
+    """
+    return MappingProxyType(
+        {
+            CursorRole.DEFAULT: CursorImage.bundled(BundledCursor.GREEN_ARROW),
+            CursorRole.CLICKABLE: CursorImage.bundled(BundledCursor.GREEN_HAND),
+            CursorRole.TEXT: CursorImage.bundled(BundledCursor.GREEN_I_BEAM),
+        },
+    )
+
+
 @dataclass(frozen=True, kw_only=True)
 class Theme:
     """Shared drawing rules for every widget in a UI.
@@ -69,17 +91,24 @@ class Theme:
             Combined flags, such as ``State.HIGHLIGHTED | State.DISABLED``,
             cannot be used either; a combination of states is styled by
             applying each flag's override in turn. Stored as a read-only copy.
+        cursors: Image for each cursor role, or ``None`` for puigame's bundled
+            ``GREEN`` cursors, which match ``DEFAULT_THEME``. It must map
+            ``CursorRole.DEFAULT``; a role it leaves out shows the
+            ``DEFAULT`` image. Stored as a read-only copy.
     """
 
     base_style: Style
     style_overrides: Mapping[State, StyleOverride]
+    cursors: Mapping[CursorRole, CursorImage] | None = None
 
     def __post_init__(self) -> None:
-        """Reject invalid keys and store ``style_overrides`` read-only.
+        """Reject invalid keys and values, and store the mappings read-only.
 
         Raises:
             ValueError: If ``style_overrides`` uses ``State.BASE`` or a
-                combination of flags as a key.
+                combination of flags as a key, or if ``cursors`` does not have
+                ``CursorRole.DEFAULT`` as a key.
+            TypeError: If a value in ``cursors`` is not a ``CursorImage``.
         """
         if State.BASE in self.style_overrides:
             raise ValueError("style_overrides cannot use State.BASE as a key")
@@ -96,6 +125,26 @@ class Theme:
             "style_overrides",
             MappingProxyType(dict(self.style_overrides)),
         )
+
+        if self.cursors is not None:
+            for cursor_image in self.cursors.values():
+                if not isinstance(cursor_image, CursorImage):
+                    raise TypeError(
+                        f"cursors values must be CursorImage, got {cursor_image!r}",
+                    )
+
+            if CursorRole.DEFAULT not in self.cursors:
+                raise ValueError(
+                    "cursors must have CursorRole.DEFAULT as a key, "
+                    f"got {list(self.cursors)!r}",
+                )
+
+            # copy, so later changes to the caller's dict don't reach the theme
+            object.__setattr__(
+                self,
+                "cursors",
+                MappingProxyType(dict(self.cursors)),
+            )
 
     def _style_for(self, state: State) -> Style:
         """Return the style for a combination of state flags.
@@ -124,6 +173,25 @@ class Theme:
                 result = replace(result, **changed_fields)
 
         return result
+
+    def _cursor_for(self, cursor_role: CursorRole) -> CursorImage:
+        """Return the cursor image for a cursor role.
+
+        Uses the bundled ``GREEN`` cursors when ``cursors`` is ``None``, and
+        the ``DEFAULT`` image for a role that ``cursors`` leaves out.
+
+        Args:
+            cursor_role: Role of the widget that sets the cursor.
+
+        Returns:
+            The cursor image to draw.
+        """
+        if self.cursors is None:
+            cursors = _get_default_cursors()
+        else:
+            cursors = self.cursors
+
+        return cursors.get(cursor_role, cursors[CursorRole.DEFAULT])
 
 
 DEFAULT_THEME = Theme(

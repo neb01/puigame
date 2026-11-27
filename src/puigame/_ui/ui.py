@@ -14,6 +14,7 @@ from collections.abc import Iterator
 import pygame as pg
 from pygame.typing import Point
 
+from puigame._styling.cursor_role import CursorRole
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui_manager import UIManager
 from puigame._validation import validate_pair, validate_size
@@ -32,7 +33,13 @@ class UI:
     own.
     """
 
-    def __init__(self, *, size: Point, theme: Theme = DEFAULT_THEME) -> None:
+    def __init__(
+        self,
+        *,
+        size: Point,
+        theme: Theme = DEFAULT_THEME,
+        has_cursor: bool = False,
+    ) -> None:
         """Create a UI with no widgets yet.
 
         Args:
@@ -40,15 +47,21 @@ class UI:
                 For a display opened with ``pg.SCALED``, this is the display's
                 own size, not the window's.
             theme: Theme that every widget in the UI draws with.
+            has_cursor: Whether ``draw()`` also draws the mouse cursor, on top
+                of the widgets, with the theme's image for the role of the
+                widget being pressed or under the cursor. Only one UI should
+                draw it, normally the top one. The game hides the system cursor
+                itself.
 
         Raises:
             TypeError: If ``size`` is not an ``(x, y)`` pair of numbers.
             ValueError: If either dimension of ``size`` is negative.
         """
         validate_size("size", size)
-
         self._rect = pg.Rect((0, 0), size)
+
         self._theme = theme
+        self._has_cursor = has_cursor
         self._children: list[Widget] = []
         self.offset = (0, 0)
 
@@ -147,26 +160,31 @@ class UI:
         self._update_tree()
 
     def draw(self, surface: pg.Surface) -> None:
-        """Draw the visible widgets onto ``surface``.
+        """Draw the visible widgets, then any cursor, onto ``surface``.
 
         Each widget is drawn, then its whole subtree, then its next sibling, so
         children appear above their parents and a later sibling's subtree above
         an earlier one's. A hidden widget is skipped along with everything below
         it. Each image is drawn at ``rect.topleft`` moved by its ``image_pos``.
+
+        With ``has_cursor``, the mouse cursor is drawn last, on top of every
+        widget, with its hotspot at the last mouse position the UI was given.
+        ``offset`` does not move it. During a press, it shows the pressed
+        widget's cursor role, even when dragged off it, while the widget is
+        still enabled, visible, and not killed. Otherwise it shows the
+        highlighted widget's role, or ``CursorRole.DEFAULT`` over anything else.
+        The role comes from the state left by the last ``update()``, as the
+        widgets' images do. With no known mouse position, such as after
+        ``WINDOWLEAVE``, no cursor is drawn.
+
         Drawing changes nothing, so it can run any number of times per update.
 
         Args:
             surface: Surface to draw on, usually the display surface. It should
                 be the size the UI was created with.
         """
-        for widget in self._iter_visible_descendants():
-            surface.blit(
-                widget.image,
-                (
-                    widget.rect.left + widget.image_pos[0],
-                    widget.rect.top + widget.image_pos[1],
-                ),
-            )
+        self._draw_tree(surface)
+        self._draw_cursor(surface)
 
     def _measure_tree(self) -> None:
         """Measure every widget in the UI, children before parents.
@@ -209,6 +227,63 @@ class UI:
         same way everywhere.
         """
         self.rect.topleft = (math.floor(self.offset.x), math.floor(self.offset.y))
+
+    def _draw_tree(self, surface: pg.Surface) -> None:
+        """Draw each visible widget's image, in tree order.
+
+        Args:
+            surface: Surface to draw on.
+        """
+        for widget in self._iter_visible_descendants():
+            surface.blit(
+                widget.image,
+                (
+                    widget.rect.left + widget.image_pos[0],
+                    widget.rect.top + widget.image_pos[1],
+                ),
+            )
+
+    def _draw_cursor(self, surface: pg.Surface) -> None:
+        """Draw the image for the current cursor role at the mouse position.
+
+        Nothing is drawn unless the UI has a cursor and a stored mouse
+        position. A usable pressed widget's role comes first, since the press
+        holds the cursor, then the highlighted widget's role, then
+        ``CursorRole.DEFAULT``.
+
+        Args:
+            surface: Surface to draw on.
+        """
+        if self._has_cursor:
+            mouse_pos = self._manager._mouse_pos
+
+            if mouse_pos is None:
+                return
+
+            pressed_widget = self._manager._pressed_widget
+            highlighted_widget = self._manager._highlighted_widget
+
+            # the press holds the role, even off the widget, while it is usable
+            if (
+                pressed_widget is not None
+                and pressed_widget._alive
+                and pressed_widget.enabled_in_tree
+                and pressed_widget.visible_in_tree
+            ):
+                cursor_image = self.theme._cursor_for(pressed_widget._cursor_role)
+
+            elif highlighted_widget is not None:
+                cursor_image = self.theme._cursor_for(highlighted_widget._cursor_role)
+
+            else:
+                cursor_image = self.theme._cursor_for(CursorRole.DEFAULT)
+
+            cursor_pos = (
+                mouse_pos[0] - cursor_image.hotspot[0],
+                mouse_pos[1] - cursor_image.hotspot[1],
+            )
+
+            surface.blit(cursor_image.image, cursor_pos)
 
     def _iter_descendants(self) -> Iterator[Widget]:
         """Yield every widget in the UI, parents first.
