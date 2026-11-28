@@ -3,7 +3,10 @@
 Two sprites bounce in a panel while buttons pause the game, jostle the main
 buttons around a small circle, show and hide or enable and disable them, and
 quit. P pauses, J jostles, and Esc quits. A label above the panel counts the
-bounces, and another shows every character in Neb0Font.
+bounces, and another shows every character in Neb0Font. Above the buttons, a
+hand of cards overlaps through negative spacing: FLIP fans it the other way,
+and clicking a card removes it. puigame draws the mouse cursor, which turns
+into a hand over buttons.
 
 Run it from the repository root with ``uv run python examples/showcase.py``.
 """
@@ -41,6 +44,12 @@ SHOW_HIDE_BUTTON_SPACING = 5
 
 TITLE_MARGIN = (5, 5)
 TITLE_TEXT = "JUMPING\nSTANDARD\nBERNARDS"
+
+CARD_FLIP_TEXT = "FLIP"
+CARD_FLIP_BUTTON_SIZE = (91, None)
+CARD_FAN_SPACING = -11
+CARD_SIZE = (30, 50)
+CARD_TEXTS = ("A", "K", "Q", "J", "10")
 
 TOGGLE_PAUSE = pg.event.custom_type()
 PAUSE_TEXT = "PAUSE (P)"
@@ -278,7 +287,30 @@ def main() -> None:
         main_axis_spacing=MAIN_ROW_SPACING,
         cross_axis_align=CrossAxisAlign.END,
     )
-    button_panel = Panel(main_row, skin=DrawnSkin())
+    left_column = Column(
+        main_row,
+        main_axis_spacing=INTRA_CONTENT_SPACING,
+        cross_axis_align=CrossAxisAlign.START,
+    )
+    card_row = Row(
+        left_column,
+        main_axis_spacing=INTRA_CONTENT_SPACING,
+        cross_axis_align=CrossAxisAlign.END,
+    )
+
+    def toggle_fan_reversed(_button: Button) -> None:
+        card_fan.main_axis_reversed = not card_fan.main_axis_reversed
+
+    Button(
+        card_row,
+        size=CARD_FLIP_BUTTON_SIZE,
+        skin=DrawnSkin(),
+        text=CARD_FLIP_TEXT,
+        on_click=toggle_fan_reversed,
+    )
+
+    card_fan = Row(card_row, main_axis_spacing=CARD_FAN_SPACING)
+    button_panel = Panel(left_column, skin=DrawnSkin())
     button_column = Column(
         button_panel,
         main_axis_spacing=INTRA_CONTENT_SPACING,
@@ -290,6 +322,15 @@ def main() -> None:
     main_buttons = Column(button_column, main_axis_spacing=INTRA_CONTENT_SPACING)
 
     Label(ui, text=TITLE_TEXT, anchor=Anchor.TOP_LEFT, margin=TITLE_MARGIN)
+
+    for card_text in CARD_TEXTS:
+        Button(
+            card_fan,
+            size=CARD_SIZE,
+            skin=DrawnSkin(),
+            text=card_text,
+            on_click=lambda button: button.kill(),
+        )
 
     # pause button
     pause_button = Button(

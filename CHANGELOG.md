@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `CursorImage`, an image drawn as the mouse cursor, with its `hotspot`: the `(x, y)` of the pixel drawn at the mouse position, which may lie outside the image. The image is copied on creation. A fractional hotspot is rounded down to the pixel it lies in. A hotspot that is not two numbers raises `TypeError`.
 - `BundledCursor`, twelve 16 by 16 cursors bundled with puigame: an arrow, a crosshair, a hand, and an I-beam in each of the `DARK`, `GREEN`, and `LIGHT` sets. `CursorImage.bundled()` makes a cursor image from one, with its hotspot set.
 - `Theme.cursors`, a mapping from each `CursorRole` to its `CursorImage`. It must map `DEFAULT`, whose image also shows for any role it leaves out. It defaults to `None`, which uses the bundled `GREEN` arrow, hand, and I-beam, to match `DEFAULT_THEME`. A mapping without `DEFAULT` raises `ValueError`, and a value that is not a `CursorImage` raises `TypeError`.
+- A `Row`'s or `Column`'s `main_axis_spacing`, `main_axis_reversed`, and `cross_axis_align` can be read, and changed after creation by assigning them. A new value applies at the next `ui.update()`. Assigning a `main_axis_spacing` that is not an `int`, including a `bool`, or a `cross_axis_align` that is not a `CrossAxisAlign`, raises `TypeError` and keeps the old value.
 
 ## [0.5.0] - 2026-11-24
 
