@@ -7,7 +7,6 @@ layout may change in any release.
 
 from puigame._components.skin import DrawnSkin, NoSkin
 from puigame._layout.anchor import Anchor
-from puigame._layout.cross_axis_align import CrossAxisAlign
 from puigame._layout.fit_size import FitSize
 from puigame._styling.cursor_image import BundledCursor, CursorImage
 from puigame._styling.cursor_role import CursorRole
@@ -23,7 +22,7 @@ from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui import UI
 from puigame._widgets.button import Button
 from puigame._widgets.label import Label
-from puigame._widgets.linear_arrangement import Column, Row
+from puigame._widgets.linear_arrangement import Column, CrossAxisAlign, Row
 from puigame._widgets.panel import Container, Panel
 from puigame._widgets.state import State
 from puigame._widgets.toggle_button import ToggleButton

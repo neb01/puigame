@@ -29,6 +29,7 @@ Anything a tool already enforces is not repeated below.
 - **Methods** are verbs: `show()`, `hide()`, `toggle()`. Values that read and write like attributes, such as `Label.text`, are properties instead.
 - **Classes** use `CapWords` with capitalised acronyms (`UIManager`). Public names avoid abbreviations, except where they follow pygame's own names (`pos`, as in `event.pos`). English spelling is used (`CENTRE`, `colour`).
 - **Modules** are named after their main class in `lowercase_with_underscores`: `UIManager` lives in `ui_manager.py`.
+- **Helper types**, such as enums, live in the module of the class whose interface they belong to, the class that takes them as a parameter or field type: `CrossAxisAlign` in `linear_arrangement.py`, `FadeProfile` in `style.py`. A helper type that belongs to several classes' interfaces gets its own module, as `CursorRole` and `FitSize` do. A Python module groups what changes together rather than holding one class, so a type used by only one class sits beside it.
 - **No unit suffixes.** Fields and parameters carry no `_px`; the docstring says "in pixels". This follows pygame (`width`, `border_radius`).
 - **Empty images** are "zero size" in names (`zero_size`, `test_…_zero_size_image`) and "0x0" in prose.
 - **Locals** say what they hold now, not what they were: `pressed_widget`, not `erstwhile_pressed_widget`.
