@@ -601,13 +601,12 @@ src/puigame/
 ├── _layout/                   anchors and placement
 │   ├── __init__.py
 │   ├── anchor.py              Anchor, get_pos_from_anchor_match
-│   ├── cross_axis_align.py    CrossAxisAlign
 │   └── fit_size.py            FitSize, FitSource
 ├── _styling/                  styles and themes
 │   ├── __init__.py
 │   ├── cursor_image.py        CursorImage, BundledCursor
 │   ├── cursor_role.py         CursorRole
-│   ├── style.py               Style, StyleOverride, FadeProfile, BundledTypeface, RGBA
+│   ├── style.py               Style, StyleOverride, FadeProfile, TextHorizontalExtent, TextAlign, BundledTypeface, RGBA
 │   └── theme.py               Theme, DEFAULT_THEME
 ├── _ui/                       running a widget tree
 │   ├── __init__.py
@@ -618,7 +617,7 @@ src/puigame/
 │   ├── button.py              Button
 │   ├── interactive_widget.py  InteractiveWidget
 │   ├── label.py               Label
-│   ├── linear_arrangement.py  LinearArrangement, Row, Column, Axis
+│   ├── linear_arrangement.py  LinearArrangement, Row, Column, Axis, CrossAxisAlign
 │   ├── panel.py               Panel, Container
 │   ├── state.py               State
 │   ├── toggle_button.py       ToggleButton
@@ -637,7 +636,7 @@ The tree follows VS Code's Explorer order with `explorer.sortOrderLexicographicO
 
 - **Subpackages are private.** The leading underscore marks everything below `puigame` as internal, so modules can move between releases without breaking games. Each subpackage's `__init__.py` holds only a docstring and imports nothing, so importing one module never pulls in the rest of its package.
 - **Base classes live with the concrete widgets.** `Widget`, `InteractiveWidget`, and `State` are in `_widgets`, as Qt and Kivy keep their base widget classes with the widgets.
-- **`_layout` holds placement rules, not widgets**: `Anchor`, `CrossAxisAlign`, and `FitSize`. `Row` and `Column` are widgets, so they live in `_widgets` with the rest.
+- **`_layout` holds placement rules, not widgets**: `Anchor` and `FitSize`. `Row` and `Column` are widgets, so they live in `_widgets` with the rest, and `CrossAxisAlign` lives with them, since only rows and columns take it (see the helper-type rule in `conventions.md`).
 - **A subclass that only configures its base lives in the base's module**, as `Container` does in `panel.py`. One that adds behaviour gets its own module, as `ToggleButton` does.
 - **`_styling`**, not `themes` (a plural suggests a collection of themes) or `appearance` (which this document uses for skins).
 - Unfinished widgets live on branches and are not in the tree until they are built.
@@ -665,7 +664,7 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 Each layer imports only from the layers above it:
 
-1. `_floor_pair`, `_components/placed_image`, `_layout/cross_axis_align`, `_layout/fit_size`, `_styling/cursor_role`, `_widgets/state`, `_widgets/toggle_group`
+1. `_floor_pair`, `_components/placed_image`, `_layout/fit_size`, `_styling/cursor_role`, `_widgets/state`, `_widgets/toggle_group`
 2. `_layout/anchor`, `_validation`
 3. `_styling/cursor_image`, `_styling/style`
 4. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
