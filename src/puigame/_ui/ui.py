@@ -8,12 +8,12 @@ UIs at once, such as a pause menu over a HUD, uses a separate UI for each, with
 the game deciding their order.
 """
 
-import math
 from collections.abc import Iterator
 
 import pygame as pg
 from pygame.typing import Point
 
+from puigame._floor_pair import floor_pair
 from puigame._styling.cursor_role import CursorRole
 from puigame._styling.theme import DEFAULT_THEME, Theme
 from puigame._ui.ui_manager import UIManager
@@ -226,7 +226,7 @@ class UI:
         on each axis, as for every widget, so a fractional offset rounds the
         same way everywhere.
         """
-        self.rect.topleft = (math.floor(self.offset.x), math.floor(self.offset.y))
+        self.rect.topleft = floor_pair(self.offset)
 
     def _draw_tree(self, surface: pg.Surface) -> None:
         """Draw each visible widget's image, in tree order.

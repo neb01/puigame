@@ -287,13 +287,13 @@ def test_assigning_offset_that_is_not_a_pair_of_numbers_raises(ui: UI, offset):
 # region --- Layout -----------------------------------------------------------
 
 
-def test_given_offset_is_floored():
+def test_fractional_offset_rounds_down_not_towards_zero():
     ui = UI(size=(10, 20), theme=ANY_THEME)
 
-    ui.offset = (-1.4, 2.5)
+    ui.offset = (-1.4, -2.6)
     ui.update()
 
-    assert ui.rect.topleft == (-2, 2)
+    assert ui.rect.topleft == (-2, -3)
 
 
 def test_offset_moves_rect_only_on_update():

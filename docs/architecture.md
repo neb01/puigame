@@ -665,8 +665,8 @@ The public API is exactly the names in `puigame.__all__`, and every public name 
 
 Each layer imports only from the layers above it:
 
-1. `_floor_pair`, `_components/placed_image`, `_layout/anchor`, `_layout/cross_axis_align`, `_layout/fit_size`, `_styling/cursor_role`, `_widgets/state`, `_widgets/toggle_group`
-2. `_validation`
+1. `_floor_pair`, `_components/placed_image`, `_layout/cross_axis_align`, `_layout/fit_size`, `_styling/cursor_role`, `_widgets/state`, `_widgets/toggle_group`
+2. `_layout/anchor`, `_validation`
 3. `_styling/cursor_image`, `_styling/style`
 4. `_styling/theme`, `_components/component`, `_components/skin`, `_components/text`
 5. `_widgets/widget`
