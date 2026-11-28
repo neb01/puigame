@@ -1,10 +1,11 @@
 """Anchor, a rect's named points, and placing one rect in another by them."""
 
-import math
 from enum import Enum, unique
 
 import pygame as pg
 from pygame.typing import Point
+
+from puigame._floor_pair import floor_pair
 
 
 @unique
@@ -113,4 +114,4 @@ def get_pos_from_anchor_match(
     margin_nudge = child_anchor.margin_sign.elementwise() * pg.Vector2(margin)
     pos = anchor_pos_in_parent - anchor_pos_in_child + margin_nudge + pg.Vector2(offset)
 
-    return (math.floor(pos.x), math.floor(pos.y))
+    return floor_pair(pos)

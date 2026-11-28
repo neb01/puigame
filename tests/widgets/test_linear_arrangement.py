@@ -715,6 +715,22 @@ def test_centred_child_with_fractional_offset_is_rounded_down_once(
     assert container.rect.topleft == expected_topleft
 
 
+def test_negative_fractional_offset_rounds_down_not_towards_zero():
+    ui = UI(size=UI_SIZE, theme=ANY_THEME)
+    column = Column(
+        ui,
+        anchor=Anchor.TOP_LEFT,
+        margin=(10, 20),
+        main_axis_spacing=3,
+        cross_axis_align=CrossAxisAlign.START,
+    )
+    container = Container(column, size=(6, 8), offset=(-2.5, -3.5))
+
+    ui.update()
+
+    assert container.rect.topleft == (7, 16)
+
+
 def test_hidden_child_is_placed_at_arrangement_top_left():
     ui = UI(size=UI_SIZE, theme=ANY_THEME)
     column = Column(

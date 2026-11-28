@@ -6,7 +6,6 @@ along either.
 
 from __future__ import annotations
 
-import math
 from enum import IntEnum, unique
 from typing import TYPE_CHECKING, ClassVar, TypeVar, assert_never
 
@@ -14,6 +13,7 @@ import pygame as pg
 from pygame.typing import Point
 
 from puigame._components.skin import NoSkin
+from puigame._floor_pair import floor_pair
 from puigame._layout.anchor import Anchor
 from puigame._layout.cross_axis_align import CrossAxisAlign
 from puigame._layout.fit_size import FitSource
@@ -312,7 +312,7 @@ class LinearArrangement(Widget):
         """
         pos = self._child_positions.get(child, (0, 0)) + pg.Vector2(child.offset)
 
-        return (math.floor(pos.x), math.floor(pos.y))
+        return floor_pair(pos)
 
     def _before_child_added(self, child: Widget) -> None:
         """Refuse a child whose placement arguments this widget would ignore.
